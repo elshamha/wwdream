@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% if object %}Edit {{ object.title }}{% else %}New Chapter{% endif %} - A Writer's Web Dream{% endblock %}
+
+{% block main_class %}container-fluid{% endblock %}
+
+{% block extra_css %}
+<style>
+    .writing-interface {
+        min-height: 80vh;
+        background: #f8f9fa;
+    }
+    .chapter-editor {
+        background: white;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        padding: 2rem;
+        margin: 2rem auto;
+        max-width: 800px;
+    }
+    .title-input {
+        border: none;
+        outline: none;
+        font-size: 1.8rem;
+        font-weight: 300;
+        width: 100%;
+        margin-bottom: 1rem;
+        background: transparent;
+    }
+    .order-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0,123,255,0.1);
+        color: #007bff;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.9rem;
+    }
+    .word-counter {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    .auto-save-indicator {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        padding: 8px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .auto-save-indicator.show {
+        opacity: 1;
+    }
+    .toolbar {
+        background: white;
+        border-bottom: 1px solid #eee;
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h5 class="mb-0">
+                {% if object %}
+                    Editing: {{ object.title }}
+                {% else %}
+                    New Chapter - {{ project.title }}
+                {% endif %}
+            </h5>
+        </div>
+        <div class="col-md-6 text-end">
+            <button type="button" class="btn btn-outline-secondary me-2" onclick="saveChapter()">
+                <i class="fas fa-save me-1"></i>Save
+            </button>
+            <a href="{% if object %}{% url 'writer:project_detail' object.project.pk %}{% else %}{% url 'writer:project_detail' project.pk %}{% endif %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Project
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="writing-interface">
+    <div class="chapter-editor position-relative">
+        <div class="order-badge">
+            Chapter {{ object.order|default:'1' }}
+        </div>
+        
+        <form method="post" id="chapter-form">
+            {% csrf_token %}
+            
+            <input type="text" 
+                   name="title" 
+                   id="id_title" 
+                   class="title-input" 
+                   placeholder="Chapter Title..." 
+                   value="{% if object %}{{ object.title }}{% else %}Untitled Chapter{% endif %}"
+                   onkeyup="autoSave()">
+            
+            {{ form.content }}
+            
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label for="{{ form.order.id_for_label }}" class="form-label">Chapter Order</label>
+                    {{ form.order }}
+                </div>
+                <div class="col-md-6">
+                    <!-- AI Assistant Quick Access -->
+                    <div class="mt-4">
+                        <a href="{% url 'writer:ai_assistant' %}" class="btn btn-outline-info btn-sm" target="_blank">
+                            <i class="fas fa-robot me-1"></i>Get AI Help
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">Private Notes</label>
+                {{ form.notes }}
+                <div class="form-text">Private notes for this chapter (plot points, character development, etc.)</div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Save Chapter
+                </button>
+                {% if object %}
+                <a href="{% url 'writer:chapter_detail' object.pk %}" class="btn btn-outline-info ms-2">
+                    <i class="fas fa-eye me-1"></i>View Chapter
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="word-counter" id="word-counter">
+    <i class="fas fa-pen me-1"></i>
+    <span id="word-count">0</span> words
+</div>
+
+<div class="auto-save-indicator" id="auto-save-indicator">
+    <i class="fas fa-check me-1"></i>Saved
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media }}
+<script>
+let autoSaveTimeout;
+let chapterId = {% if object %}{{ object.pk }}{% else %}null{% endif %};
+
+function countWords() {
+    let content = '';
+    if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.id_content) {
+        content = CKEDITOR.instances.id_content.getData();
+    } else {
+        content = document.getElementById('id_content').value;
+    }
+    
+    // Remove HTML tags and count words
+    const text = content.replace(/<[^>]*>/g, '');
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+    const wordCount = words.length;
+    
+    document.getElementById('word-count').textContent = wordCount;
+    return wordCount;
+}
+
+function showAutoSaveIndicator() {
+    const indicator = document.getElementById('auto-save-indicator');
+    indicator.classList.add('show', 'bg-success', 'text-white');
+    indicator.innerHTML = '<i class="fas fa-check me-1"></i>Saved';
+    
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 2000);
+}
+
+function showAutoSaveError() {
+    const indicator = document.getElementById('auto-save-indicator');
+    indicator.classList.add('show', 'bg-danger', 'text-white');
+    indicator.innerHTML = '<i class="fas fa-exclamation me-1"></i>Error saving';
+    
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 3000);
+}
+
+function autoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        const title = document.getElementById('id_title').value;
+        let content = '';
+        
+        if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.id_content) {
+            content = CKEDITOR.instances.id_content.getData();
+        } else {
+            content = document.getElementById('id_content').value;
+        }
+        
+        fetch('{% url "writer:auto_save" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                chapter_id: chapterId,
+                title: title,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                chapterId = data.chapter_id;
+                showAutoSaveIndicator();
+                countWords();
+            } else {
+                showAutoSaveError();
+            }
+        })
+        .catch(error => {
+            console.error('Auto-save error:', error);
+            showAutoSaveError();
+        });
+    }, 2000);
+}
+
+function saveChapter() {
+    document.getElementById('chapter-form').submit();
+}
+
+// Initialize word counter
+document.addEventListener('DOMContentLoaded', function() {
+    countWords();
+    
+    // Set up CKEDITOR event listeners when editor is ready
+    if (typeof CKEDITOR !== 'undefined') {
+        CKEDITOR.on('instanceReady', function(evt) {
+            evt.editor.on('change', function() {
+                autoSave();
+                countWords();
+            });
+        });
+    }
+    
+    // Fallback for textarea
+    const contentField = document.getElementById('id_content');
+    if (contentField) {
+        contentField.addEventListener('input', function() {
+            autoSave();
+            countWords();
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% if object %}Edit {{ object.title }}{% else %}New Document{% endif %} - Atticus Writer{% endblock %}
+
+{% block main_class %}container-fluid{% endblock %}
+
+{% block extra_css %}
+<style>
+    .writing-interface {
+        min-height: 80vh;
+        background: #f8f9fa;
+    }
+    .document-editor {
+        background: white;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        padding: 2rem;
+        margin: 2rem auto;
+        max-width: 800px;
+    }
+    .title-input {
+        border: none;
+        outline: none;
+        font-size: 2rem;
+        font-weight: 300;
+        width: 100%;
+        margin-bottom: 1rem;
+        background: transparent;
+    }
+    .word-counter {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    .auto-save-indicator {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        padding: 8px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .auto-save-indicator.show {
+        opacity: 1;
+    }
+    .toolbar {
+        background: white;
+        border-bottom: 1px solid #eee;
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h5 class="mb-0">{% if object %}Editing: {{ object.title }}{% else %}New Document{% endif %}</h5>
+        </div>
+        <div class="col-md-6 text-end">
+            <button type="button" class="btn btn-outline-secondary me-2" onclick="saveDocument()">
+                <i class="fas fa-save me-1"></i>Save
+            </button>
+            <a href="{% url 'writer:document_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Documents
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="writing-interface">
+    <div class="document-editor">
+        <form method="post" id="document-form">
+            {% csrf_token %}
+            <input type="text" 
+                   name="title" 
+                   id="id_title" 
+                   class="title-input" 
+                   placeholder="Document Title..." 
+                   value="{% if object %}{{ object.title }}{% else %}Untitled Document{% endif %}"
+                   onkeyup="autoSave()">
+            
+            {{ form.content }}
+            
+            <div class="form-check mt-3">
+                {{ form.is_published }}
+                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                    Publish this document
+                </label>
+            </div>
+            
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Save Document
+                </button>
+                {% if object %}
+                <a href="{% url 'writer:document_detail' object.pk %}" class="btn btn-outline-info ms-2">
+                    <i class="fas fa-eye me-1"></i>View Document
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="word-counter" id="word-counter">
+    <i class="fas fa-pen me-1"></i>
+    <span id="word-count">0</span> words
+</div>
+
+<div class="auto-save-indicator" id="auto-save-indicator">
+    <i class="fas fa-check me-1"></i>Saved
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media }}
+<script>
+let autoSaveTimeout;
+let documentId = {% if object %}{{ object.pk }}{% else %}null{% endif %};
+
+function countWords() {
+    let content = '';
+    if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.id_content) {
+        content = CKEDITOR.instances.id_content.getData();
+    } else {
+        content = document.getElementById('id_content').value;
+    }
+    
+    // Remove HTML tags and count words
+    const text = content.replace(/<[^>]*>/g, '');
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+    const wordCount = words.length;
+    
+    document.getElementById('word-count').textContent = wordCount;
+    return wordCount;
+}
+
+function showAutoSaveIndicator() {
+    const indicator = document.getElementById('auto-save-indicator');
+    indicator.classList.add('show', 'bg-success', 'text-white');
+    indicator.innerHTML = '<i class="fas fa-check me-1"></i>Saved';
+    
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 2000);
+}
+
+function showAutoSaveError() {
+    const indicator = document.getElementById('auto-save-indicator');
+    indicator.classList.add('show', 'bg-danger', 'text-white');
+    indicator.innerHTML = '<i class="fas fa-exclamation me-1"></i>Error saving';
+    
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 3000);
+}
+
+function autoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        const title = document.getElementById('id_title').value;
+        let content = '';
+        
+        if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.id_content) {
+            content = CKEDITOR.instances.id_content.getData();
+        } else {
+            content = document.getElementById('id_content').value;
+        }
+        
+        fetch('{% url "writer:auto_save" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                document_id: documentId,
+                title: title,
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                documentId = data.document_id;
+                showAutoSaveIndicator();
+                countWords();
+            } else {
+                showAutoSaveError();
+            }
+        })
+        .catch(error => {
+            console.error('Auto-save error:', error);
+            showAutoSaveError();
+        });
+    }, 2000);
+}
+
+function saveDocument() {
+    document.getElementById('document-form').submit();
+}
+
+// Initialize word counter
+document.addEventListener('DOMContentLoaded', function() {
+    countWords();
+    
+    // Set up CKEDITOR event listeners when editor is ready
+    if (typeof CKEDITOR !== 'undefined') {
+        CKEDITOR.on('instanceReady', function(evt) {
+            evt.editor.on('change', function() {
+                autoSave();
+                countWords();
+            });
+        });
+    }
+    
+    // Fallback for textarea
+    const contentField = document.getElementById('id_content');
+    if (contentField) {
+        contentField.addEventListener('input', function() {
+            autoSave();
+            countWords();
+        });
+    }
+});
+</script>
+{% endblock %}

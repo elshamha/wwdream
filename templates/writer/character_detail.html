@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ character.name }} - Character Details - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' character.project.pk %}">{{ character.project.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:character_list' character.project.pk %}">Characters</a></li>
+                    <li class="breadcrumb-item active">{{ character.name }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-user text-primary"></i> {{ character.name }}</h1>
+                <div>
+                    <a href="{% url 'writer:character_update' character.pk %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-edit"></i> Edit Character
+                    </a>
+                    <a href="{% url 'writer:character_delete' character.pk %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Character Profile -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-id-card text-info"></i> Character Profile</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Basic Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Full Name:</strong></td>
+                                    <td>{{ character.name }}</td>
+                                </tr>
+                                {% if character.age %}
+                                <tr>
+                                    <td><strong>Age:</strong></td>
+                                    <td>{{ character.age }} years old</td>
+                                </tr>
+                                {% endif %}
+                                {% if character.occupation %}
+                                <tr>
+                                    <td><strong>Occupation:</strong></td>
+                                    <td>{{ character.occupation }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if character.role %}
+                                <tr>
+                                    <td><strong>Role:</strong></td>
+                                    <td><span class="badge bg-primary">{{ character.role }}</span></td>
+                                </tr>
+                                {% endif %}
+                                {% if character.character_type %}
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td><span class="badge bg-secondary">{{ character.get_character_type_display }}</span></td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            {% if character.physical_description %}
+                            <h5>Physical Description</h5>
+                            <div class="character-description">
+                                {{ character.physical_description|linebreaks }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if character.description %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-book text-warning"></i> Character Description</h3>
+                </div>
+                <div class="card-body">
+                    <div class="character-description">
+                        {{ character.description|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if character.backstory %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-history text-success"></i> Backstory</h3>
+                </div>
+                <div class="card-body">
+                    <div class="character-backstory">
+                        {{ character.backstory|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if character.personality_traits %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-brain text-purple"></i> Personality & Traits</h3>
+                </div>
+                <div class="card-body">
+                    <div class="character-personality">
+                        {{ character.personality_traits|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if character.goals_motivations %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-bullseye text-danger"></i> Goals & Motivations</h3>
+                </div>
+                <div class="card-body">
+                    <div class="character-goals">
+                        {{ character.goals_motivations|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if character.relationships %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-heart text-pink"></i> Relationships</h3>
+                </div>
+                <div class="card-body">
+                    <div class="character-relationships">
+                        {{ character.relationships|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Character Avatar -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+                    <h5>{{ character.name }}</h5>
+                    {% if character.role %}
+                        <p class="text-muted">{{ character.role }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar text-info"></i> Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Character Type:</span>
+                        <span class="badge bg-secondary">{{ character.get_character_type_display|default:"Unknown" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Created:</span>
+                        <span class="text-muted">{{ character.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Last Updated:</span>
+                        <span class="text-muted">{{ character.updated_at|timesince }} ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Character Notes -->
+            {% if character.notes %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-sticky-note text-warning"></i> Notes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="character-notes">
+                        {{ character.notes|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs text-secondary"></i> Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'writer:character_update' character.pk %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i> Edit Character
+                        </a>
+                        <a href="{% url 'writer:character_list' character.project.pk %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-users"></i> All Characters
+                        </a>
+                        <a href="{% url 'writer:project_detail' character.project.pk %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-folder-open"></i> Back to Project
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.character-description,
+.character-backstory,
+.character-personality,
+.character-goals,
+.character-relationships,
+.character-notes {
+    line-height: 1.6;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.card-header {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-bottom: 2px solid #dee2e6;
+}
+
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+.text-pink {
+    color: #e83e8c !important;
+}
+
+.table-borderless td {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+</style>
+{% endblock %}

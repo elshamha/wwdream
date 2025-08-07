@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Character - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' character.project.pk %}">{{ character.project.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:character_list' character.project.pk %}">Characters</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:character_detail' character.pk %}">{{ character.name }}</a></li>
+                    <li class="breadcrumb-item active">Delete</li>
+                </ol>
+            </nav>
+
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Delete Character
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-times fa-4x text-danger mb-3"></i>
+                        <h4>Are you sure you want to delete this character?</h4>
+                    </div>
+
+                    <div class="character-info bg-light p-3 rounded mb-4">
+                        <h5><strong>{{ character.name }}</strong></h5>
+                        {% if character.role %}
+                            <p class="mb-1"><strong>Role:</strong> {{ character.role }}</p>
+                        {% endif %}
+                        {% if character.character_type %}
+                            <p class="mb-1"><strong>Type:</strong> {{ character.get_character_type_display }}</p>
+                        {% endif %}
+                        {% if character.description %}
+                            <p class="mb-1"><strong>Description:</strong></p>
+                            <p class="text-muted">{{ character.description|truncatewords:20 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Warning:</strong> This action cannot be undone. All character information, including backstory, relationships, and notes will be permanently deleted.
+                    </div>
+
+                    <form method="post" class="d-flex justify-content-between">
+                        {% csrf_token %}
+                        <a href="{% url 'writer:character_detail' character.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Yes, Delete Character
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

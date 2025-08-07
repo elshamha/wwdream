@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upload</title>
+</head>
+<body>
+    <h1>Test Document Upload</h1>
+    
+    <script>
+    // Test the upload functionality
+    function testUpload() {
+        // Create a test file content
+        const content = `<!DOCTYPE html>
+<html>
+<head><title>Test</title></head>
+<body>
+<h1>My Novel</h1>
+<h2>Chapter 1: Start</h2>
+<p>This is the beginning.</p>
+<h2>Chapter 2: Middle</h2>
+<p>This is the middle part.</p>
+</body>
+</html>`;
+        
+        // Create a blob and file
+        const blob = new Blob([content], { type: 'text/html' });
+        const file = new File([blob], 'test.html', { type: 'text/html' });
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Add CSRF token (you'd need to get this from the page)
+        const csrfToken = 'dummy-token'; // You'd get this from Django
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        // Send to upload endpoint
+        fetch('/writer/upload-analysis/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Upload result:', data);
+            document.getElementById('result').innerHTML = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            document.getElementById('result').innerHTML = 'Error: ' + error.message;
+        });
+    }
+    </script>
+    
+    <button onclick="testUpload()">Test Upload</button>
+    <pre id="result"></pre>
+</body>
+</html>

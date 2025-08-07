@@ -1,0 +1,474 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Device Preview - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Device Preview</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-mobile-alt text-primary"></i> Device Preview</h1>
+                <div>
+                    <button class="btn btn-outline-secondary me-2" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand" id="fullscreenIcon"></i> <span id="fullscreenText">Fullscreen</span>
+                    </button>
+                    <button class="btn btn-outline-info" onclick="exportPreview()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Preview Controls -->
+        <div class="col-lg-3">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h5><i class="fas fa-sliders-h text-warning"></i> Preview Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="previewForm" class="preview-controls">
+                        {% csrf_token %}
+                        
+                        <!-- Device Selection -->
+                        <div class="form-group mb-3">
+                            <label for="{{ form.device.id_for_label }}" class="form-label">
+                                <i class="fas fa-mobile-alt"></i> Device
+                            </label>
+                            {{ form.device }}
+                        </div>
+
+                        <!-- Font Settings -->
+                        <div class="form-group mb-3">
+                            <label for="{{ form.font_family.id_for_label }}" class="form-label">
+                                <i class="fas fa-font"></i> Font Family
+                            </label>
+                            {{ form.font_family }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.font_size.id_for_label }}" class="form-label">
+                                        <i class="fas fa-text-height"></i> Size
+                                    </label>
+                                    {{ form.font_size }}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.line_height.id_for_label }}" class="form-label">
+                                        <i class="fas fa-align-justify"></i> Line Height
+                                    </label>
+                                    {{ form.line_height }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sync"></i> Update Preview
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <!-- Quick Presets -->
+                    <div class="quick-presets">
+                        <h6><i class="fas fa-magic"></i> Quick Presets</h6>
+                        <div class="btn-group-vertical w-100" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('kindle')">
+                                <i class="fab fa-amazon"></i> Kindle
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('iphone')">
+                                <i class="fab fa-apple"></i> iPhone
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('ipad')">
+                                <i class="fas fa-tablet-alt"></i> iPad
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('android')">
+                                <i class="fab fa-android"></i> Android
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('desktop')">
+                                <i class="fas fa-desktop"></i> Desktop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Area -->
+        <div class="col-lg-9">
+            <div class="preview-container">
+                {% if content %}
+                    <div class="device-preview" id="devicePreview">
+                        <div class="device-frame device-{{ device|default:'kindle' }}">
+                            <div class="device-screen">
+                                <div class="device-content" style="
+                                    font-family: {{ font_family|default:'serif' }};
+                                    font-size: {{ font_size|default:'16' }}px;
+                                    line-height: {{ line_height|default:'1.6' }};
+                                ">
+                                    <h1 class="preview-title">{{ title|default:'Document Preview' }}</h1>
+                                    <div class="preview-content">
+                                        {{ content|striptags|linebreaks|safe }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Information -->
+                    <div class="preview-info mt-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <h5 class="text-primary">{{ content|wordcount }}</h5>
+                                        <small class="text-muted">Words</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-info">{{ content|length }}</h5>
+                                        <small class="text-muted">Characters</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-warning">~{{ content|wordcount|floatformat:0 }} words</h5>
+                                        <small class="text-muted">Est. Reading Time (min)</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h5 class="text-success">{{ device|default:'Kindle'|title }}</h5>
+                                        <small class="text-muted">Current Device</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- No Content State -->
+                    <div class="no-content-state">
+                        <div class="text-center py-5">
+                            <i class="fas fa-mobile-alt fa-4x text-muted mb-4"></i>
+                            <h3 class="text-muted">No Content to Preview</h3>
+                            <p class="text-muted mb-4">Select a document or chapter to see how it would look on different devices.</p>
+                            <div class="d-flex justify-content-center gap-3">
+                                <a href="{% url 'writer:document_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-file-alt"></i> Select Document
+                                </a>
+                                <a href="{% url 'writer:project_list' %}" class="btn btn-outline-success">
+                                    <i class="fas fa-folder-open"></i> Browse Projects
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.preview-container {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 30px;
+    min-height: 600px;
+}
+
+.device-preview {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+.device-frame {
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    background: #333;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.device-frame:before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 6px;
+    background: #666;
+    border-radius: 3px;
+}
+
+/* Device Specific Styles */
+.device-kindle {
+    width: 320px;
+    background: #e8e8e8;
+    border: 2px solid #ccc;
+}
+
+.device-kindle:before {
+    background: #999;
+}
+
+.device-iphone {
+    width: 375px;
+    background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
+    border-radius: 25px;
+}
+
+.device-ipad {
+    width: 500px;
+    background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+    border-radius: 15px;
+    border: 3px solid #ccc;
+}
+
+.device-android {
+    width: 360px;
+    background: linear-gradient(145deg, #333, #222);
+    border-radius: 20px;
+}
+
+.device-desktop {
+    width: 600px;
+    background: #f8f9fa;
+    border: 3px solid #dee2e6;
+    border-radius: 10px;
+}
+
+.device-screen {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.device-content {
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.preview-title {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.preview-content {
+    text-align: justify;
+    color: #444;
+}
+
+.preview-controls .form-control,
+.preview-controls .form-select {
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.quick-presets .btn {
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.no-content-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+}
+
+.preview-info .card {
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .device-frame {
+        width: 100% !important;
+        max-width: 350px;
+    }
+    
+    .preview-container {
+        padding: 15px;
+    }
+}
+
+/* Fullscreen mode */
+.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #f8f9fa;
+    z-index: 9999;
+    overflow: auto;
+}
+
+.fullscreen-mode .device-frame {
+    width: 90% !important;
+    max-width: 800px;
+}
+</style>
+
+<script>
+// Device presets
+const devicePresets = {
+    kindle: {
+        device: 'kindle',
+        font_family: 'serif',
+        font_size: '14',
+        line_height: '1.5'
+    },
+    iphone: {
+        device: 'iphone',
+        font_family: 'sans-serif',
+        font_size: '16',
+        line_height: '1.4'
+    },
+    ipad: {
+        device: 'ipad',
+        font_family: 'serif',
+        font_size: '18',
+        line_height: '1.6'
+    },
+    android: {
+        device: 'android',
+        font_family: 'sans-serif',
+        font_size: '15',
+        line_height: '1.5'
+    },
+    desktop: {
+        device: 'desktop',
+        font_family: 'serif',
+        font_size: '16',
+        line_height: '1.8'
+    }
+};
+
+function applyPreset(presetName) {
+    const preset = devicePresets[presetName];
+    if (!preset) return;
+    
+    // Update form fields
+    document.querySelector('select[name="device"]').value = preset.device;
+    document.querySelector('select[name="font_family"]').value = preset.font_family;
+    document.querySelector('input[name="font_size"]').value = preset.font_size;
+    document.querySelector('input[name="line_height"]').value = preset.line_height;
+    
+    // Update preview instantly
+    updatePreviewInstant(preset);
+}
+
+function updatePreviewInstant(settings) {
+    const deviceFrame = document.querySelector('.device-frame');
+    const deviceContent = document.querySelector('.device-content');
+    
+    if (deviceFrame && deviceContent) {
+        // Update device frame class
+        deviceFrame.className = `device-frame device-${settings.device}`;
+        
+        // Update content styles
+        deviceContent.style.fontFamily = settings.font_family;
+        deviceContent.style.fontSize = settings.font_size + 'px';
+        deviceContent.style.lineHeight = settings.line_height;
+    }
+}
+
+function toggleFullscreen() {
+    const previewContainer = document.querySelector('.preview-container');
+    const icon = document.getElementById('fullscreenIcon');
+    const text = document.getElementById('fullscreenText');
+    
+    if (previewContainer.classList.contains('fullscreen-mode')) {
+        previewContainer.classList.remove('fullscreen-mode');
+        icon.className = 'fas fa-expand';
+        text.textContent = 'Fullscreen';
+        document.body.style.overflow = 'auto';
+    } else {
+        previewContainer.classList.add('fullscreen-mode');
+        icon.className = 'fas fa-compress';
+        text.textContent = 'Exit Fullscreen';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function exportPreview() {
+    // Implement export functionality
+    alert('Export functionality coming soon!');
+}
+
+// Auto-update preview on form changes
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('previewForm');
+    if (form) {
+        const inputs = form.querySelectorAll('select, input');
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                // Get current settings
+                const deviceSelect = form.querySelector('select[name="device"]');
+                const fontFamilySelect = form.querySelector('select[name="font_family"]');
+                const fontSizeInput = form.querySelector('input[name="font_size"]');
+                const lineHeightInput = form.querySelector('input[name="line_height"]');
+                
+                if (deviceSelect && fontFamilySelect && fontSizeInput && lineHeightInput) {
+                    const settings = {
+                        device: deviceSelect.value,
+                        font_family: fontFamilySelect.value,
+                        font_size: fontSizeInput.value,
+                        line_height: lineHeightInput.value
+                    };
+                    updatePreviewInstant(settings);
+                }
+            });
+        });
+        
+        // Auto-submit form on change for better UX
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                setTimeout(() => {
+                    form.submit();
+                }, 500);
+            });
+        });
+    }
+    
+    // Initialize with default values if no content is shown
+    const previewContent = document.querySelector('.preview-content');
+    if (previewContent && previewContent.innerHTML.trim() === '') {
+        previewContent.innerHTML = '<h2>Sample Chapter</h2><p>This is a sample preview. Select a document or create content to see how it would look on different devices.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>';
+    }
+});
+
+// ESC key to exit fullscreen
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const previewContainer = document.querySelector('.preview-container');
+        if (previewContainer.classList.contains('fullscreen-mode')) {
+            toggleFullscreen();
+        }
+    }
+});
+</script>
+{% endblock %}

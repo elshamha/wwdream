@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Characters - {{ project.title }} - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' project.pk %}">{{ project.title }}</a></li>
+                    <li class="breadcrumb-item active">Characters</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-users text-primary"></i> Characters in {{ project.title }}</h1>
+                <a href="{% url 'writer:character_create' project.pk %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Character
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if characters %}
+        <div class="row">
+            {% for character in characters %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card character-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="character-avatar me-3">
+                                {% if character.physical_description %}
+                                    <i class="fas fa-user-circle fa-3x text-primary"></i>
+                                {% else %}
+                                    <i class="fas fa-user fa-3x text-muted"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    <a href="{% url 'writer:character_detail' character.pk %}" class="text-decoration-none">
+                                        {{ character.name }}
+                                    </a>
+                                </h5>
+                                {% if character.role %}
+                                    <span class="badge bg-primary">{{ character.role }}</span>
+                                {% endif %}
+                                {% if character.character_type %}
+                                    <span class="badge bg-secondary">{{ character.get_character_type_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if character.description %}
+                            <p class="card-text text-muted">{{ character.description|truncatewords:15 }}</p>
+                        {% endif %}
+
+                        {% if character.age or character.occupation %}
+                            <div class="character-details mb-3">
+                                {% if character.age %}
+                                    <small class="text-muted me-3">
+                                        <i class="fas fa-birthday-cake"></i> {{ character.age }} years old
+                                    </small>
+                                {% endif %}
+                                {% if character.occupation %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-briefcase"></i> {{ character.occupation }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="character-actions">
+                            <a href="{% url 'writer:character_detail' character.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <a href="{% url 'writer:character_update' character.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'writer:character_delete' character.pk %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> Created {{ character.created_at|timesince }} ago
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-4"></i>
+            <h3 class="text-muted">No characters yet</h3>
+            <p class="text-muted mb-4">Start building your character roster for this project.</p>
+            <a href="{% url 'writer:character_create' project.pk %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Create Your First Character
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.character-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #dee2e6;
+}
+
+.character-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.character-avatar {
+    min-width: 60px;
+}
+
+.character-details {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.character-actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    font-size: 0.7rem;
+}
+</style>
+{% endblock %}

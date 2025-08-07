@@ -1,0 +1,817 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Personal Library - Writer's Web Dream{% endblock %}
+
+{% block content %}
+<!-- Ethereal Library Hero -->
+<div class="ethereal-hero">
+    <div class="container-fluid">
+        <!-- Welcome Message - Top Left -->
+        <div class="row mb-2">
+            <div class="col-12">
+                <div class="welcome-section">
+                    <h6 class="welcome-message" style="color: #ffffff !important; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.25rem; opacity: 0.9;">
+                        Welcome back, {{ user.first_name|default:user.username }}!
+                    </h6>
+                    <p class="welcome-subtitle" style="color: #ffffff !important; opacity: 0.7; font-size: 0.8rem; margin-bottom: 0;">
+                        Ready to create something amazing today?
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Hero Content -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="hero-title">
+                        <h1 class="ethereal-gradient-text mb-2">
+                            <i class="fas fa-book-open ethereal-icon-glow"></i> 
+                            My Ethereal Library
+                        </h1>
+                        <p class="ethereal-subtitle">Where stories come to life in magical harmony</p>
+                    </div>
+                    <div class="hero-actions">
+                        <a href="{% url 'writer:import_document' %}" class="btn ethereal-btn ethereal-btn-success me-2">
+                            <i class="fas fa-upload"></i> 
+                            <span>Import Document</span>
+                        </a>
+                        <a href="{% url 'writer:project_create' %}" class="btn ethereal-btn ethereal-btn-primary">
+                            <i class="fas fa-plus"></i> 
+                            <span>New Project</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="row">
+        <!-- Projects Section -->
+        <div class="col-md-8">
+            <div class="ethereal-card ethereal-glow mb-4">
+                <div class="ethereal-card-header">
+                    <h3 class="ethereal-gradient-text">
+                        <i class="fas fa-folder-open ethereal-icon-glow me-2"></i> 
+                        My Magical Projects
+                    </h3>
+                </div>
+                <div class="ethereal-card-body">
+                    {% if projects %}
+                        <div class="row">
+                            {% for project in projects %}
+                            <div class="col-lg-6 col-xl-4 mb-4">
+                                <div class="ethereal-project-card h-100 ethereal-glow-hover">
+                                    <div class="ethereal-card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h4 class="card-title mb-0" style="color: #ffffff !important;">
+                                                <a href="{% url 'writer:chapter_editor' project.pk %}" class="text-decoration-none ethereal-glow-on-hover" style="color: #ffffff !important;" title="Open in Editor">
+                                                    {{ project.title }}
+                                                </a>
+                                            </h4>
+                                            <div class="dropdown">
+                                                <button class="btn ethereal-btn-minimal p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-v ethereal-text-muted fs-5"></i>
+                                                </button>
+                                                <ul class="dropdown-menu ethereal-dropdown">
+                                                    <li><a class="dropdown-item ethereal-dropdown-item" href="{% url 'writer:chapter_editor' project.pk %}">
+                                                        <i class="fas fa-edit me-2"></i> Open Editor
+                                                    </a></li>
+                                                    <li><a class="dropdown-item ethereal-dropdown-item" href="{% url 'writer:project_detail' project.pk %}">
+                                                        <i class="fas fa-info-circle me-2"></i> Project Details
+                                                    </a></li>
+                                                    <li><hr class="ethereal-divider"></li>
+                                                    <li><a class="dropdown-item ethereal-dropdown-item" href="#" onclick="toggleCollaboration({{ project.pk }})">
+                                                        <i class="fas fa-users me-2"></i> 
+                                                        {% if project.is_collaborative %}Make Private{% else %}Make Collaborative{% endif %}
+                                                    </a></li>
+                                                    {% if project.is_collaborative %}
+                                                    <li><a class="dropdown-item ethereal-dropdown-item" href="#" onclick="shareProject({{ project.pk }})">
+                                                        <i class="fas fa-share-alt me-2"></i> Share Link
+                                                    </a></li>
+                                                    {% endif %}
+                                                    <li><hr class="ethereal-divider"></li>
+                                                    <li><a class="dropdown-item ethereal-dropdown-item" href="{% url 'writer:project_update' project.pk %}">
+                                                        <i class="fas fa-cog me-2"></i> Settings
+                                                    </a></li>
+                                                    <li><hr class="ethereal-divider"></li>
+                                                    <li><a class="dropdown-item ethereal-dropdown-item text-danger" href="#" onclick="confirmProjectDelete({{ project.pk }}, '{{ project.title|escapejs }}')">
+                                                        <i class="fas fa-trash me-2"></i> Delete Project
+                                                    </a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        
+                                        <p class="card-text ethereal-text-muted mb-3">{{ project.description|truncatewords:20|default:"No description available." }}</p>
+                                        
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-6">
+                                                <div class="ethereal-stat-box text-center p-3 rounded">
+                                                    <div class="stat-number ethereal-text-primary fw-bold">{{ project.chapters.count }}</div>
+                                                    <div class="stat-label small ethereal-text-muted">Chapter{{ project.chapters.count|pluralize }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="ethereal-stat-box text-center p-3 rounded">
+                                                    <div class="stat-number ethereal-text-success fw-bold">{{ project.total_word_count|default:0 }}</div>
+                                                    <div class="stat-label small ethereal-text-muted">Word{{ project.total_word_count|pluralize }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="badges">
+                                                <span class="ethereal-badge ethereal-badge-primary me-1">{{ project.theme.name|default:"General" }}</span>
+                                                {% if project.is_collaborative %}
+                                                    <span class="ethereal-badge ethereal-badge-success me-1">
+                                                        <i class="fas fa-users"></i> Collaborative
+                                                    </span>
+                                                {% else %}
+                                                    <span class="ethereal-badge ethereal-badge-secondary me-1">
+                                                        <i class="fas fa-lock"></i> Private
+                                                    </span>
+                                                {% endif %}
+                                                {% if project.is_public %}
+                                                    <span class="ethereal-badge ethereal-badge-info me-1">
+                                                        <i class="fas fa-globe"></i> Public
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <small class="ethereal-text-muted">
+                                                <i class="fas fa-clock me-1"></i> Updated {{ project.updated_at|timesince }} ago
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="project-actions">
+                                            <div class="d-grid gap-2">
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn ethereal-btn ethereal-btn-primary w-100" title="Open Editor">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </a>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <a href="{% url 'writer:chapter_manager' project.pk %}" class="btn ethereal-btn ethereal-btn-outline-info w-100" title="Manage Chapters">
+                                                            <i class="fas fa-list"></i> Chapters
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <button type="button" class="btn ethereal-btn ethereal-btn-outline-success w-100" onclick="shareProject({{ project.pk }})">
+                                                            <i class="fas fa-share-alt"></i> Share
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <button type="button" class="btn ethereal-btn ethereal-btn-outline-danger w-100" onclick="confirmProjectDelete({{ project.pk }}, '{{ project.title|escapejs }}')">
+                                                            <i class="fas fa-trash"></i> Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="ethereal-empty-state">
+                                <i class="fas fa-folder-plus fa-4x ethereal-text-muted mb-3 ethereal-pulse"></i>
+                                <h4 class="ethereal-text-muted mb-3">No projects yet</h4>
+                                <p class="ethereal-text-muted mb-4">Start your first writing project to organize your magical work.</p>
+                                <a href="{% url 'writer:project_create' %}" class="btn ethereal-btn ethereal-btn-primary ethereal-glow">
+                                    <i class="fas fa-plus me-2"></i> Create Your First Project
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Library Stats -->
+            <div class="ethereal-card ethereal-glow mb-4">
+                <div class="ethereal-card-header">
+                    <h5 class="ethereal-gradient-text">
+                        <i class="fas fa-chart-bar ethereal-icon-glow me-2"></i> 
+                        Library Stats
+                    </h5>
+                </div>
+                <div class="ethereal-card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="ethereal-stat-box p-3 rounded">
+                                <h4 class="ethereal-pulse" style="color: #ffffff !important;">{{ projects.count }}</h4>
+                                <small style="color: #ffffff !important; opacity: 0.8;">Projects</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="ethereal-stat-box p-3 rounded">
+                                <h4 class="ethereal-pulse" style="color: #ffffff !important;">{{ imported_documents.count }}</h4>
+                                <small style="color: #ffffff !important; opacity: 0.8;">Imported Docs</small>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="ethereal-divider">
+                    <div class="text-center">
+                        <div class="ethereal-stat-box p-3 rounded">
+                            <h5 class="ethereal-pulse" style="color: #ffffff !important;">
+                                {% with total_words=projects|length %}
+                                    {% for project in projects %}
+                                        {% if forloop.first %}
+                                            {{ project.total_word_count|add:0 }}
+                                        {% else %}
+                                            {% widthratio project.total_word_count 1 1 %}
+                                        {% endif %}
+                                    {% empty %}
+                                        0
+                                    {% endfor %}
+                                {% endwith %}
+                            </h5>
+                            <small style="color: #ffffff !important; opacity: 0.8;">Total Words</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Imports -->
+            <div class="ethereal-card ethereal-glow mb-4">
+                <div class="ethereal-card-header">
+                    <h5 style="color: #ffffff !important;">
+                        <i class="fas fa-file-import ethereal-icon-glow me-2"></i> 
+                        Recent Imports
+                    </h5>
+                </div>
+                <div class="ethereal-card-body">
+                    {% if imported_documents %}
+                        {% for doc in imported_documents|slice:":5" %}
+                        <div class="ethereal-import-item d-flex justify-content-between align-items-center mb-3 p-3 rounded">
+                            <div class="flex-grow-1">
+                                <a href="{% url 'writer:import_detail' doc.pk %}" class="text-decoration-none">
+                                    <strong style="color: #ffffff !important;">{{ doc.title|striptags|truncatechars:30 }}</strong>
+                                </a>
+                                <br>
+                                <small style="color: #ffffff !important; opacity: 0.8;">
+                                    <i class="fas fa-file-{{ doc.import_type }} me-1"></i> 
+                                    {{ doc.import_type|upper }} • {{ doc.created_at|timesince }} ago
+                                </small>
+                                {% if doc.file_size %}
+                                <br>
+                                <small style="color: #ffffff !important; opacity: 0.8;">
+                                    <i class="fas fa-hdd me-1"></i> {{ doc.file_size|filesizeformat }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group-vertical" role="group">
+                                <a href="{% url 'writer:import_detail' doc.pk %}" class="btn ethereal-btn ethereal-btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn ethereal-btn ethereal-btn-outline-danger btn-sm" onclick="confirmImportDelete({{ doc.pk }}, '{{ doc.title|escapejs }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <div class="ethereal-empty-state">
+                                <i class="fas fa-file-import fa-3x ethereal-text-muted mb-2 ethereal-pulse"></i>
+                                <p class="ethereal-text-muted mb-0">No imported documents</p>
+                                <a href="{% url 'writer:import_document' %}" class="btn ethereal-btn ethereal-btn-outline-primary btn-sm mt-2">
+                                    Import Your First Document
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="ethereal-card ethereal-glow">
+                <div class="ethereal-card-header">
+                    <h5 style="color: #ffffff !important;">
+                        <i class="fas fa-bolt ethereal-icon-glow me-2"></i> 
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="ethereal-card-body">
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'writer:ai_assistant' %}" class="btn ethereal-btn ethereal-btn-outline-info ethereal-glow-hover">
+                            <i class="fas fa-robot me-2"></i> AI Assistant
+                        </a>
+                        <a href="{% url 'writer:device_preview' %}" class="btn ethereal-btn ethereal-btn-outline-secondary ethereal-glow-hover">
+                            <i class="fas fa-mobile-alt me-2"></i> Device Preview
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Ethereal Personal Library Styling */
+.ethereal-hero {
+    background: linear-gradient(135deg, 
+        rgba(var(--ethereal-primary-rgb), 0.1) 0%, 
+        rgba(var(--ethereal-secondary-rgb), 0.1) 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hero-title h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.ethereal-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.8;
+    color: var(--ethereal-text-muted);
+    font-style: italic;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.hero-actions .btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+/* Ethereal Project Cards */
+.ethereal-project-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.ethereal-project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        rgba(var(--ethereal-primary-rgb), 0.8) 0%, 
+        rgba(var(--ethereal-secondary-rgb), 0.8) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.ethereal-project-card:hover::before {
+    opacity: 1;
+}
+
+.ethereal-project-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(var(--ethereal-primary-rgb), 0.3);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        0 0 40px rgba(var(--ethereal-primary-rgb), 0.2);
+}
+
+/* Ethereal Stat Boxes */
+.ethereal-stat-box {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ethereal-stat-box::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, 
+        transparent 40%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        transparent 60%);
+    transition: transform 0.6s ease;
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+}
+
+.ethereal-stat-box:hover::before {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+}
+
+.ethereal-stat-box:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(var(--ethereal-primary-rgb), 0.3);
+    transform: translateY(-2px);
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    line-height: 1.2;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Ethereal Import Items */
+.ethereal-import-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ethereal-import-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, 
+        rgba(var(--ethereal-primary-rgb), 0.8) 0%, 
+        rgba(var(--ethereal-secondary-rgb), 0.8) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.ethereal-import-item:hover::before {
+    opacity: 1;
+}
+
+.ethereal-import-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(var(--ethereal-primary-rgb), 0.3);
+    transform: translateX(5px);
+}
+
+/* Ethereal Empty States */
+.ethereal-empty-state {
+    padding: 3rem;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.ethereal-empty-state i {
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 0 20px rgba(var(--ethereal-primary-rgb), 0.3));
+}
+
+/* Ethereal Dropdown Enhancements */
+.ethereal-dropdown {
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    padding: 0.5rem;
+}
+
+.ethereal-dropdown-item {
+    border-radius: 8px;
+    margin-bottom: 0.25rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    color: var(--ethereal-text-primary) !important;
+}
+
+.ethereal-dropdown-item:hover {
+    background: rgba(var(--ethereal-primary-rgb), 0.2);
+    color: var(--ethereal-primary) !important;
+    transform: translateX(5px);
+}
+
+.ethereal-dropdown-item.text-danger:hover {
+    background: rgba(220, 53, 69, 0.2);
+    color: #ff6b7a !important;
+}
+
+.ethereal-divider {
+    border-color: rgba(255, 255, 255, 0.1);
+    margin: 0.5rem 0;
+}
+
+/* Enhanced Badge System */
+.ethereal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.ethereal-badge-primary {
+    background: rgba(var(--ethereal-primary-rgb), 0.2);
+    color: var(--ethereal-primary);
+    border-color: rgba(var(--ethereal-primary-rgb), 0.3);
+}
+
+.ethereal-badge-success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #4ade80;
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+.ethereal-badge-secondary {
+    background: rgba(108, 117, 125, 0.2);
+    color: #94a3b8;
+    border-color: rgba(108, 117, 125, 0.3);
+}
+
+.ethereal-badge-info {
+    background: rgba(23, 162, 184, 0.2);
+    color: #38bdf8;
+    border-color: rgba(23, 162, 184, 0.3);
+}
+
+.ethereal-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced Pulse Animation */
+@keyframes ethereal-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+.ethereal-pulse {
+    animation: ethereal-pulse 3s ease-in-out infinite;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .ethereal-hero {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .hero-title h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .hero-actions .btn {
+        width: 100%;
+        padding: 0.6rem 1rem;
+    }
+    
+    .ethereal-project-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 1.25rem;
+    }
+    
+    .project-actions .btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Enhanced Glow Effects */
+.ethereal-glow-on-hover:hover {
+    text-shadow: 0 0 20px rgba(var(--ethereal-primary-rgb), 0.6);
+    transition: text-shadow 0.3s ease;
+}
+
+.ethereal-glow-hover:hover {
+    box-shadow: 
+        0 0 30px rgba(var(--ethereal-primary-rgb), 0.3),
+        0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading States */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: ethereal-spin 1s linear infinite;
+}
+
+@keyframes ethereal-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced Button Animations */
+.project-actions .btn {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.project-actions .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    transform: translate(-50%, -50%);
+}
+
+.project-actions .btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.project-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+</style>
+</style>
+
+<!-- Ethereal Share Project Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content ethereal-modal">
+            <div class="ethereal-modal-header">
+                <h5 class="modal-title ethereal-gradient-text" id="shareModalLabel">
+                    <i class="fas fa-share-alt ethereal-icon-glow me-2"></i> Share Magical Project
+                </h5>
+                <button type="button" class="btn-close ethereal-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="ethereal-modal-body">
+                <p class="ethereal-text-muted mb-3">Share this collaborative project with others and let the magic unfold:</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control ethereal-input" id="shareLink" readonly>
+                    <button class="btn ethereal-btn ethereal-btn-outline-secondary" type="button" onclick="copyToClipboard()">
+                        <i class="fas fa-copy me-1"></i> Copy
+                    </button>
+                </div>
+                <div class="alert ethereal-alert ethereal-alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Anyone with this magical link can view and collaborate on this project.
+                </div>
+            </div>
+            <div class="ethereal-modal-footer">
+                <button type="button" class="btn ethereal-btn ethereal-btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCollaboration(projectId) {
+    fetch(`/writer/projects/${projectId}/toggle-collaboration/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Reload to show updated status
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating collaboration settings.');
+    });
+}
+
+function shareProject(projectId) {
+    fetch(`/writer/projects/${projectId}/share-link/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('shareLink').value = data.share_url;
+            new bootstrap.Modal(document.getElementById('shareModal')).show();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while generating share link.');
+    });
+}
+
+function copyToClipboard() {
+    const shareLink = document.getElementById('shareLink');
+    shareLink.select();
+    shareLink.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(shareLink.value).then(function() {
+        // Show success feedback
+        const copyBtn = event.target.closest('button');
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        copyBtn.classList.remove('btn-outline-secondary');
+        copyBtn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-outline-secondary');
+        }, 2000);
+    });
+}
+
+// Delete confirmation functions
+function confirmProjectDelete(projectId, projectTitle) {
+    if (confirm(`Are you sure you want to delete the project "${projectTitle}"?\n\nThis action cannot be undone and will delete all chapters and content.`)) {
+        // Redirect to the delete URL
+        window.location.href = `/writer/projects/${projectId}/delete/`;
+    }
+}
+
+function confirmImportDelete(importId, importTitle) {
+    if (confirm(`Are you sure you want to delete the imported document "${importTitle}"?\n\nThis action cannot be undone.`)) {
+        // Redirect to the delete URL
+        window.location.href = `/writer/import/${importId}/delete/`;
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

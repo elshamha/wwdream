@@ -1,0 +1,32 @@
+# Django specific
+*.pyc
+__pycache__/
+db.sqlite3
+*.log
+.env
+local_settings.py
+
+# Virtual environment
+myproject_env/
+venv/
+env/
+
+# Media files (optional - remove if you want to backup uploaded files)
+media/
+
+# Static files (generated)
+staticfiles/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
