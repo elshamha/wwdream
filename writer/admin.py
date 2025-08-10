@@ -24,24 +24,24 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Chapter)
 class ChapterAdmin(admin.ModelAdmin):
-    list_display = ['title', 'project', 'order', 'word_count', 'created_at', 'updated_at']
-    list_filter = ['project', 'created_at', 'updated_at']
-    search_fields = ['title', 'content', 'project__title', 'project__author__username']
+    list_display = ['title', 'order', 'word_count', 'created_at', 'updated_at']
+    list_filter = ['created_at', 'updated_at']
+    search_fields = ['title', 'content']
     readonly_fields = ['word_count', 'created_at', 'updated_at']
-    ordering = ['project', 'order']
+    ordering = ['order']
 
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ['title', 'author', 'project', 'word_count', 'is_published', 'created_at', 'updated_at']
-    list_filter = ['is_published', 'created_at', 'updated_at', 'author', 'project']
+    list_display = ['title', 'author', 'word_count', 'is_published', 'created_at', 'updated_at']
+    list_filter = ['is_published', 'created_at', 'updated_at', 'author']
     search_fields = ['title', 'content', 'author__username']
     list_editable = ['is_published']
     readonly_fields = ['word_count', 'created_at', 'updated_at']
     
     fieldsets = (
         (None, {
-            'fields': ('title', 'author', 'project', 'content', 'is_published')
+            'fields': ('title', 'author', 'content', 'is_published')
         }),
         ('Metadata', {
             'fields': ('word_count', 'created_at', 'updated_at'),

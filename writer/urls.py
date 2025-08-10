@@ -24,11 +24,17 @@ urlpatterns = [
     
     # Chapters
     path('projects/<int:project_id>/chapters/new/', views.ChapterCreateView.as_view(), name='chapter_create'),
-    path('projects/<int:project_id>/chapters/manager/', views.chapter_manager, name='chapter_manager'),
     path('projects/<int:project_id>/editor/', views.chapter_editor, name='chapter_editor'),
     path('chapters/<int:pk>/', views.ChapterDetailView.as_view(), name='chapter_detail'),
     path('chapters/<int:pk>/edit/', views.ChapterUpdateView.as_view(), name='chapter_update'),
     path('chapters/<int:pk>/delete/', views.ChapterDeleteView.as_view(), name='chapter_delete'),
+    
+    # Chapter Management API
+    path('projects/<int:project_id>/chapters/list/', views.get_chapter_list, name='get_chapter_list'),
+    path('projects/<int:project_id>/chapters/create/', views.create_new_chapter, name='create_new_chapter'),
+    path('projects/<int:project_id>/chapters/reorder/', views.reorder_chapters, name='reorder_chapters'),
+    path('projects/<int:project_id>/chapters/<int:chapter_id>/order/', views.update_chapter_order, name='update_chapter_order'),
+    path('projects/<int:project_id>/chapters/<int:chapter_id>/delete/', views.delete_chapter, name='delete_chapter'),
     
     # Documents
     path('documents/', views.DocumentListView.as_view(), name='document_list'),
@@ -46,18 +52,25 @@ urlpatterns = [
     # Document Import URLs
     path('import/', views.import_document, name='import_document'),
     path('import/<int:pk>/', views.import_detail, name='import_detail'),
+    path('import/<int:pk>/convert-to-project/', views.convert_import_to_project, name='convert_import_to_project'),
+    path('import/<int:pk>/add-to-project/<int:project_id>/', views.add_import_to_project, name='add_import_to_project'),
     path('import/<int:pk>/delete/', views.ImportedDocumentDeleteView.as_view(), name='import_delete'),
-    path('upload-analysis/', views.upload_document_analysis, name='upload_document_analysis'),
-    path('upload-test/', views.upload_test, name='upload_test'),
     
-    # Device Preview URLs
-    path('preview/', views.device_preview, name='device_preview'),
-    path('preview/document/<int:document_id>/', views.device_preview, name='device_preview_document'),
-    path('preview/chapter/<int:chapter_id>/', views.device_preview, name='device_preview_chapter'),
+    # API URLs
+    path('projects/api/list/', views.projects_api_list, name='projects_api_list'),
+    path('upload-test/', views.upload_test, name='upload_test'),
     
     # AI Assistant
     path('ai-assistant/', views.ai_assistant, name='ai_assistant'),
     
+    # Format & Export
+    path('format/', views.format_page, name='format_page'),
+    path('export/<int:project_id>/<str:format_type>/', views.export_project, name='export_project'),
+    
     # Auto-save
     path('auto-save/', views.auto_save, name='auto_save'),
+    
+    # AJAX endpoints
+    path('ajax/create-chapter/', views.ajax_create_chapter, name='ajax_create_chapter'),
+    path('upload-file/', views.upload_file, name='upload_file'),
 ]

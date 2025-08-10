@@ -29,35 +29,6 @@ class WritingTheme(models.Model):
         return self.get_name_display()
 
 
-class DevicePreview(models.Model):
-    """Different device formats for preview"""
-    DEVICE_TYPES = [
-        ('iphone', 'iPhone'),
-        ('ipad', 'iPad'),
-        ('kindle', 'Amazon Kindle'),
-        ('imac', 'iMac'),
-        ('macbook', 'MacBook'),
-        ('android_phone', 'Android Phone'),
-        ('android_tablet', 'Android Tablet'),
-        ('windows_laptop', 'Windows Laptop'),
-        ('paperback', 'Paperback Book'),
-        ('hardcover', 'Hardcover Book'),
-    ]
-    
-    name = models.CharField(max_length=50, choices=DEVICE_TYPES, unique=True)
-    screen_width = models.IntegerField()
-    screen_height = models.IntegerField()
-    font_size_default = models.IntegerField(default=16)
-    line_height = models.FloatField(default=1.5)
-    margin_left = models.IntegerField(default=20)
-    margin_right = models.IntegerField(default=20)
-    margin_top = models.IntegerField(default=20)
-    margin_bottom = models.IntegerField(default=20)
-    
-    def __str__(self):
-        return self.get_name_display()
-
-
 class Project(models.Model):
     """A writing project that can contain multiple chapters/documents"""
     title = models.CharField(max_length=200)
@@ -98,6 +69,26 @@ class Project(models.Model):
         if self.target_word_count > 0:
             return min(100, (self.total_word_count / self.target_word_count) * 100)
         return 0
+    
+    @property
+    def content_preview(self):
+        """Get a preview of content from the first chapter"""
+        first_chapter = self.chapters.first()
+        if first_chapter and first_chapter.content:
+            import re
+            # Remove HTML tags for preview
+            text = re.sub(r'<[^>]+>', '', first_chapter.content)
+            # Return first 150 characters
+            if len(text) > 150:
+                return text[:150] + "..."
+            return text
+        return "No content available yet."
+    
+    def update_word_count(self):
+        """Update the cached word count for this project"""
+        total_words = sum(chapter.word_count for chapter in self.chapters.all())
+        # If you want to store this in the model, you'd need to add a field
+        return total_words
 
 
 class ProjectCollaborator(models.Model):
@@ -167,8 +158,9 @@ class ImportedDocument(models.Model):
     IMPORT_TYPES = [
         ('pdf', 'PDF'),
         ('docx', 'Word Document'),
-        ('gdoc', 'Google Document'),
+        ('google_docs', 'Google Document'),
         ('txt', 'Text File'),
+        ('html', 'HTML File'),
         ('rtf', 'Rich Text Format'),
         ('odt', 'OpenDocument Text'),
     ]
@@ -176,14 +168,35 @@ class ImportedDocument(models.Model):
     title = models.CharField(max_length=200)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='imported_documents')
     project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='imported_documents')
-    original_file = models.FileField(upload_to='imports/')
-    import_type = models.CharField(max_length=10, choices=IMPORT_TYPES)
+    original_file = models.FileField(upload_to='imports/', blank=True, null=True)
+    google_docs_url = models.URLField(blank=True, null=True, help_text="Google Docs sharing URL")
+    import_type = models.CharField(max_length=15, choices=IMPORT_TYPES)
     extracted_content = RichTextField(blank=True, null=True)
     import_date = models.DateTimeField(auto_now_add=True)
     file_size = models.IntegerField(default=0)
+    word_count = models.IntegerField(default=0)
     
     def __str__(self):
         return f"{self.title} ({self.get_import_type_display()})"
+    
+    def save(self, *args, **kwargs):
+        # Calculate word count
+        if self.extracted_content:
+            import re
+            text = re.sub(r'<[^>]+>', '', self.extracted_content)  # Remove HTML tags
+            self.word_count = len(text.split())
+        super().save(*args, **kwargs)
+    
+    @property
+    def paragraph_count(self):
+        """Calculate the number of paragraphs in the content"""
+        if self.extracted_content:
+            import re
+            # Remove HTML tags and split by double line breaks or <p> tags
+            text = re.sub(r'<[^>]+>', '', self.extracted_content)
+            paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+            return len(paragraphs)
+        return 0
 
 
 class Chapter(models.Model):

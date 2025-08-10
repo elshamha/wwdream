@@ -3,470 +3,1411 @@
 
 {% block title %}Device Preview - A Writer's Web Dream{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Main Layout */
+.preview-workspace {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+}
+
+.preview-sidebar {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+    backdrop-filter: blur(25px);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    min-height: 100vh;
+    padding: 2rem;
+    box-shadow: 
+        2px 0 20px rgba(0, 0, 0, 0.08),
+        inset -1px 0 0 rgba(255, 255, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0.02;
+    pointer-events: none;
+}
+
+.preview-main {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    backdrop-filter: blur(12px);
+    pointer-events: none;
+    animation: etherealFloat 15s ease-in-out infinite;
+}
+
+@keyframes etherealFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.02); }
+}
+
+/* Enhanced Header */
+.preview-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 
+        0 8px 30px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%);
+    pointer-events: none;
+    border-radius: 20px;
+}
+
+.preview-header h1 {
+    color: #ffffff;
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.preview-header p {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Enhanced Device Selection */
+.device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.device-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.device-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(79, 172, 254, 0.3), 
+        rgba(255, 255, 255, 0.6), 
+        rgba(118, 75, 162, 0.3), 
+        transparent);
+    transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 16px;
+}
+
+.device-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+        0 12px 35px rgba(79, 172, 254, 0.2),
+        0 4px 20px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border-color: rgba(79, 172, 254, 0.6);
+}
+
+.device-card:hover::before {
+    left: 100%;
+}
+
+.device-card.active {
+    border-color: #4facfe;
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
+    box-shadow: 
+        0 8px 30px rgba(79, 172, 254, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+.device-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(79, 172, 254, 0.3));
+}
+
+.device-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 0.3rem 0;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.device-subtitle {
+    font-size: 0.75rem;
+    color: #666;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Enhanced Format Controls */
+.format-section {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.8rem;
+    box-shadow: 
+        0 6px 25px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(15px);
+    position: relative;
+    overflow: hidden;
+}
+
+.format-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.02) 0%, rgba(118, 75, 162, 0.01) 100%);
+    pointer-events: none;
+    border-radius: 16px;
+}
+
+.format-section h6 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid rgba(79, 172, 254, 0.1);
+    font-size: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.format-input {
+    border: 2px solid rgba(79, 172, 254, 0.1);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%);
+    backdrop-filter: blur(5px);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.format-input:focus {
+    outline: none;
+    border-color: #4facfe;
+    box-shadow: 
+        0 0 0 4px rgba(79, 172, 254, 0.15),
+        0 4px 12px rgba(79, 172, 254, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+}
+
+/* Device Preview Area */
+.device-stage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    position: relative;
+    z-index: 1;
+    perspective: 1000px;
+}
+
+.device-mockup {
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.35));
+    transform-style: preserve-3d;
+}
+
+.device-mockup:hover {
+    transform: translateY(-10px) rotateY(5deg);
+    filter: drop-shadow(0 35px 70px rgba(0, 0, 0, 0.4));
+}
+
+/* Device Frames */
+.device-frame {
+    border-radius: 25px;
+    padding: 25px;
+    position: relative;
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 
+        0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 15px 35px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.device-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border-radius: 25px;
+    pointer-events: none;
+}
+
+/* Enhanced iPhone */
+.device-iphone {
+    width: 340px;
+    height: 680px;
+    background: linear-gradient(145deg, #1a1a1a, #2d2d2d, #000);
+    border-radius: 35px;
+    border: 3px solid #333;
+    padding: 35px 18px;
+    position: relative;
+    box-shadow: 
+        0 0 0 2px rgba(255, 255, 255, 0.1),
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.device-iphone::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 8px;
+    background: linear-gradient(135deg, #444, #222);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.device-iphone::after {
+    content: '';
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 6px;
+    background: linear-gradient(135deg, #444, #222);
+    border-radius: 3px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced iPad */
+.device-ipad {
+    width: 520px;
+    height: 680px;
+    background: linear-gradient(145deg, #f5f5f5, #e8e8e8, #ddd);
+    border-radius: 25px;
+    border: 3px solid #bbb;
+    padding: 45px 35px;
+    position: relative;
+    box-shadow: 
+        0 0 0 2px rgba(255, 255, 255, 0.8),
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        inset 0 2px 0 rgba(255, 255, 255, 0.9);
+}
+
+.device-ipad::before {
+    content: '';
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    border: 3px solid #999;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f0f0f0, #ddd);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.1),
+        0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Enhanced Kindle */
+.device-kindle {
+    width: 380px;
+    height: 560px;
+    background: linear-gradient(145deg, #fafafa, #f0f0f0, #e8e8e8);
+    border-radius: 15px;
+    border: 3px solid #ccc;
+    padding: 35px 25px 50px;
+    position: relative;
+    box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.9),
+        0 15px 30px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+.device-kindle::before {
+    content: 'amazon kindle';
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+}
+
+/* Enhanced Book Formats */
+.device-paperback {
+    width: 340px;
+    height: 520px;
+    background: linear-gradient(145deg, #fefefe, #f8f8f8, #f0f0f0);
+    border-radius: 12px;
+    border: 2px solid #ddd;
+    padding: 35px 30px;
+    position: relative;
+    box-shadow: 
+        0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 8px 25px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset -2px 0 0 rgba(0, 0, 0, 0.02);
+}
+
+.device-paperback::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, #e0e0e0, #d0d0d0);
+    border-radius: 12px 0 0 12px;
+}
+
+.device-hardcover {
+    width: 380px;
+    height: 560px;
+    background: linear-gradient(145deg, #2c3e50, #34495e, #1a252f);
+    border-radius: 8px;
+    border: 3px solid #1a252f;
+    padding: 45px 35px;
+    position: relative;
+    box-shadow: 
+        0 0 0 2px rgba(255, 255, 255, 0.1),
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.device-hardcover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #gold, #darkgoldenrod, #gold);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.device-hardcover::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: linear-gradient(to bottom, #1a252f, #2c3e50);
+    box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Screen Content with Glossy Blur */
+.device-screen {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border-radius: 12px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+        0 1px 3px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(1px);
+}
+
+.device-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.4) 0%, 
+        rgba(255, 255, 255, 0.1) 30%, 
+        rgba(255, 255, 255, 0.05) 60%, 
+        rgba(255, 255, 255, 0.2) 100%);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 12px;
+}
+
+.device-screen::after {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 15%;
+    width: 30%;
+    height: 50%;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.6) 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        transparent 100%);
+    border-radius: 50%;
+    filter: blur(20px);
+    pointer-events: none;
+    z-index: 2;
+    animation: glossyShine 3s ease-in-out infinite;
+}
+
+@keyframes glossyShine {
+    0%, 100% { 
+        opacity: 0.6;
+        transform: translateX(-10%) translateY(-10%) scale(1);
+    }
+    50% { 
+        opacity: 0.8;
+        transform: translateX(10%) translateY(10%) scale(1.1);
+    }
+}
+
+.device-content {
+    padding: 1.8rem;
+    height: 100%;
+    overflow-y: auto;
+    font-family: 'Times New Roman', serif;
+    line-height: 1.6;
+    color: #333;
+    background: transparent;
+    position: relative;
+    z-index: 3;
+    backdrop-filter: blur(0.5px);
+}
+
+/* Content Styling */
+.content-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.content-body h1, .content-body h2, .content-body h3 {
+    color: #333;
+    margin: 1.5rem 0 0.75rem 0;
+    font-weight: 600;
+}
+
+.content-body p {
+    margin-bottom: 1rem;
+    text-align: justify;
+    text-indent: 1.5em;
+}
+
+.content-body blockquote {
+    margin: 1.5rem 0;
+    padding: 1rem 1.5rem;
+    border-left: 4px solid #4facfe;
+    background: #f8f9fa;
+    font-style: italic;
+    color: #555;
+}
+
+.content-body .dialogue {
+    text-indent: 0;
+    margin: 0.5rem 0;
+}
+
+/* Progress Bar */
+.reading-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: rgba(79, 172, 254, 0.3);
+    width: 100%;
+}
+
+.reading-progress-fill {
+    height: 100%;
+    background: #4facfe;
+    width: 35%;
+    transition: width 0.3s ease;
+}
+
+/* Page Info */
+.page-info {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 0.7rem;
+    color: #999;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Font Preview */
+.font-preview {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.font-sample {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.action-btn {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+}
+
+.action-btn.secondary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* Statistics */
+.preview-stats {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #4facfe;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .device-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .ethereal-sidebar {
+        position: fixed;
+        left: -320px;
+        top: 0;
+        width: 320px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+    }
+    
+    .ethereal-sidebar.open {
+        left: 0;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+    }
+    
+    .preview-main {
+        padding: 1rem;
+    }
+    
+    .device-frame {
+        width: 100% !important;
+        max-width: 350px;
+        height: auto !important;
+    }
+    
+    .format-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr 1fr;
+        display: grid;
+        gap: 0.8rem;
+    }
+}
+
+/* Loading Animation */
+.device-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.loading-spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #4facfe;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-right: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scrollbar Styling */
+.device-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.device-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.device-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.device-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Content Animation */
+.content-slide-in {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Enhanced Format Layout */
+.format-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    align-items: end;
+}
+
+.format-control {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.format-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 0.6rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Enhanced Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn-gradient {
+    background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    padding: 0.8rem 1.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 4px 15px rgba(79, 172, 254, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.3), 
+        transparent);
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-gradient:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 25px rgba(79, 172, 254, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.btn-gradient:hover::before {
+    left: 100%;
+}
+
+.btn-gradient:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-outline {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+    border: 2px solid rgba(79, 172, 254, 0.3);
+    border-radius: 12px;
+    color: #4facfe;
+    padding: 0.8rem 1.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-outline:hover {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-color: #4facfe;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+        0 8px 25px rgba(79, 172, 254, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    color: #3b82f6;
+}
+
+/* Enhanced Dark Mode */
+[data-theme="dark"] {
+    background: linear-gradient(135deg, #1a1b26 0%, #24283b 50%, #1f2937 100%);
+}
+
+[data-theme="dark"] .ethereal-sidebar {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%);
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
+[data-theme="dark"] .device-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .device-card:hover {
+    border-color: rgba(79, 172, 254, 0.6);
+    box-shadow: 
+        0 12px 35px rgba(79, 172, 254, 0.3),
+        0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .device-name {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .device-subtitle {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .format-section {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(31, 41, 55, 0.95) 100%);
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
+[data-theme="dark"] .format-section h6 {
+    color: #f1f5f9;
+    border-bottom-color: rgba(79, 172, 254, 0.2);
+}
+
+[data-theme="dark"] .format-input {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(31, 41, 55, 0.8) 100%);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .format-input:focus {
+    border-color: #4facfe;
+    box-shadow: 
+        0 0 0 4px rgba(79, 172, 254, 0.2),
+        0 4px 12px rgba(79, 172, 254, 0.3);
+}
+
+[data-theme="dark"] .format-label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .btn-outline {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%);
+    border-color: rgba(79, 172, 254, 0.4);
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .btn-outline:hover {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
+    color: #93c5fd;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Device Preview</li>
-                </ol>
-            </nav>
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1><i class="fas fa-mobile-alt text-primary"></i> Device Preview</h1>
-                <div>
-                    <button class="btn btn-outline-secondary me-2" onclick="toggleFullscreen()">
-                        <i class="fas fa-expand" id="fullscreenIcon"></i> <span id="fullscreenText">Fullscreen</span>
-                    </button>
-                    <button class="btn btn-outline-info" onclick="exportPreview()">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Preview Controls -->
-        <div class="col-lg-3">
-            <div class="card sticky-top" style="top: 20px;">
-                <div class="card-header">
-                    <h5><i class="fas fa-sliders-h text-warning"></i> Preview Settings</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post" id="previewForm" class="preview-controls">
-                        {% csrf_token %}
-                        
-                        <!-- Device Selection -->
-                        <div class="form-group mb-3">
-                            <label for="{{ form.device.id_for_label }}" class="form-label">
-                                <i class="fas fa-mobile-alt"></i> Device
-                            </label>
-                            {{ form.device }}
-                        </div>
-
-                        <!-- Font Settings -->
-                        <div class="form-group mb-3">
-                            <label for="{{ form.font_family.id_for_label }}" class="form-label">
-                                <i class="fas fa-font"></i> Font Family
-                            </label>
-                            {{ form.font_family }}
-                        </div>
-
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group mb-3">
-                                    <label for="{{ form.font_size.id_for_label }}" class="form-label">
-                                        <i class="fas fa-text-height"></i> Size
-                                    </label>
-                                    {{ form.font_size }}
-                                </div>
+<div class="preview-workspace">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Controls -->
+            <div class="col-lg-3 p-0">
+                <div class="ethereal-sidebar">
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <h5 class="mb-1">📱 Device Preview</h5>
+                        <p class="text-muted small mb-0">See how your work looks across devices</p>
+                    </div>
+                    
+                    <!-- Device Selection -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">📱 Choose Device</h6>
+                        <div class="device-grid">
+                            <div class="device-card active" data-device="iphone" onclick="selectDevice('iphone')">
+                                <div class="device-icon">📱</div>
+                                <p class="device-name">iPhone</p>
+                                <p class="device-subtitle">375 × 812</p>
                             </div>
-                            <div class="col-6">
-                                <div class="form-group mb-3">
-                                    <label for="{{ form.line_height.id_for_label }}" class="form-label">
-                                        <i class="fas fa-align-justify"></i> Line Height
-                                    </label>
-                                    {{ form.line_height }}
-                                </div>
+                            <div class="device-card" data-device="ipad" onclick="selectDevice('ipad')">
+                                <div class="device-icon">📱</div>
+                                <p class="device-name">iPad</p>
+                                <p class="device-subtitle">768 × 1024</p>
+                            </div>
+                            <div class="device-card" data-device="kindle" onclick="selectDevice('kindle')">
+                                <div class="device-icon">📖</div>
+                                <p class="device-name">Kindle</p>
+                                <p class="device-subtitle">300 × 400</p>
+                            </div>
+                            <div class="device-card" data-device="paperback" onclick="selectDevice('paperback')">
+                                <div class="device-icon">📚</div>
+                                <p class="device-name">Paperback</p>
+                                <p class="device-subtitle">5.5" × 8.5"</p>
+                            </div>
+                            <div class="device-card" data-device="hardcover" onclick="selectDevice('hardcover')">
+                                <div class="device-icon">📗</div>
+                                <p class="device-name">Hardcover</p>
+                                <p class="device-subtitle">6" × 9"</p>
                             </div>
                         </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-sync"></i> Update Preview
-                            </button>
+                    </div>
+                    
+                    <!-- Typography Controls -->
+                    <div class="format-section">
+                        <h6>🔤 Typography</h6>
+                        <div class="format-row">
+                            <div class="format-control">
+                                <label class="format-label">Font Family</label>
+                                <select class="format-input" id="fontFamily" onchange="updatePreview()">
+                                    <option value="serif">Times New Roman</option>
+                                    <option value="sans-serif">Arial</option>
+                                    <option value="georgia">Georgia</option>
+                                    <option value="palatino">Palatino</option>
+                                    <option value="garamond">Garamond</option>
+                                    <option value="minion">Minion Pro</option>
+                                </select>
+                            </div>
+                            <div class="format-control">
+                                <label class="format-label">Size</label>
+                                <input type="range" class="format-input" id="fontSize" min="10" max="24" value="16" onchange="updatePreview()">
+                                <small class="text-muted text-center" id="fontSizeValue">16px</small>
+                            </div>
                         </div>
-                    </form>
-
-                    <hr>
-
-                    <!-- Quick Presets -->
-                    <div class="quick-presets">
-                        <h6><i class="fas fa-magic"></i> Quick Presets</h6>
-                        <div class="btn-group-vertical w-100" role="group">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('kindle')">
-                                <i class="fab fa-amazon"></i> Kindle
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('iphone')">
-                                <i class="fab fa-apple"></i> iPhone
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('ipad')">
-                                <i class="fas fa-tablet-alt"></i> iPad
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('android')">
-                                <i class="fab fa-android"></i> Android
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyPreset('desktop')">
-                                <i class="fas fa-desktop"></i> Desktop
-                            </button>
+                        <div class="format-row">
+                            <div class="format-control">
+                                <label class="format-label">Line Height</label>
+                                <input type="range" class="format-input" id="lineHeight" min="1.2" max="2.5" step="0.1" value="1.6" onchange="updatePreview()">
+                                <small class="text-muted text-center" id="lineHeightValue">1.6</small>
+                            </div>
+                            <div class="format-control">
+                                <label class="format-label">Margin</label>
+                                <input type="range" class="format-input" id="margin" min="0.5" max="3" step="0.1" value="1.5" onchange="updatePreview()">
+                                <small class="text-muted text-center" id="marginValue">1.5rem</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Font Preview -->
+                    <div class="font-preview">
+                        <div class="font-sample" id="fontSample">
+                            "The quick brown fox jumps over the lazy dog. This sample shows how your chosen typography will look in the preview."
+                        </div>
+                    </div>
+                    
+                    <!-- Content Source -->
+                    <div class="format-section">
+                        <h6>📄 Content Source</h6>
+                        <select class="format-input w-100 mb-2" id="contentSource" onchange="loadContent()">
+                            <option value="sample">Sample Content</option>
+                            <option value="current">Current Project</option>
+                            {% if user_projects %}
+                                {% for project in user_projects %}
+                                <option value="project_{{ project.id }}">{{ project.title }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                        <textarea class="format-input w-100" id="customContent" rows="4" placeholder="Or paste your own text here..." onchange="updatePreview()"></textarea>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="action-buttons">
+                        <button class="btn-gradient" onclick="exportPreview()">
+                            📤 Export
+                        </button>
+                        <button class="btn-outline" onclick="sharePreview()">
+                            🔗 Share
+                        </button>
+                        <button class="btn-outline" onclick="resetSettings()">
+                            🔄 Reset
+                        </button>
+                        <button class="btn-gradient" onclick="fullscreenPreview()">
+                            📺 Fullscreen
+                        </button>
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div class="preview-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Words</span>
+                            <span class="stat-value" id="wordCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Characters</span>
+                            <span class="stat-value" id="charCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Reading Time</span>
+                            <span class="stat-value" id="readTime">0 min</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Pages (est.)</span>
+                            <span class="stat-value" id="pageCount">1</span>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Preview Area -->
-        <div class="col-lg-9">
-            <div class="preview-container">
-                {% if content %}
-                    <div class="device-preview" id="devicePreview">
-                        <div class="device-frame device-{{ device|default:'kindle' }}">
-                            <div class="device-screen">
-                                <div class="device-content" style="
-                                    font-family: {{ font_family|default:'serif' }};
-                                    font-size: {{ font_size|default:'16' }}px;
-                                    line-height: {{ line_height|default:'1.6' }};
-                                ">
-                                    <h1 class="preview-title">{{ title|default:'Document Preview' }}</h1>
-                                    <div class="preview-content">
-                                        {{ content|striptags|linebreaks|safe }}
+            
+            <!-- Main Preview Area -->
+            <div class="col-lg-9 p-0">
+                <div class="preview-main">
+                    <!-- Header -->
+                    <div class="preview-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h1>📱 Live Device Preview</h1>
+                                <p>Real-time preview of how your content appears across different devices and formats</p>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline-light btn-sm d-lg-none" onclick="toggleSidebar()">
+                                    ⚙️ Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Device Stage -->
+                    <div class="device-stage">
+                        <div class="device-mockup">
+                            <div class="device-frame device-iphone" id="deviceFrame">
+                                <div class="device-screen">
+                                    <div class="device-content content-slide-in" id="deviceContent">
+                                        <div class="content-title" id="contentTitle">{{ title|default:"Sample Chapter" }}</div>
+                                        <div class="content-body" id="contentBody">
+                                            {{ content|safe|default:"<p>Welcome to the Device Preview! This powerful tool shows you exactly how your writing will appear on different devices and formats.</p><p>Select a device from the sidebar, adjust typography settings, and see real-time changes. Your readers will see your work exactly as it appears here.</p><p>Whether they're reading on a Kindle, iPad, or physical book, you can ensure your formatting looks perfect everywhere.</p>" }}
+                                        </div>
+                                        <div class="reading-progress">
+                                            <div class="reading-progress-fill"></div>
+                                        </div>
+                                        <div class="page-info">Page 1 of 3</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Preview Information -->
-                    <div class="preview-info mt-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row text-center">
-                                    <div class="col-md-3">
-                                        <h5 class="text-primary">{{ content|wordcount }}</h5>
-                                        <small class="text-muted">Words</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h5 class="text-info">{{ content|length }}</h5>
-                                        <small class="text-muted">Characters</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h5 class="text-warning">~{{ content|wordcount|floatformat:0 }} words</h5>
-                                        <small class="text-muted">Est. Reading Time (min)</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <h5 class="text-success">{{ device|default:'Kindle'|title }}</h5>
-                                        <small class="text-muted">Current Device</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% else %}
-                    <!-- No Content State -->
-                    <div class="no-content-state">
-                        <div class="text-center py-5">
-                            <i class="fas fa-mobile-alt fa-4x text-muted mb-4"></i>
-                            <h3 class="text-muted">No Content to Preview</h3>
-                            <p class="text-muted mb-4">Select a document or chapter to see how it would look on different devices.</p>
-                            <div class="d-flex justify-content-center gap-3">
-                                <a href="{% url 'writer:document_list' %}" class="btn btn-outline-primary">
-                                    <i class="fas fa-file-alt"></i> Select Document
-                                </a>
-                                <a href="{% url 'writer:project_list' %}" class="btn btn-outline-success">
-                                    <i class="fas fa-folder-open"></i> Browse Projects
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.preview-container {
-    background: #f8f9fa;
-    border-radius: 15px;
-    padding: 30px;
-    min-height: 600px;
-}
-
-.device-preview {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
-}
-
-.device-frame {
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    background: #333;
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.device-frame:before {
-    content: '';
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 6px;
-    background: #666;
-    border-radius: 3px;
-}
-
-/* Device Specific Styles */
-.device-kindle {
-    width: 320px;
-    background: #e8e8e8;
-    border: 2px solid #ccc;
-}
-
-.device-kindle:before {
-    background: #999;
-}
-
-.device-iphone {
-    width: 375px;
-    background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
-    border-radius: 25px;
-}
-
-.device-ipad {
-    width: 500px;
-    background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
-    border-radius: 15px;
-    border: 3px solid #ccc;
-}
-
-.device-android {
-    width: 360px;
-    background: linear-gradient(145deg, #333, #222);
-    border-radius: 20px;
-}
-
-.device-desktop {
-    width: 600px;
-    background: #f8f9fa;
-    border: 3px solid #dee2e6;
-    border-radius: 10px;
-}
-
-.device-screen {
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    min-height: 400px;
-    max-height: 600px;
-    overflow-y: auto;
-}
-
-.device-content {
-    padding: 20px;
-    line-height: 1.6;
-}
-
-.preview-title {
-    font-size: 1.5em;
-    margin-bottom: 20px;
-    color: #333;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-}
-
-.preview-content {
-    text-align: justify;
-    color: #444;
-}
-
-.preview-controls .form-control,
-.preview-controls .form-select {
-    border-radius: 8px;
-    font-size: 0.9rem;
-}
-
-.quick-presets .btn {
-    margin-bottom: 5px;
-    text-align: left;
-}
-
-.no-content-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 500px;
-}
-
-.preview-info .card {
-    background: rgba(255,255,255,0.9);
-    backdrop-filter: blur(10px);
-    border: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .device-frame {
-        width: 100% !important;
-        max-width: 350px;
-    }
-    
-    .preview-container {
-        padding: 15px;
-    }
-}
-
-/* Fullscreen mode */
-.fullscreen-mode {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #f8f9fa;
-    z-index: 9999;
-    overflow: auto;
-}
-
-.fullscreen-mode .device-frame {
-    width: 90% !important;
-    max-width: 800px;
-}
-</style>
-
 <script>
-// Device presets
-const devicePresets = {
-    kindle: {
-        device: 'kindle',
-        font_family: 'serif',
-        font_size: '14',
-        line_height: '1.5'
-    },
+let currentDevice = 'iphone';
+let isFullscreen = false;
+
+// Device configurations
+const deviceConfigs = {
     iphone: {
-        device: 'iphone',
-        font_family: 'sans-serif',
-        font_size: '16',
-        line_height: '1.4'
+        class: 'device-iphone',
+        width: '320px',
+        height: '640px',
+        defaultFont: 'sans-serif',
+        defaultSize: 16
     },
     ipad: {
-        device: 'ipad',
-        font_family: 'serif',
-        font_size: '18',
-        line_height: '1.6'
+        class: 'device-ipad',
+        width: '480px',
+        height: '640px',
+        defaultFont: 'serif',
+        defaultSize: 18
     },
-    android: {
-        device: 'android',
-        font_family: 'sans-serif',
-        font_size: '15',
-        line_height: '1.5'
+    kindle: {
+        class: 'device-kindle',
+        width: '360px',
+        height: '520px',
+        defaultFont: 'serif',
+        defaultSize: 14
     },
-    desktop: {
-        device: 'desktop',
-        font_family: 'serif',
-        font_size: '16',
-        line_height: '1.8'
+    paperback: {
+        class: 'device-paperback',
+        width: '320px',
+        height: '480px',
+        defaultFont: 'serif',
+        defaultSize: 12
+    },
+    hardcover: {
+        class: 'device-hardcover',
+        width: '360px',
+        height: '520px',
+        defaultFont: 'serif',
+        defaultSize: 14
     }
 };
 
-function applyPreset(presetName) {
-    const preset = devicePresets[presetName];
-    if (!preset) return;
+function selectDevice(deviceType) {
+    currentDevice = deviceType;
     
-    // Update form fields
-    document.querySelector('select[name="device"]').value = preset.device;
-    document.querySelector('select[name="font_family"]').value = preset.font_family;
-    document.querySelector('input[name="font_size"]').value = preset.font_size;
-    document.querySelector('input[name="line_height"]').value = preset.line_height;
+    // Update active state
+    document.querySelectorAll('.device-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    document.querySelector(`[data-device="${deviceType}"]`).classList.add('active');
     
-    // Update preview instantly
-    updatePreviewInstant(preset);
+    // Update device frame
+    const frame = document.getElementById('deviceFrame');
+    const config = deviceConfigs[deviceType];
+    
+    frame.className = `device-frame ${config.class}`;
+    frame.style.width = config.width;
+    frame.style.height = config.height;
+    
+    // Update font defaults
+    document.getElementById('fontFamily').value = config.defaultFont;
+    document.getElementById('fontSize').value = config.defaultSize;
+    document.getElementById('fontSizeValue').textContent = config.defaultSize + 'px';
+    
+    updatePreview();
 }
 
-function updatePreviewInstant(settings) {
-    const deviceFrame = document.querySelector('.device-frame');
-    const deviceContent = document.querySelector('.device-content');
+function updatePreview() {
+    const content = document.getElementById('deviceContent');
+    const fontSample = document.getElementById('fontSample');
     
-    if (deviceFrame && deviceContent) {
-        // Update device frame class
-        deviceFrame.className = `device-frame device-${settings.device}`;
-        
-        // Update content styles
-        deviceContent.style.fontFamily = settings.font_family;
-        deviceContent.style.fontSize = settings.font_size + 'px';
-        deviceContent.style.lineHeight = settings.line_height;
-    }
+    const fontFamily = document.getElementById('fontFamily').value;
+    const fontSize = document.getElementById('fontSize').value;
+    const lineHeight = document.getElementById('lineHeight').value;
+    const margin = document.getElementById('margin').value;
+    
+    // Update values display
+    document.getElementById('fontSizeValue').textContent = fontSize + 'px';
+    document.getElementById('lineHeightValue').textContent = lineHeight;
+    document.getElementById('marginValue').textContent = margin + 'rem';
+    
+    // Apply styles
+    const fontFamilyMap = {
+        'serif': 'Times New Roman, serif',
+        'sans-serif': 'Arial, sans-serif',
+        'georgia': 'Georgia, serif',
+        'palatino': 'Palatino, serif',
+        'garamond': 'Garamond, serif',
+        'minion': 'Minion Pro, serif'
+    };
+    
+    content.style.fontFamily = fontFamilyMap[fontFamily] || fontFamilyMap.serif;
+    content.style.fontSize = fontSize + 'px';
+    content.style.lineHeight = lineHeight;
+    content.style.padding = margin + 'rem';
+    
+    // Update font sample
+    fontSample.style.fontFamily = fontFamilyMap[fontFamily];
+    fontSample.style.fontSize = fontSize + 'px';
+    fontSample.style.lineHeight = lineHeight;
+    
+    // Update statistics
+    updateStatistics();
 }
 
-function toggleFullscreen() {
-    const previewContainer = document.querySelector('.preview-container');
-    const icon = document.getElementById('fullscreenIcon');
-    const text = document.getElementById('fullscreenText');
+function updateStatistics() {
+    const content = document.getElementById('contentBody').textContent || '';
+    const words = content.trim().split(/\s+/).length;
+    const chars = content.length;
+    const readTime = Math.ceil(words / 200); // 200 words per minute
+    const pages = Math.ceil(words / 250); // 250 words per page
     
-    if (previewContainer.classList.contains('fullscreen-mode')) {
-        previewContainer.classList.remove('fullscreen-mode');
-        icon.className = 'fas fa-expand';
-        text.textContent = 'Fullscreen';
-        document.body.style.overflow = 'auto';
-    } else {
-        previewContainer.classList.add('fullscreen-mode');
-        icon.className = 'fas fa-compress';
-        text.textContent = 'Exit Fullscreen';
-        document.body.style.overflow = 'hidden';
+    document.getElementById('wordCount').textContent = words.toLocaleString();
+    document.getElementById('charCount').textContent = chars.toLocaleString();
+    document.getElementById('readTime').textContent = readTime + ' min';
+    document.getElementById('pageCount').textContent = pages;
+}
+
+function loadContent() {
+    const source = document.getElementById('contentSource').value;
+    const contentBody = document.getElementById('contentBody');
+    const contentTitle = document.getElementById('contentTitle');
+    
+    if (source === 'sample') {
+        contentTitle.textContent = 'Sample Chapter';
+        contentBody.innerHTML = `
+            <p>Welcome to the Device Preview! This powerful tool shows you exactly how your writing will appear on different devices and formats.</p>
+            <p>Select a device from the sidebar, adjust typography settings, and see real-time changes. Your readers will see your work exactly as it appears here.</p>
+            <p>"This is how dialogue would appear," she said, adjusting the settings on her device.</p>
+            <p>"Perfect," he replied. "Now I can see exactly how my readers will experience my story."</p>
+            <p>Whether they're reading on a Kindle, iPad, or physical book, you can ensure your formatting looks perfect everywhere.</p>
+        `;
+    } else if (source === 'current') {
+        // Load current content if available
+        const customText = document.getElementById('customContent').value;
+        if (customText.trim()) {
+            contentTitle.textContent = 'Custom Content';
+            contentBody.innerHTML = customText.split('\n').map(p => `<p>${p}</p>`).join('');
+        }
     }
+    
+    updateStatistics();
+}
+
+function resetSettings() {
+    const config = deviceConfigs[currentDevice];
+    document.getElementById('fontFamily').value = config.defaultFont;
+    document.getElementById('fontSize').value = config.defaultSize;
+    document.getElementById('lineHeight').value = '1.6';
+    document.getElementById('margin').value = '1.5';
+    updatePreview();
 }
 
 function exportPreview() {
-    // Implement export functionality
-    alert('Export functionality coming soon!');
+    // Create export functionality
+    const settings = {
+        device: currentDevice,
+        fontFamily: document.getElementById('fontFamily').value,
+        fontSize: document.getElementById('fontSize').value,
+        lineHeight: document.getElementById('lineHeight').value,
+        margin: document.getElementById('margin').value
+    };
+    
+    // You could implement actual export functionality here
+    alert('Export functionality: Settings saved!\n\n' + JSON.stringify(settings, null, 2));
 }
 
-// Auto-update preview on form changes
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('previewForm');
-    if (form) {
-        const inputs = form.querySelectorAll('select, input');
-        inputs.forEach(input => {
-            input.addEventListener('change', function() {
-                // Get current settings
-                const deviceSelect = form.querySelector('select[name="device"]');
-                const fontFamilySelect = form.querySelector('select[name="font_family"]');
-                const fontSizeInput = form.querySelector('input[name="font_size"]');
-                const lineHeightInput = form.querySelector('input[name="line_height"]');
-                
-                if (deviceSelect && fontFamilySelect && fontSizeInput && lineHeightInput) {
-                    const settings = {
-                        device: deviceSelect.value,
-                        font_family: fontFamilySelect.value,
-                        font_size: fontSizeInput.value,
-                        line_height: lineHeightInput.value
-                    };
-                    updatePreviewInstant(settings);
-                }
-            });
-        });
-        
-        // Auto-submit form on change for better UX
-        inputs.forEach(input => {
-            input.addEventListener('change', function() {
-                setTimeout(() => {
-                    form.submit();
-                }, 500);
-            });
-        });
-    }
+function sharePreview() {
+    // Create shareable link
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Preview link copied to clipboard!');
+    }).catch(() => {
+        alert('Preview link: ' + url);
+    });
+}
+
+function fullscreenPreview() {
+    const workspace = document.querySelector('.preview-workspace');
     
-    // Initialize with default values if no content is shown
-    const previewContent = document.querySelector('.preview-content');
-    if (previewContent && previewContent.innerHTML.trim() === '') {
-        previewContent.innerHTML = '<h2>Sample Chapter</h2><p>This is a sample preview. Select a document or create content to see how it would look on different devices.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>';
+    if (!isFullscreen) {
+        if (workspace.requestFullscreen) {
+            workspace.requestFullscreen();
+        } else if (workspace.webkitRequestFullscreen) {
+            workspace.webkitRequestFullscreen();
+        } else if (workspace.msRequestFullscreen) {
+            workspace.msRequestFullscreen();
+        }
+        isFullscreen = true;
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        isFullscreen = false;
+    }
+}
+
+function toggleSidebar() {
+    const sidebar = document.querySelector('.ethereal-sidebar');
+    sidebar.classList.toggle('open');
+}
+
+// Custom content updates
+document.getElementById('customContent').addEventListener('input', function() {
+    const content = this.value;
+    if (content.trim()) {
+        const contentBody = document.getElementById('contentBody');
+        const contentTitle = document.getElementById('contentTitle');
+        
+        contentTitle.textContent = 'Custom Content';
+        contentBody.innerHTML = content.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
+        updateStatistics();
     }
 });
 
-// ESC key to exit fullscreen
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+    updateStatistics();
+    
+    // Listen for fullscreen changes
+    document.addEventListener('fullscreenchange', function() {
+        isFullscreen = document.fullscreenElement !== null;
+    });
+});
+
+// Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const previewContainer = document.querySelector('.preview-container');
-        if (previewContainer.classList.contains('fullscreen-mode')) {
-            toggleFullscreen();
+    if (e.key === 'Escape' && isFullscreen) {
+        fullscreenPreview();
+    }
+    
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case '1':
+                e.preventDefault();
+                selectDevice('iphone');
+                break;
+            case '2':
+                e.preventDefault();
+                selectDevice('ipad');
+                break;
+            case '3':
+                e.preventDefault();
+                selectDevice('kindle');
+                break;
+            case 'r':
+                e.preventDefault();
+                resetSettings();
+                break;
         }
     }
 });

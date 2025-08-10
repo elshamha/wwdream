@@ -1244,31 +1244,60 @@ body.dark-mode .focus-mode {
     opacity: 1;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Visible but Transparent Design */
 .document-content::-webkit-scrollbar {
     width: 8px;
 }
 
 .document-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 4px;
 }
 
 body.dark-mode .document-content::-webkit-scrollbar-track {
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .document-content::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
+    border: 1px solid rgba(79, 209, 199, 0.3);
 }
 
 body.dark-mode .document-content::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(79, 209, 199, 0.3);
 }
 
 .document-content::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(79, 209, 199, 0.5);
+}
+
+/* Global visible but transparent scrollbar styling */
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    border: 1px solid rgba(79, 209, 199, 0.3);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(79, 209, 199, 0.5);
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 /* Smooth Scrolling */
@@ -2310,4 +2339,24 @@ a:hover {
 .btn-light:hover {
     background: rgba(26, 26, 26, 0.9) !important;
     color: #FFFFFF !important;
+}
+
+/* Ethereal Icon Glow Effects */
+.ethereal-icon-glow {
+    color: #ffffff !important;
+    text-shadow: 
+        0 0 5px rgba(79, 209, 199, 0.5),
+        0 0 10px rgba(79, 209, 199, 0.3),
+        0 0 15px rgba(79, 209, 199, 0.2);
+    filter: drop-shadow(0 0 3px rgba(79, 209, 199, 0.4));
+    transition: all 0.3s ease;
+}
+
+.ethereal-icon-glow:hover {
+    text-shadow: 
+        0 0 8px rgba(79, 209, 199, 0.7),
+        0 0 15px rgba(79, 209, 199, 0.5),
+        0 0 20px rgba(79, 209, 199, 0.3);
+    filter: drop-shadow(0 0 5px rgba(79, 209, 199, 0.6));
+    transform: scale(1.05);
 }

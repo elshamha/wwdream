@@ -719,9 +719,15 @@
                         </a>
                     </li>
                     <li class="nav-item d-lg-none">
-                        <a class="nav-link" href="{% url 'writer:ai_assistant' %}">
-                            <i class="fas fa-robot me-1"></i>AI Assistant
-                        </a>
+                        {% if recent_projects %}
+                            <a class="nav-link" href="{% url 'writer:chapter_editor' recent_projects.0.pk %}">
+                                <i class="fas fa-feather-alt me-1"></i>Editor
+                            </a>
+                        {% else %}
+                            <a class="nav-link" href="{% url 'writer:project_create' %}">
+                                <i class="fas fa-feather-alt me-1"></i>Editor
+                            </a>
+                        {% endif %}
                     </li>
                     
                     <!-- Desktop dropdowns -->
@@ -752,24 +758,21 @@
                             <i class="fas fa-magic me-1"></i>Tools
                         </a>
                         <ul class="dropdown-menu dropdown-menu-modern">
-                            <li><a class="dropdown-item" href="{% url 'writer:ai_assistant' %}">
-                                <i class="fas fa-robot me-2"></i>AI Assistant
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'writer:import_document' %}">
-                                <i class="fas fa-file-import me-2"></i>Import Document
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'writer:device_preview' %}">
-                                <i class="fas fa-mobile-alt me-2"></i>Device Preview
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" onclick="showThemeSelector()">
-                                <i class="fas fa-palette me-2"></i>Writing Themes
-                            </a></li>
                             <li><a class="dropdown-item" href="#" onclick="showWritingSettings()">
                                 <i class="fas fa-cog me-2"></i>Writing Preferences
                             </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="showCollaborationTools()">
-                                <i class="fas fa-users me-2"></i>Collaboration
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle" href="#" id="themesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-palette me-1"></i>Themes
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-modern">
+                            <li><a class="dropdown-item" href="#" onclick="showThemeSelector()">
+                                <i class="fas fa-palette me-2"></i>Writing Themes
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="toggleDarkMode()">
+                                <i class="fas fa-moon me-2"></i>Dark Mode
                             </a></li>
                         </ul>
                     </li>
@@ -793,9 +796,6 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'writer:personal_library' %}">
                                 <i class="fas fa-book-open me-2"></i>My Library
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="toggleDarkMode()">
-                                <i class="fas fa-moon me-2"></i>Dark Mode
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">

@@ -1,23 +1,31 @@
 """
 Document parsing utilities for different file formats.
-Handles PDF, DOCX, TXT, and HTML files for chapter analysis.
+Handles PDF, DOCX, TXT, HTML, and Google Docs files for rich text editing.
 """
 
 import os
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import mimetypes
+# import requests
+# from urllib.parse import urlparse, parse_qs
 
-def extract_text_from_file(file_path: str) -> str:
+def extract_text_from_file(file_path: str, google_docs_url: Optional[str] = None) -> str:
     """
-    Extract text content from various file formats.
+    Extract text content from various file formats with rich formatting preservation.
     
     Args:
         file_path: Path to the file to parse
+        google_docs_url: Optional Google Docs sharing URL for direct import
         
     Returns:
-        Extracted text content as string
+        Extracted text content as HTML string with formatting preserved
     """
+    # Handle Google Docs URL
+    if google_docs_url:
+        return "<p>Google Docs import temporarily disabled. Please export as DOCX and upload the file instead.</p>"
+        # return extract_from_google_docs(google_docs_url)
+    
     if not os.path.exists(file_path):
         return ""
     
@@ -33,6 +41,10 @@ def extract_text_from_file(file_path: str) -> str:
             return extract_from_pdf(file_path)
         elif file_extension in ['.docx', '.doc']:
             return extract_from_docx(file_path)
+        elif file_extension == '.rtf':
+            return extract_from_rtf(file_path)
+        elif file_extension == '.odt':
+            return extract_from_odt(file_path)
         else:
             # Try to read as plain text
             return extract_from_txt(file_path)
@@ -41,14 +53,41 @@ def extract_text_from_file(file_path: str) -> str:
         return ""
 
 def extract_from_txt(file_path: str) -> str:
-    """Extract text from plain text file."""
+    """Extract text from plain text file and convert to HTML."""
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
-            return file.read()
+            content = file.read()
+        
+        # Convert plain text to HTML with paragraph breaks
+        content = content.replace('\r\n', '\n').replace('\r', '\n')
+        paragraphs = content.split('\n\n')
+        html_content = ''
+        
+        for paragraph in paragraphs:
+            paragraph = paragraph.strip()
+            if paragraph:
+                # Preserve line breaks within paragraphs
+                paragraph = paragraph.replace('\n', '<br>')
+                html_content += f'<p>{paragraph}</p>\n'
+        
+        return html_content if html_content else f'<p>{content.replace("\n", "<br>")}</p>'
+        
     except UnicodeDecodeError:
         # Try with different encoding
         with open(file_path, 'r', encoding='latin-1') as file:
-            return file.read()
+            content = file.read()
+            # Convert to HTML format
+            content = content.replace('\r\n', '\n').replace('\r', '\n')
+            paragraphs = content.split('\n\n')
+            html_content = ''
+            
+            for paragraph in paragraphs:
+                paragraph = paragraph.strip()
+                if paragraph:
+                    paragraph = paragraph.replace('\n', '<br>')
+                    html_content += f'<p>{paragraph}</p>\n'
+            
+            return html_content if html_content else f'<p>{content.replace("\n", "<br>")}</p>'
 
 def extract_from_html(file_path: str) -> str:
     """Extract text from HTML file while preserving structure."""
@@ -67,344 +106,423 @@ def extract_from_html(file_path: str) -> str:
 
 def extract_from_pdf(file_path: str) -> str:
     """
-    Extract text from PDF file.
-    Note: This is a placeholder. In production, you'd use libraries like PyPDF2 or pdfplumber.
+    Extract text from PDF file with formatting preservation.
     """
     try:
-        # For now, return empty string since PDF parsing requires additional libraries
-        # In production, install PyPDF2 or pdfplumber:
-        # pip install PyPDF2
-        # or
-        # pip install pdfplumber
+        import PyPDF2
+        import pdfplumber
         
-        print(f"PDF parsing not implemented yet for {file_path}")
-        return ""
+        # Try pdfplumber first for better formatting
+        try:
+            with pdfplumber.open(file_path) as pdf:
+                text_content = ""
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_content += page_text + "\n\n"
+                
+                if text_content.strip():
+                    # Convert to HTML with proper paragraph formatting
+                    paragraphs = text_content.split('\n\n')
+                    html_content = ''
+                    
+                    for paragraph in paragraphs:
+                        paragraph = paragraph.strip()
+                        if paragraph:
+                            # Clean up excessive whitespace
+                            paragraph = re.sub(r'\s+', ' ', paragraph)
+                            # Preserve intentional line breaks
+                            paragraph = paragraph.replace('\n', '<br>')
+                            html_content += f'<p>{paragraph}</p>\n'
+                    
+                    return html_content
+        except Exception as e:
+            print(f"pdfplumber failed, trying PyPDF2: {e}")
+        
+        # Fallback to PyPDF2
+        with open(file_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            text_content = ""
+            
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text_content += page_text + "\n\n"
+            
+            if text_content.strip():
+                # Convert to HTML
+                paragraphs = text_content.split('\n\n')
+                html_content = ''
+                
+                for paragraph in paragraphs:
+                    paragraph = paragraph.strip()
+                    if paragraph:
+                        paragraph = re.sub(r'\s+', ' ', paragraph)
+                        paragraph = paragraph.replace('\n', '<br>')
+                        html_content += f'<p>{paragraph}</p>\n'
+                
+                return html_content
+            
+        return "<p>Could not extract text from PDF file.</p>"
+        
+    except ImportError:
+        return "<p>PDF parsing libraries not installed. Please install PyPDF2 and pdfplumber.</p>"
     except Exception as e:
         print(f"Error parsing PDF: {e}")
-        return ""
+        return f"<p>Error reading PDF file: {str(e)}</p>"
 
 def extract_from_docx(file_path: str) -> str:
     """
-    Extract text from DOCX file.
-    Note: This is a placeholder. In production, you'd use python-docx library.
+    Extract text from DOCX file with rich formatting preservation.
     """
     try:
-        # For now, return empty string since DOCX parsing requires additional libraries
-        # In production, install python-docx:
-        # pip install python-docx
+        from docx import Document
+        from docx.shared import Inches
+        from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
         
-        print(f"DOCX parsing not implemented yet for {file_path}")
-        return ""
+        doc = Document(file_path)
+        html_content = ""
+        
+        for paragraph in doc.paragraphs:
+            if not paragraph.text.strip():
+                continue
+                
+            # Start paragraph tag
+            p_style = ""
+            
+            # Handle alignment
+            if paragraph.alignment == WD_PARAGRAPH_ALIGNMENT.CENTER:
+                p_style += "text-align: center; "
+            elif paragraph.alignment == WD_PARAGRAPH_ALIGNMENT.RIGHT:
+                p_style += "text-align: right; "
+            elif paragraph.alignment == WD_PARAGRAPH_ALIGNMENT.JUSTIFY:
+                p_style += "text-align: justify; "
+            
+            # Check if it's a heading
+            if paragraph.style.name.startswith('Heading'):
+                level = paragraph.style.name.replace('Heading ', '')
+                try:
+                    level_num = int(level)
+                    if level_num <= 6:
+                        tag = f"h{level_num}"
+                        style_attr = f' style="{p_style}"' if p_style else ''
+                        html_content += f"<{tag}{style_attr}>"
+                    else:
+                        tag = "p"
+                        p_style += "font-weight: bold; font-size: 1.2em; "
+                        style_attr = f' style="{p_style}"' if p_style else ''
+                        html_content += f"<{tag}{style_attr}>"
+                except ValueError:
+                    tag = "p"
+                    p_style += "font-weight: bold; "
+                    style_attr = f' style="{p_style}"' if p_style else ''
+                    html_content += f"<{tag}{style_attr}>"
+            else:
+                tag = "p"
+                style_attr = f' style="{p_style}"' if p_style else ''
+                html_content += f"<{tag}{style_attr}>"
+            
+            # Process text with formatting
+            text_content = ""
+            for run in paragraph.runs:
+                run_text = run.text
+                if not run_text:
+                    continue
+                
+                # Apply formatting
+                if run.bold and run.italic:
+                    run_text = f"<strong><em>{run_text}</em></strong>"
+                elif run.bold:
+                    run_text = f"<strong>{run_text}</strong>"
+                elif run.italic:
+                    run_text = f"<em>{run_text}</em>"
+                
+                if run.underline:
+                    run_text = f"<u>{run_text}</u>"
+                
+                text_content += run_text
+            
+            html_content += text_content + f"</{tag}>\n"
+        
+        # Handle tables
+        for table in doc.tables:
+            html_content += "<table border='1' style='border-collapse: collapse; width: 100%; margin: 10px 0;'>\n"
+            for row in table.rows:
+                html_content += "<tr>\n"
+                for cell in row.cells:
+                    cell_text = cell.text.strip()
+                    if cell_text:
+                        html_content += f"<td style='padding: 8px; border: 1px solid #ccc;'>{cell_text}</td>\n"
+                    else:
+                        html_content += "<td style='padding: 8px; border: 1px solid #ccc;'>&nbsp;</td>\n"
+                html_content += "</tr>\n"
+            html_content += "</table>\n"
+        
+        return html_content if html_content.strip() else "<p>No readable content found in document.</p>"
+        
+    except ImportError:
+        return "<p>DOCX parsing library not installed. Please install python-docx.</p>"
     except Exception as e:
         print(f"Error parsing DOCX: {e}")
-        return ""
+        return f"<p>Error reading DOCX file: {str(e)}</p>"
 
-def analyze_document_structure(content: str) -> Dict:
+
+def extract_from_rtf(file_path: str) -> str:
     """
-    Analyze document structure to identify titles and chapters.
+    Extract text from RTF file with basic formatting preservation.
+    """
+    try:
+        from striprtf.striprtf import rtf_to_text
+        
+        with open(file_path, 'rb') as file:
+            rtf_content = file.read().decode('utf-8', errors='ignore')
+        
+        # Extract plain text
+        plain_text = rtf_to_text(rtf_content)
+        
+        # Convert to HTML with paragraph formatting
+        if plain_text.strip():
+            paragraphs = plain_text.split('\n\n')
+            html_content = ''
+            
+            for paragraph in paragraphs:
+                paragraph = paragraph.strip()
+                if paragraph:
+                    # Clean up excessive whitespace
+                    paragraph = re.sub(r'\s+', ' ', paragraph)
+                    # Preserve intentional line breaks
+                    paragraph = paragraph.replace('\n', '<br>')
+                    html_content += f'<p>{paragraph}</p>\n'
+            
+            return html_content
+        
+        return "<p>No readable content found in RTF file.</p>"
+        
+    except ImportError:
+        return "<p>RTF parsing library not installed. Please install striprtf.</p>"
+    except Exception as e:
+        print(f"Error parsing RTF: {e}")
+        return f"<p>Error reading RTF file: {str(e)}</p>"
+
+
+def extract_from_odt(file_path: str) -> str:
+    """
+    Extract text from ODT file with formatting preservation.
+    """
+    try:
+        import zipfile
+        import xml.etree.ElementTree as ET
+        
+        with zipfile.ZipFile(file_path, 'r') as odt_zip:
+            # Read the content.xml file which contains the text
+            try:
+                content_xml = odt_zip.read('content.xml')
+                root = ET.fromstring(content_xml)
+                
+                # Extract text from all text nodes
+                text_content = ""
+                
+                # Define ODT namespaces
+                namespaces = {
+                    'text': 'urn:oasis:names:tc:opendocument:xmlns:text:1.0',
+                    'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0'
+                }
+                
+                # Find all paragraphs
+                for paragraph in root.findall('.//text:p', namespaces):
+                    para_text = ''.join(paragraph.itertext()).strip()
+                    if para_text:
+                        text_content += para_text + '\n\n'
+                
+                # Find all headings
+                for heading in root.findall('.//text:h', namespaces):
+                    level = heading.get('{urn:oasis:names:tc:opendocument:xmlns:text:1.0}outline-level', '1')
+                    heading_text = ''.join(heading.itertext()).strip()
+                    if heading_text:
+                        text_content = text_content.replace(heading_text + '\n\n', f'<h{level}>{heading_text}</h{level}>\n\n')
+                
+                if text_content.strip():
+                    # Convert to HTML with paragraph formatting
+                    paragraphs = text_content.split('\n\n')
+                    html_content = ''
+                    
+                    for paragraph in paragraphs:
+                        paragraph = paragraph.strip()
+                        if paragraph:
+                            # Check if it's already a heading
+                            if paragraph.startswith('<h') and paragraph.endswith('>'):
+                                html_content += paragraph + '\n'
+                            else:
+                                # Clean up excessive whitespace
+                                paragraph = re.sub(r'\s+', ' ', paragraph)
+                                html_content += f'<p>{paragraph}</p>\n'
+                    
+                    return html_content
+                
+                return "<p>No readable content found in ODT file.</p>"
+                
+            except KeyError:
+                return "<p>Invalid ODT file structure.</p>"
+        
+    except Exception as e:
+        print(f"Error parsing ODT: {e}")
+        return f"<p>Error reading ODT file: {str(e)}</p>"
+
+
+def extract_from_google_docs(docs_url: str) -> str:
+    """
+    Extract text from Google Docs using the public sharing URL.
     
     Args:
-        content: Text content to analyze
+        docs_url: The Google Docs sharing URL
         
     Returns:
-        Dictionary with analysis results
+        Extracted HTML content from the Google Doc
     """
-    if not content:
-        return {
-            'titles': [],
-            'chapters': [],
-            'total_words': 0,
-            'total_sentences': 0,
-            'suggested_splits': []
+    try:
+        # Extract document ID from various Google Docs URL formats
+        doc_id = extract_google_docs_id(docs_url)
+        if not doc_id:
+            return "<p>Invalid Google Docs URL. Please ensure the document is publicly accessible.</p>"
+        
+        # Use the export URL to get HTML version
+        export_url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
+        
+        # Make request to get the document
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-    
-    # Find titles (H1 tags or lines that look like titles)
-    titles = []
-    title_patterns = [
-        r'<h1[^>]*>(.*?)</h1>',  # HTML H1 tags
-        r'^([A-Z][A-Z\s]{2,})$',  # ALL CAPS lines
-        r'^(Title:|TITLE:)\s*(.+)$',  # Explicit title markers
-    ]
-    
-    for pattern in title_patterns:
-        matches = re.findall(pattern, content, re.MULTILINE | re.IGNORECASE)
-        for match in matches:
-            if isinstance(match, tuple):
-                title_text = match[-1].strip()
-            else:
-                title_text = match.strip()
-            
-            if title_text and len(title_text) > 1:
-                titles.append({
-                    'text': title_text,
-                    'position': content.find(title_text)
-                })
-    
-    # Find chapters (H2 tags or lines that look like chapters)
-    chapters = []
-    chapter_patterns = [
-        r'<h2[^>]*>(.*?)</h2>',  # HTML H2 tags
-        r'^(Chapter\s+\d+.*?)$',  # Chapter X patterns
-        r'^(\d+\.\s+.+)$',  # Numbered sections
-        r'^([A-Z][a-z]+\s+[A-Z][a-z]+.*?)$',  # Title Case sections
-    ]
-    
-    for pattern in chapter_patterns:
-        matches = re.findall(pattern, content, re.MULTILINE)
-        for match in matches:
-            chapter_text = match.strip() if isinstance(match, str) else match
-            if chapter_text and len(chapter_text) > 1:
-                chapters.append({
-                    'text': chapter_text,
-                    'position': content.find(chapter_text)
-                })
-    
-    # Count words and sentences
-    # Remove HTML tags for accurate word count
-    clean_content = re.sub(r'<[^>]+>', ' ', content)
-    words = clean_content.split()
-    total_words = len(words)
-    
-    sentence_endings = re.findall(r'[.!?]+', content)
-    total_sentences = len(sentence_endings)
-    
-    # Suggest splits for long content (every 4000 words, ending at last period)
-    suggested_splits = []
-    if total_words > 4000:
-        # Split into chunks of approximately 4000 words
-        words_per_chunk = 4000
-        current_pos = 0
-        split_count = 1
         
-        while current_pos < len(words):
-            # Find the end position for this chunk (4000 words ahead)
-            end_word_pos = min(current_pos + words_per_chunk, len(words))
-            
-            if end_word_pos >= len(words):
-                # This is the last chunk
-                break
-            
-            # Find the text position of this word range
-            words_before = words[current_pos:end_word_pos]
-            chunk_text = ' '.join(words_before)
-            
-            # Find the last period in this chunk
-            last_period_pos = chunk_text.rfind('.')
-            
-            if last_period_pos != -1:
-                # Split at the last period
-                actual_chunk_text = chunk_text[:last_period_pos + 1]
-                actual_word_count = len(actual_chunk_text.split())
-                
-                # Find this position in the original content
-                original_pos = content.find(actual_chunk_text)
-                if original_pos == -1:
-                    # Fallback: find approximate position
-                    partial_content = ' '.join(words[:current_pos + actual_word_count])
-                    original_pos = len(partial_content)
-                
-                suggested_splits.append({
-                    'position': original_pos + len(actual_chunk_text),
-                    'chapter_name': f'Untitled Chapter {split_count}',
-                    'word_count': actual_word_count,
-                    'ends_with_period': True
-                })
-                
-                # Update current position to start after the period
-                current_pos += actual_word_count
-            else:
-                # No period found, split at word boundary
-                suggested_splits.append({
-                    'position': len(' '.join(words[:end_word_pos])),
-                    'chapter_name': f'Untitled Chapter {split_count}',
-                    'word_count': words_per_chunk,
-                    'ends_with_period': False
-                })
-                current_pos = end_word_pos
-            
-            split_count += 1
-    
-    return {
-        'titles': titles,
-        'chapters': chapters,
-        'total_words': total_words,
-        'total_sentences': total_sentences,
-        'suggested_splits': suggested_splits
-    }
+        response = requests.get(export_url, headers=headers, timeout=30)
+        response.raise_for_status()
+        
+        # Parse the HTML content
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find the main content div
+        content_div = soup.find('div', {'id': 'contents'}) or soup.find('body')
+        
+        if not content_div:
+            return "<p>Could not extract content from Google Docs. Please check the sharing permissions.</p>"
+        
+        # Clean up the HTML
+        # Remove Google Docs specific elements
+        for element in content_div.find_all(['script', 'style', 'meta', 'title']):
+            element.decompose()
+        
+        # Remove Google Docs specific classes and IDs
+        for element in content_div.find_all():
+            if element.get('class'):
+                element['class'] = []
+            if element.get('id'):
+                del element['id']
+            if element.get('style'):
+                del element['style']
+        
+        # Convert to clean HTML
+        html_content = str(content_div)
+        
+        # Clean up extra whitespace and empty elements
+        html_content = re.sub(r'<p[^>]*>\s*</p>', '', html_content)
+        html_content = re.sub(r'<div[^>]*>\s*</div>', '', html_content)
+        html_content = re.sub(r'\s+', ' ', html_content)
+        
+        return html_content if html_content.strip() else "<p>No readable content found in the Google Doc.</p>"
+        
+    except requests.exceptions.RequestException as e:
+        return f"<p>Error accessing Google Docs: {str(e)}. Please ensure the document is publicly accessible.</p>"
+    except Exception as e:
+        print(f"Error parsing Google Docs: {e}")
+        return f"<p>Error reading Google Docs: {str(e)}</p>"
 
-def create_chapters_from_analysis(content: str, analysis: Dict, project_id: int) -> List[Dict]:
+
+def extract_google_docs_id(url: str) -> Optional[str]:
     """
-    Create chapter data from analysis results with proper 4000-word pagination.
+    Extract the document ID from various Google Docs URL formats.
     
     Args:
-        content: Original content
-        analysis: Analysis results from analyze_document_structure
-        project_id: ID of the project to add chapters to
+        url: The Google Docs URL
         
     Returns:
-        List of chapter dictionaries ready for database insertion
+        The document ID if found, None otherwise
     """
-    chapters_data = []
-    
-    # If we have detected chapters, use them but still respect word limits
-    if analysis['chapters']:
-        # Sort chapters by position
-        sorted_chapters = sorted(analysis['chapters'], key=lambda x: x['position'])
+    try:
+        # Common Google Docs URL patterns
+        patterns = [
+            r'/document/d/([a-zA-Z0-9-_]+)',  # Standard sharing URL
+            r'id=([a-zA-Z0-9-_]+)',          # Some export URLs
+            r'/d/([a-zA-Z0-9-_]+)/edit',     # Edit URLs
+        ]
         
-        for i, chapter in enumerate(sorted_chapters):
-            # Find content between this chapter and the next
-            start_pos = chapter['position']
-            end_pos = sorted_chapters[i + 1]['position'] if i + 1 < len(sorted_chapters) else len(content)
-            
-            chapter_content = content[start_pos:end_pos].strip()
-            
-            # Check if this chapter exceeds 4000 words
-            clean_content = re.sub(r'<[^>]+>', ' ', chapter_content)
-            word_count = len(clean_content.split())
-            
-            if word_count > 4000:
-                # Split this long chapter into smaller ones
-                sub_chapters = split_long_chapter(chapter_content, chapter['text'], i + 1)
-                chapters_data.extend([{**ch, 'project_id': project_id} for ch in sub_chapters])
-            else:
-                chapters_data.append({
-                    'title': chapter['text'],
-                    'content': chapter_content,
-                    'order': i + 1,
-                    'project_id': project_id
-                })
-    
-    # If no chapters detected but content is long, use suggested splits
-    elif analysis['suggested_splits']:
-        start_pos = 0
-        for i, split in enumerate(analysis['suggested_splits']):
-            end_pos = split['position']
-            chapter_content = content[start_pos:end_pos].strip()
-            
-            chapters_data.append({
-                'title': split['chapter_name'],
-                'content': chapter_content,
-                'order': i + 1,
-                'project_id': project_id,
-                'word_count': split['word_count'],
-                'auto_split': True
-            })
-            
-            start_pos = end_pos
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
         
-        # Add the remaining content as the last chapter
-        if start_pos < len(content):
-            remaining_content = content[start_pos:].strip()
-            if remaining_content:
-                clean_remaining = re.sub(r'<[^>]+>', ' ', remaining_content)
-                remaining_words = len(clean_remaining.split())
-                
-                chapters_data.append({
-                    'title': f'Untitled Chapter {len(analysis["suggested_splits"]) + 1}',
-                    'content': remaining_content,
-                    'order': len(analysis['suggested_splits']) + 1,
-                    'project_id': project_id,
-                    'word_count': remaining_words,
-                    'auto_split': True
-                })
-    
-    # If no chapters and content is short, create a single chapter
-    else:
-        title = analysis['titles'][0]['text'] if analysis['titles'] else 'Imported Document'
-        clean_content = re.sub(r'<[^>]+>', ' ', content)
-        word_count = len(clean_content.split())
-        
-        chapters_data.append({
-            'title': title,
-            'content': content,
-            'order': 1,
-            'project_id': project_id,
-            'word_count': word_count
-        })
-    
-    return chapters_data
+        return None
+    except Exception:
+        return None
 
-def split_long_chapter(content: str, chapter_title: str, base_order: int) -> List[Dict]:
+
+def is_google_docs_url(url: str) -> bool:
     """
-    Split a long chapter into multiple chapters of ~4000 words each,
-    ending at the last period before the word limit.
+    Check if a URL is a Google Docs URL.
+    
+    Args:
+        url: The URL to check
+        
+    Returns:
+        True if it's a Google Docs URL, False otherwise
     """
-    chapters = []
+    try:
+        parsed = urlparse(url)
+        return (
+            'docs.google.com' in parsed.netloc and 
+            '/document/' in parsed.path
+        )
+    except Exception:
+        return False
+
+
+def validate_document_access(url: str) -> Tuple[bool, str]:
+    """
+    Validate that a Google Docs URL is accessible for import.
     
-    # Remove HTML tags for accurate word counting
-    clean_content = re.sub(r'<[^>]+>', ' ', content)
-    words = clean_content.split()
-    
-    if len(words) <= 4000:
-        return [{
-            'title': chapter_title,
-            'content': content,
-            'order': base_order,
-            'word_count': len(words)
-        }]
-    
-    start_pos = 0
-    part_num = 1
-    
-    while start_pos < len(content):
-        # Find approximately 4000 words from current position
-        words_subset = words[start_pos:start_pos + 4000]
+    Args:
+        url: The Google Docs URL to validate
         
-        if not words_subset:
-            break
+    Returns:
+        Tuple of (is_valid, message)
+    """
+    try:
+        if not is_google_docs_url(url):
+            return False, "Not a valid Google Docs URL"
+        
+        doc_id = extract_google_docs_id(url)
+        if not doc_id:
+            return False, "Could not extract document ID from URL"
+        
+        # Test access to the document
+        export_url = f"https://docs.google.com/document/d/{doc_id}/export?format=html"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        response = requests.head(export_url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            return True, "Document is accessible"
+        elif response.status_code == 403:
+            return False, "Document is not publicly accessible. Please change sharing settings to 'Anyone with the link can view'"
+        elif response.status_code == 404:
+            return False, "Document not found. Please check the URL"
+        else:
+            return False, f"Unable to access document (Status: {response.status_code})"
             
-        # Create the text chunk
-        chunk_text = ' '.join(words_subset)
-        
-        # Find the last period in this chunk
-        last_period_pos = chunk_text.rfind('.')
-        
-        if last_period_pos != -1 and len(words_subset) == 4000:
-            # We're not at the end and found a period
-            actual_chunk = chunk_text[:last_period_pos + 1]
-            actual_words = actual_chunk.split()
-        else:
-            # Either we're at the end or no period found, use all words
-            actual_chunk = chunk_text
-            actual_words = words_subset
-        
-        # Find this chunk in the original content (with HTML)
-        # This is approximate since we're working with cleaned content
-        start_char_pos = content.find(actual_words[0]) if actual_words else start_pos
-        if start_char_pos == -1:
-            start_char_pos = start_pos
-            
-        # Find end position by looking for the last word
-        if actual_words:
-            last_word = actual_words[-1].rstrip('.')
-            end_char_pos = content.find(last_word, start_char_pos) + len(last_word)
-            if content[end_char_pos:end_char_pos+1] == '.':
-                end_char_pos += 1
-        else:
-            end_char_pos = len(content)
-        
-        chapter_content = content[start_char_pos:end_char_pos].strip()
-        
-        # Create chapter title
-        if part_num == 1:
-            title = chapter_title
-        else:
-            title = f"{chapter_title} (Part {part_num})"
-        
-        chapters.append({
-            'title': title,
-            'content': chapter_content,
-            'order': base_order + (part_num - 1) * 0.1,  # Use decimal for sub-parts
-            'word_count': len(actual_words),
-            'auto_split': part_num > 1
-        })
-        
-        # Move to next chunk
-        start_pos += len(actual_words)
-        part_num += 1
-        
-        # Safety check to prevent infinite loops
-        if part_num > 50:  # Max 50 parts per chapter
-            break
-    
-    return chapters
+    except requests.exceptions.Timeout:
+        return False, "Request timed out. Please try again"
+    except requests.exceptions.RequestException as e:
+        return False, f"Network error: {str(e)}"
+    except Exception as e:
+        return False, f"Validation error: {str(e)}"

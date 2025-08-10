@@ -5,67 +5,51 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy, reverse
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.db.models import Q, Max
-from django.db import models
+from django.db.models import Q, Max, F
+from django.db import models, transaction
 import re
 from .models import (Document, Project, Chapter, AIAssistanceRequest, Character, 
-                    ImportedDocument, ProjectCollaborator, WritingTheme, DevicePreview, 
+                    ImportedDocument, ProjectCollaborator, WritingTheme, 
                     PersonalLibrary, WritingSession)
 from .forms import (DocumentForm, ProjectForm, ChapterForm, AIAssistanceForm, 
-                   CharacterForm, ImportDocumentForm, CollaboratorForm, DevicePreviewForm)
+                   CharacterForm, ImportDocumentForm, CollaboratorForm)
 import json
 import random
 import os
 import mimetypes
 from django.conf import settings
-from .document_parser import extract_text_from_file, analyze_document_structure, create_chapters_from_analysis
-from docx import Document as DocxDocument
-import PyPDF2
+from .document_parser import extract_text_from_file  # , is_google_docs_url
 import tempfile
-
-
-# Utility Functions
-def extract_text_from_file(file_obj, file_type):
-    """Extract text from uploaded files"""
-    try:
-        if file_type == 'pdf':
-            pdf_reader = PyPDF2.PdfReader(file_obj)
-            text = ''
-            for page in pdf_reader.pages:
-                text += page.extract_text() + '\n'
-            return text
-        elif file_type in ['docx', 'doc']:
-            doc = DocxDocument(file_obj)
-            text = ''
-            for paragraph in doc.paragraphs:
-                text += paragraph.text + '\n'
-            return text
-        elif file_type == 'txt':
-            return file_obj.read().decode('utf-8')
-        else:
-            return "File type not supported for text extraction"
-    except Exception as e:
-        return f"Error extracting text: {str(e)}"
 
 
 # Personal Library Views
 @login_required
 def personal_library(request):
-    library, created = PersonalLibrary.objects.get_or_create(user=request.user)
-    user_projects = Project.objects.filter(
-        Q(author=request.user) | Q(collaborators=request.user)
-    ).distinct()
-    imported_docs = ImportedDocument.objects.filter(user=request.user)
-    
-    context = {
-        'library': library,
-        'projects': user_projects,
-        'imported_documents': imported_docs,
-    }
-    return render(request, 'writer/personal_library.html', context)
+    try:
+        library, created = PersonalLibrary.objects.get_or_create(user=request.user)
+        # Simplified queries to prevent operational errors
+        user_projects = Project.objects.filter(author=request.user).select_related('author').prefetch_related('chapters')
+        imported_docs = ImportedDocument.objects.filter(user=request.user).order_by('-created_at')
+        
+        context = {
+            'library': library,
+            'projects': user_projects,
+            'imported_documents': imported_docs,
+        }
+        return render(request, 'writer/personal_library.html', context)
+    except Exception as e:
+        # Fallback in case of database issues
+        context = {
+            'library': None,
+            'projects': [],
+            'imported_documents': [],
+            'error_message': 'There was an issue loading your library. Please try again.'
+        }
+        return render(request, 'writer/personal_library.html', context)
 
 
 # Project Views
@@ -142,6 +126,13 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
     
     def get_queryset(self):
         return Project.objects.filter(author=self.request.user)
+    
+    def get_success_url(self):
+        return reverse('writer:project_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, f'Project "{form.instance.title}" updated successfully!')
+        return super().form_valid(form)
 
 
 class ProjectDeleteView(LoginRequiredMixin, DeleteView):
@@ -387,236 +378,11 @@ class ChapterDeleteView(LoginRequiredMixin, DeleteView):
 
 
 @login_required
-def chapter_manager(request, project_id):
-    """Chapter manager with drag-and-drop reordering"""
-    project = get_object_or_404(Project, id=project_id, author=request.user)
-    chapters = Chapter.objects.filter(project=project).order_by('order')
-    
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        
-        if action == 'reorder':
-            # Handle drag-and-drop reordering
-            chapter_ids = request.POST.getlist('chapter_ids[]')
-            for index, chapter_id in enumerate(chapter_ids):
-                Chapter.objects.filter(id=chapter_id, project=project).update(order=index)
-            return JsonResponse({'status': 'success'})
-        
-        elif action == 'manual_reorder':
-            # Handle manual chapter number input
-            chapter_id = request.POST.get('chapter_id')
-            new_order = int(request.POST.get('new_order', 0))
-            chapter = get_object_or_404(Chapter, id=chapter_id, project=project)
-            
-            # Get all chapters ordered by their current order
-            chapters_list = list(Chapter.objects.filter(project=project).order_by('order'))
-            
-            # Remove the chapter from its current position
-            chapters_list.remove(chapter)
-            
-            # Insert at new position (adjust for 0-based indexing)
-            new_index = max(0, min(new_order - 1, len(chapters_list)))
-            chapters_list.insert(new_index, chapter)
-            
-            # Update all chapter orders
-            for index, ch in enumerate(chapters_list):
-                ch.order = index
-                ch.save()
-                
-            return JsonResponse({'status': 'success'})
-        
-        elif action == 'create_chapter':
-            # Handle creating new chapter with heading
-            title = request.POST.get('title', 'Untitled Chapter')
-            heading_level = request.POST.get('heading_level', 'h2')
-            
-            # Get the next order number
-            max_order = Chapter.objects.filter(project=project).aggregate(
-                max_order=models.Max('order')
-            )['max_order'] or -1
-            
-            # Create heading content based on level
-            heading_tag = f"<{heading_level}>{title}</{heading_level}>"
-            content = f"{heading_tag}<p></p>"
-            
-            chapter = Chapter.objects.create(
-                title=title,
-                content=content,
-                project=project,
-                order=max_order + 1
-            )
-            
-            return JsonResponse({
-                'status': 'success',
-                'chapter_id': chapter.id,
-                'chapter_title': chapter.title,
-                'chapter_order': chapter.order + 1
-            })
-    
-    context = {
-        'project': project,
-        'chapters': chapters,
-    }
-    return render(request, 'writer/chapter_manager.html', context)
-
-
-def analyze_document_for_chapters(content):
-    """
-    Analyze uploaded document content to extract chapters based on headings and structure
-    """
-    # Remove extra whitespace and normalize
-    content = re.sub(r'\s+', ' ', content).strip()
-    
-    # Split content by potential chapter markers
-    # Look for H1 tags (titles), H2 tags (chapters), and common chapter patterns
-    chapters = []
-    
-    # First, try to split by H1 and H2 tags
-    h1_pattern = r'<h1[^>]*>(.*?)</h1>'
-    h2_pattern = r'<h2[^>]*>(.*?)</h2>'
-    
-    # Find all H1 and H2 headings with their positions
-    headings = []
-    
-    for match in re.finditer(h1_pattern, content, re.IGNORECASE | re.DOTALL):
-        headings.append({
-            'level': 1,
-            'title': re.sub(r'<[^>]+>', '', match.group(1)).strip(),
-            'start': match.start(),
-            'end': match.end()
-        })
-    
-    for match in re.finditer(h2_pattern, content, re.IGNORECASE | re.DOTALL):
-        headings.append({
-            'level': 2,
-            'title': re.sub(r'<[^>]+>', '', match.group(1)).strip(),
-            'start': match.start(),
-            'end': match.end()
-        })
-    
-    # Sort headings by position
-    headings.sort(key=lambda x: x['start'])
-    
-    # If no headings found, look for common chapter patterns
-    if not headings:
-        chapter_patterns = [
-            r'chapter\s+\d+[:\.\-\s]*([^\n\r]*)',
-            r'chapter\s+[a-z]+[:\.\-\s]*([^\n\r]*)',
-            r'part\s+\d+[:\.\-\s]*([^\n\r]*)',
-            r'section\s+\d+[:\.\-\s]*([^\n\r]*)',
-        ]
-        
-        for pattern in chapter_patterns:
-            for match in re.finditer(pattern, content, re.IGNORECASE):
-                headings.append({
-                    'level': 2,
-                    'title': match.group(0).strip(),
-                    'start': match.start(),
-                    'end': match.end()
-                })
-    
-    # Extract content between headings
-    if headings:
-        for i, heading in enumerate(headings):
-            # Determine content start and end
-            content_start = heading['end']
-            content_end = headings[i + 1]['start'] if i + 1 < len(headings) else len(content)
-            
-            # Extract content
-            chapter_content = content[content_start:content_end].strip()
-            
-            # Clean up the content
-            chapter_content = re.sub(r'<[^>]+>', '', chapter_content)  # Remove remaining HTML
-            chapter_content = re.sub(r'\s+', ' ', chapter_content).strip()
-            
-            # Only create chapter if it has substantial content
-            if len(chapter_content) > 100:  # Minimum 100 characters
-                # Split long chapters automatically
-                split_chapters = split_long_content(chapter_content, heading['title'])
-                chapters.extend(split_chapters)
-    else:
-        # No headings found, split by length and punctuation
-        clean_content = re.sub(r'<[^>]+>', '', content)
-        split_chapters = split_long_content(clean_content, "Imported Chapter")
-        chapters.extend(split_chapters)
-    
-    return chapters if chapters else [{'title': 'Imported Document', 'content': content[:5000]}]
-
-
-def split_long_content(content, base_title):
-    """
-    Split long content into smaller chapters based on sentence count and punctuation
-    """
-    chapters = []
-    
-    # Split by sentences
-    sentences = re.split(r'([.!?]+)', content)
-    current_chapter = ""
-    sentence_count = 0
-    chapter_num = 1
-    
-    i = 0
-    while i < len(sentences):
-        sentence = sentences[i].strip()
-        if not sentence:
-            i += 1
-            continue
-            
-        # Add sentence and punctuation
-        if i + 1 < len(sentences) and sentences[i + 1] in '.!?':
-            current_chapter += sentence + sentences[i + 1] + " "
-            sentence_count += 1
-            i += 2
-        else:
-            current_chapter += sentence + " "
-            i += 1
-        
-        # Check if we've reached the limit (4000 sentences) or chapter is long enough
-        if sentence_count >= 3999 or (sentence_count >= 100 and len(current_chapter) > 5000):
-            title = f"{base_title}" if chapter_num == 1 else f"{base_title} - Part {chapter_num}"
-            chapters.append({
-                'title': title,
-                'content': current_chapter.strip()
-            })
-            
-            current_chapter = ""
-            sentence_count = 0
-            chapter_num += 1
-    
-    # Add remaining content if any
-    if current_chapter.strip():
-        title = f"{base_title}" if chapter_num == 1 else f"{base_title} - Part {chapter_num}"
-        chapters.append({
-            'title': title,
-            'content': current_chapter.strip()
-        })
-    
-    return chapters
-
-
-@login_required
 def chapter_editor(request, project_id):
-    """Integrated chapter management and editor view with pagination"""
-    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    """Integrated chapter management and editor view"""
     
     project = get_object_or_404(Project, id=project_id, author=request.user)
     all_chapters = Chapter.objects.filter(project=project).order_by('order')
-    
-    # Pagination settings
-    chapters_per_page = int(request.GET.get('per_page', 10))  # Allow customizable pagination
-    if chapters_per_page not in [5, 10, 15, 25, 50]:  # Validate allowed values
-        chapters_per_page = 10
-    page = request.GET.get('page', 1)
-    
-    # Create paginator
-    paginator = Paginator(all_chapters, chapters_per_page)
-    
-    try:
-        chapters = paginator.page(page)
-    except PageNotAnInteger:
-        chapters = paginator.page(1)
-    except EmptyPage:
-        chapters = paginator.page(paginator.num_pages)
     
     # Get the current chapter being edited (default to first or create one)
     current_chapter_id = request.GET.get('chapter_id')
@@ -626,15 +392,6 @@ def chapter_editor(request, project_id):
         current_chapter = get_object_or_404(Chapter, id=current_chapter_id, project=project)
     elif all_chapters.exists():
         current_chapter = all_chapters.first()
-    
-    # If current chapter is not on the current page, find which page it's on
-    current_chapter_page = 1
-    if current_chapter:
-        try:
-            chapter_position = list(all_chapters.values_list('id', flat=True)).index(current_chapter.id)
-            current_chapter_page = (chapter_position // chapters_per_page) + 1
-        except ValueError:
-            current_chapter_page = 1
     
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -653,6 +410,7 @@ def chapter_editor(request, project_id):
             content = request.POST.get('content', '')
             
             if chapter_id:
+                # Update existing chapter
                 chapter = get_object_or_404(Chapter, id=chapter_id, project=project)
                 chapter.title = title
                 chapter.content = content
@@ -662,6 +420,26 @@ def chapter_editor(request, project_id):
                     'status': 'success',
                     'word_count': chapter.word_count,
                     'message': 'Chapter saved successfully'
+                })
+            else:
+                # Create new chapter if none exists
+                max_order = Chapter.objects.filter(project=project).aggregate(
+                    max_order=models.Max('order')
+                )['max_order'] or -1
+                
+                chapter = Chapter.objects.create(
+                    title=title,
+                    content=content,
+                    project=project,
+                    order=max_order + 1
+                )
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'chapter_id': chapter.id,
+                    'word_count': chapter.word_count,
+                    'message': 'New chapter created and saved successfully',
+                    'redirect_url': f'/writer/projects/{project_id}/editor/?chapter_id={chapter.id}'
                 })
         
         elif action == 'create_chapter':
@@ -749,39 +527,6 @@ def chapter_editor(request, project_id):
             except Exception as e:
                 return JsonResponse({'success': False, 'error': str(e)})
         
-        elif action == 'analyze_uploaded_document':
-            # Handle document upload and chapter analysis
-            try:
-                import json
-                data = json.loads(request.body)
-                document_content = data.get('content')
-                
-                chapters_data = analyze_document_for_chapters(document_content)
-                
-                # Create chapters from analyzed content
-                created_chapters = []
-                for i, chapter_data in enumerate(chapters_data):
-                    chapter = Chapter.objects.create(
-                        title=chapter_data['title'],
-                        content=chapter_data['content'],
-                        project=project,
-                        order=all_chapters.count() + i + 1
-                    )
-                    created_chapters.append({
-                        'id': chapter.id,
-                        'title': chapter.title,
-                        'order': chapter.order
-                    })
-                
-                return JsonResponse({
-                    'success': True,
-                    'chapters_created': len(created_chapters),
-                    'chapters': created_chapters
-                })
-                
-            except Exception as e:
-                return JsonResponse({'success': False, 'error': str(e)})
-        
         elif action == 'create_chapter_from_heading':
             # Handle creating new chapter from H2 heading
             title = request.POST.get('title', 'Untitled Chapter')
@@ -820,24 +565,79 @@ def chapter_editor(request, project_id):
                 'redirect_url': f'/writer/projects/{project_id}/editor/?chapter_id={new_chapter.id}'
             })
     
-    context = {
-        'project': project,
-        'chapters': chapters,
-        'all_chapters': all_chapters,
-        'current_chapter': current_chapter,
-        'current_chapter_page': current_chapter_page,
-        'chapters_per_page': chapters_per_page,
-        'page_obj': chapters,  # For template compatibility with Django pagination
-    }
-    return render(request, 'writer/chapter_editor.html', context)
-
-
-@login_required
-def upload_document_analysis(request):
-    """Upload and analyze documents for intelligent chapter creation."""
-    if request.method == 'POST':
-        if 'file' in request.FILES:
+    # Handle create_from_selection action
+    if request.method == 'POST' and request.POST.get('action') == 'create_from_selection':
+        try:
+            selected_text = request.POST.get('selected_text', '').strip()
+            new_title = request.POST.get('new_title', '').strip()
+            remove_from_current = request.POST.get('remove_from_current', '').lower() == 'true'
+            
+            if not selected_text:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No text selected'
+                })
+            
+            if not new_title:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Chapter title is required'
+                })
+            
+            # Get the highest order number for new chapter positioning
+            current_order = 0
+            if current_chapter:
+                current_order = current_chapter.order
+            
+            # Create new chapter with selected text
+            new_chapter = Chapter.objects.create(
+                title=new_title,
+                content=selected_text,
+                project=project,
+                order=current_order + 1
+            )
+            
+            # Update orders of subsequent chapters
+            Chapter.objects.filter(
+                project=project,
+                order__gt=current_order
+            ).exclude(id=new_chapter.id).update(order=F('order') + 1)
+            
+            # Optionally remove selected text from current chapter
+            if remove_from_current and current_chapter:
+                # Remove the selected text from current chapter's content
+                current_content = current_chapter.content or ''
+                if selected_text in current_content:
+                    updated_content = current_content.replace(selected_text, '', 1)
+                    current_chapter.content = updated_content
+                    current_chapter.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'chapter_id': new_chapter.id,
+                'chapter_title': new_chapter.title,
+                'chapter_order': new_chapter.order,
+                'message': f'Chapter "{new_title}" created successfully',
+                'redirect_url': f'/writer/projects/{project_id}/editor/?chapter_id={new_chapter.id}'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error creating chapter: {str(e)}'
+            })
+    
+    # Handle direct_upload_to_editor action
+    if request.method == 'POST' and request.POST.get('action') == 'direct_upload_to_editor':
+        try:
+            if 'file' not in request.FILES:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No file selected'
+                })
+            
             uploaded_file = request.FILES['file']
+            insert_position = request.POST.get('insert_position', 'end')  # 'start', 'end', 'cursor'
             
             # Save the uploaded file temporarily
             temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_uploads')
@@ -845,91 +645,52 @@ def upload_document_analysis(request):
             
             temp_file_path = os.path.join(temp_dir, uploaded_file.name)
             
-            try:
-                # Save the file
-                with open(temp_file_path, 'wb+') as destination:
-                    for chunk in uploaded_file.chunks():
-                        destination.write(chunk)
-                
-                # Extract text content
-                content = extract_text_from_file(temp_file_path)
-                
-                if not content:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'Could not extract text from the uploaded file. Please try a different format.'
-                    })
-                
-                # Analyze the document structure
-                analysis = analyze_document_structure(content)
-                
+            # Save the file
+            with open(temp_file_path, 'wb+') as destination:
+                for chunk in uploaded_file.chunks():
+                    destination.write(chunk)
+            
+            # Extract text content
+            content = extract_text_from_file(temp_file_path)
+            
+            if not content:
                 # Clean up temporary file
-                os.remove(temp_file_path)
-                
-                return JsonResponse({
-                    'success': True,
-                    'analysis': {
-                        'titles': analysis['titles'][:5],  # Limit to first 5 titles
-                        'chapters': analysis['chapters'][:20],  # Limit to first 20 chapters
-                        'total_sentences': analysis['total_sentences'],
-                        'suggested_splits': analysis['suggested_splits'][:10],  # Limit suggested splits
-                        'content_preview': content[:500] + '...' if len(content) > 500 else content
-                    },
-                    'full_content': content  # Store for project creation
-                })
-                
-            except Exception as e:
-                # Clean up temporary file on error
                 if os.path.exists(temp_file_path):
                     os.remove(temp_file_path)
                 
                 return JsonResponse({
-                    'success': False,
-                    'error': f'Error processing file: {str(e)}'
+                    'status': 'error',
+                    'message': 'Could not extract text from the uploaded file. Please try a different format.'
                 })
-        
-        elif 'create_project' in request.POST:
-            # Create project from analyzed document
-            try:
-                project_title = request.POST.get('project_title', 'Imported Document')
-                content = request.POST.get('content', '')
-                analysis_data = json.loads(request.POST.get('analysis', '{}'))
-                
-                # Create the project
-                project = Project.objects.create(
-                    title=project_title,
-                    description=f'Project created from uploaded document analysis',
-                    author=request.user,
-                    is_collaboration=False
-                )
-                
-                # Create chapters from analysis
-                chapters_data = create_chapters_from_analysis(content, analysis_data, project.id)
-                
-                # Create Chapter objects
-                for chapter_data in chapters_data:
-                    Chapter.objects.create(
-                        title=chapter_data['title'],
-                        content=chapter_data['content'],
-                        order=chapter_data['order'],
-                        project=project
-                    )
-                
-                messages.success(request, f'Project "{project_title}" created successfully with {len(chapters_data)} chapters!')
-                return redirect('writer:chapter_editor', project_id=project.id)
-                
-            except Exception as e:
-                messages.error(request, f'Error creating project: {str(e)}')
-                return redirect('writer:upload_document_analysis')
-    
-    user_projects = Project.objects.filter(
-        Q(author=request.user) | Q(collaborators=request.user)
-    ).distinct()
+            
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+            
+            # Return the extracted content for insertion
+            return JsonResponse({
+                'status': 'success',
+                'content': content,
+                'filename': uploaded_file.name,
+                'message': f'File "{uploaded_file.name}" uploaded successfully'
+            })
+            
+        except Exception as e:
+            # Clean up temporary file on error
+            if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+            
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error processing file: {str(e)}'
+            })
     
     context = {
-        'user_projects': user_projects,
+        'project': project,
+        'all_chapters': all_chapters,
+        'current_chapter': current_chapter,
     }
-    return render(request, 'writer/upload_document_analysis.html', context)
+    return render(request, 'writer/chapter_editor.html', context)
 
 @login_required
 def upload_test(request):
@@ -1004,40 +765,240 @@ def import_document(request):
         if form.is_valid():
             imported_doc = form.save(commit=False)
             imported_doc.user = request.user
-            imported_doc.file_size = imported_doc.original_file.size
             
-            # Determine file type
-            file_name = imported_doc.original_file.name.lower()
-            if file_name.endswith('.pdf'):
-                imported_doc.import_type = 'pdf'
-            elif file_name.endswith(('.docx', '.doc')):
-                imported_doc.import_type = 'docx'
-            elif file_name.endswith('.txt'):
-                imported_doc.import_type = 'txt'
-            elif file_name.endswith('.rtf'):
-                imported_doc.import_type = 'rtf'
-            elif file_name.endswith('.odt'):
-                imported_doc.import_type = 'odt'
+            # Handle Google Docs URL
+            google_docs_url = form.cleaned_data.get('google_docs_url')
+            if google_docs_url:
+                # Extract content from Google Docs
+                imported_doc.google_docs_url = google_docs_url
+                extracted_content = extract_text_from_file(None, google_docs_url=google_docs_url)
+                imported_doc.import_type = 'google_docs'
+                imported_doc.file_size = 0  # No file uploaded
+                
+                # Save without file
+                imported_doc.save()
+                imported_doc.extracted_content = extracted_content
+            else:
+                # Handle file upload
+                imported_doc.file_size = imported_doc.original_file.size
+                
+                # Determine file type
+                file_name = imported_doc.original_file.name.lower()
+                if file_name.endswith('.pdf'):
+                    imported_doc.import_type = 'pdf'
+                elif file_name.endswith(('.docx', '.doc')):
+                    imported_doc.import_type = 'docx'
+                elif file_name.endswith('.txt'):
+                    imported_doc.import_type = 'txt'
+                elif file_name.endswith('.rtf'):
+                    imported_doc.import_type = 'rtf'
+                elif file_name.endswith('.odt'):
+                    imported_doc.import_type = 'odt'
+                elif file_name.endswith(('.html', '.htm')):
+                    imported_doc.import_type = 'html'
+                
+                # Save the file first to get the path
+                imported_doc.save()
+                
+                # Extract text content from the saved file
+                temp_file_path = imported_doc.original_file.path
+                extracted_content = extract_text_from_file(temp_file_path)
             
-            # Extract text content
-            imported_doc.extracted_content = extract_text_from_file(
-                imported_doc.original_file, 
-                imported_doc.import_type
-            )
+            # Set target project if selected, otherwise create a new project
+            target_project = form.cleaned_data.get('target_project')
+            if not target_project:
+                # Auto-create a new project based on the imported document
+                project_title = imported_doc.title
+                if len(project_title) > 50:  # Ensure title isn't too long
+                    project_title = project_title[:47] + "..."
+                
+                # Create new project
+                target_project = Project.objects.create(
+                    title=project_title,
+                    description=f"Project created from imported document: {imported_doc.title}",
+                    author=request.user,
+                    target_word_count=10000,  # Default word count
+                    genre="General",  # Default genre
+                )
+                
+                imported_doc.project = target_project
             
+            # Apply formatting options
+            if not form.cleaned_data.get('preserve_formatting', True):
+                # Strip HTML formatting if user doesn't want it preserved
+                import re
+                extracted_content = re.sub(r'<[^>]+>', '', extracted_content)
+                # Convert back to simple paragraphs
+                paragraphs = [p.strip() for p in extracted_content.split('\n') if p.strip()]
+                extracted_content = ''.join(f'<p>{p}</p>' for p in paragraphs)
+            
+            imported_doc.extracted_content = extracted_content
+            
+            # Save again with extracted content
             imported_doc.save()
-            messages.success(request, f"Document '{imported_doc.title}' imported successfully!")
+            
+            # Auto-create chapters if requested, or create a single chapter if no target project was selected
+            if form.cleaned_data.get('auto_create_chapters', False) and target_project:
+                create_chapters_from_content(imported_doc.extracted_content, target_project, imported_doc.title)
+                messages.success(request, f"Document '{imported_doc.title}' imported and chapters created successfully!")
+            elif target_project and not form.cleaned_data.get('auto_create_chapters', False):
+                # Create a single chapter with all the content
+                Chapter.objects.create(
+                    title=imported_doc.title,
+                    content=imported_doc.extracted_content,
+                    project=target_project,
+                    order=1
+                )
+                messages.success(request, f"Document '{imported_doc.title}' imported successfully and converted to a new project!")
+            else:
+                messages.success(request, f"Document '{imported_doc.title}' imported successfully!")
+            
             return redirect('writer:import_detail', pk=imported_doc.pk)
     else:
         form = ImportDocumentForm(user=request.user)
     
-    return render(request, 'writer/import_document.html', {'form': form})
+    return render(request, 'writer/import_form.html', {'form': form})
+
+
+def create_chapters_from_content(content, project, base_title):
+    """Create chapters from content based on HTML headings"""
+    import re
+    from bs4 import BeautifulSoup
+    
+    try:
+        soup = BeautifulSoup(content, 'html.parser')
+        
+        # Find all headings (h1, h2, h3)
+        headings = soup.find_all(['h1', 'h2', 'h3'])
+        
+        if not headings:
+            # No headings found, create a single chapter
+            Chapter.objects.create(
+                title=base_title,
+                content=content,
+                project=project,
+                order=1
+            )
+            return
+        
+        current_content = ""
+        chapter_order = 1
+        
+        for i, heading in enumerate(headings):
+            # Get content between this heading and the next
+            current_element = heading.next_sibling
+            chapter_content = f"<{heading.name}>{heading.get_text()}</{heading.name}>"
+            
+            while current_element and current_element != headings[i + 1] if i + 1 < len(headings) else True:
+                if hasattr(current_element, 'name') and current_element.name:
+                    chapter_content += str(current_element)
+                elif isinstance(current_element, str) and current_element.strip():
+                    chapter_content += current_element
+                current_element = current_element.next_sibling
+                if i + 1 < len(headings) and current_element == headings[i + 1]:
+                    break
+            
+            # Create chapter
+            Chapter.objects.create(
+                title=heading.get_text().strip() or f"{base_title} - Chapter {chapter_order}",
+                content=chapter_content,
+                project=project,
+                order=chapter_order
+            )
+            chapter_order += 1
+            
+    except Exception as e:
+        # Fallback: create single chapter
+        Chapter.objects.create(
+            title=base_title,
+            content=content,
+            project=project,
+            order=1
+        )
 
 
 @login_required
 def import_detail(request, pk):
     imported_doc = get_object_or_404(ImportedDocument, pk=pk, user=request.user)
     return render(request, 'writer/import_detail.html', {'imported_doc': imported_doc})
+
+
+@login_required
+def convert_import_to_project(request, pk):
+    """Convert an imported document to a new project with chapters"""
+    if request.method == 'POST':
+        imported_doc = get_object_or_404(ImportedDocument, pk=pk, user=request.user)
+        
+        # Create a new project
+        project = Project.objects.create(
+            title=imported_doc.title,
+            description=f"Project created from imported document: {imported_doc.title}",
+            author=request.user,
+            genre='Other'  # Default genre
+        )
+        
+        # Create a chapter with the imported content
+        chapter = Chapter.objects.create(
+            title=f"Chapter 1: {imported_doc.title}",
+            content=imported_doc.extracted_content or "No content available",
+            project=project,
+            order=1
+        )
+        
+        messages.success(request, f"Successfully converted '{imported_doc.title}' to project '{project.title}'!")
+        return JsonResponse({
+            'status': 'success',
+            'project_id': project.id,
+            'redirect_url': reverse('writer:chapter_editor', kwargs={'project_id': project.id})
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+
+@login_required
+def add_import_to_project(request, pk, project_id):
+    """Add imported document content as a new chapter to an existing project"""
+    if request.method == 'POST':
+        imported_doc = get_object_or_404(ImportedDocument, pk=pk, user=request.user)
+        project = get_object_or_404(Project, id=project_id, author=request.user)
+        
+        # Get the next order for the new chapter
+        last_chapter = Chapter.objects.filter(project=project).order_by('-order').first()
+        next_order = (last_chapter.order + 1) if last_chapter else 1
+        
+        # Create a new chapter with the imported content
+        chapter = Chapter.objects.create(
+            title=f"Chapter {next_order}: {imported_doc.title}",
+            content=imported_doc.extracted_content or "No content available",
+            project=project,
+            order=next_order
+        )
+        
+        messages.success(request, f"Successfully added '{imported_doc.title}' as a new chapter to '{project.title}'!")
+        return JsonResponse({
+            'status': 'success',
+            'project_id': project.id,
+            'chapter_id': chapter.id,
+            'redirect_url': reverse('writer:chapter_editor', kwargs={'project_id': project.id}) + f'?chapter_id={chapter.id}'
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+
+@login_required
+def projects_api_list(request):
+    """API endpoint to list user's projects"""
+    projects = Project.objects.filter(author=request.user).order_by('-updated_at')
+    projects_data = [
+        {
+            'id': project.id,
+            'title': project.title,
+            'description': project.description or '',
+            'updated_at': project.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        for project in projects
+    ]
+    return JsonResponse({'projects': projects_data})
 
 
 class ImportedDocumentDeleteView(LoginRequiredMixin, DeleteView):
@@ -1054,103 +1015,52 @@ class ImportedDocumentDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
-# Device Preview Views
+# AJAX Views
 @login_required
-def device_preview(request, document_id=None, chapter_id=None):
-    if request.method == 'POST':
-        form = DevicePreviewForm(request.POST)
-        if form.is_valid():
-            device = form.cleaned_data['device']
-            font_family = form.cleaned_data['font_family']
-            font_size = form.cleaned_data['font_size']
-            line_height = form.cleaned_data['line_height']
-            
-            # Get content
-            content = ""
-            title = "Preview"
-            
-            if document_id:
-                doc = get_object_or_404(Document, id=document_id, author=request.user)
-                content = doc.content or "No content available"
-                title = doc.title
-            elif chapter_id:
-                chapter = get_object_or_404(Chapter, id=chapter_id)
-                if chapter.project.author != request.user and not chapter.project.collaborators.filter(id=request.user.id).exists():
-                    messages.error(request, "Permission denied")
-                    return redirect('writer:dashboard')
-                content = chapter.content or "No content available"
-                title = f"{chapter.project.title} - {chapter.title}"
-            else:
-                # Default sample content for preview
-                content = """
-                <h2>Sample Chapter</h2>
-                <p>This is a sample preview showing how your content would appear on different devices. You can select different devices, fonts, and formatting options to see how your writing would look.</p>
-                
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                
-                <blockquote>
-                "The art of writing is the art of discovering what you believe." - Gustave Flaubert
-                </blockquote>
-                
-                <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                
-                <h3>Sample Dialogue</h3>
-                <p>"This device preview feature is quite helpful," she said, adjusting the font size on her tablet.</p>
-                <p>"Indeed," he replied, "it shows exactly how readers will experience our work."</p>
-                """
-                title = "Sample Preview Content"
-            
-            context = {
-                'content': content,
-                'title': title,
-                'device': device,
-                'font_family': font_family,
-                'font_size': font_size,
-                'line_height': line_height,
-                'form': form,
-            }
-            return render(request, 'writer/device_preview.html', context)
-    else:
-        form = DevicePreviewForm()
-    
-    # Provide default sample content for GET requests
-    context = {
-        'form': form,
-        'content': """
-        <h2>Welcome to Device Preview</h2>
-        <p>This tool allows you to preview how your writing will appear on different devices and with various formatting options.</p>
+@require_http_methods(["POST"])
+def ajax_create_chapter(request):
+    try:
+        import json
+        data = json.loads(request.body)
         
-        <p>To get started:</p>
-        <ol>
-            <li>Select a device type from the dropdown</li>
-            <li>Choose your preferred font family</li>
-            <li>Adjust font size and line height</li>
-            <li>Click "Update Preview" to see the changes</li>
-        </ol>
+        project_id = data.get('project_id')
+        title = data.get('title', '').strip()
+        content = data.get('content', '').strip()
         
-        <p>You can also preview specific documents by navigating to them first, then accessing the device preview feature.</p>
+        if not all([project_id, title, content]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
         
-        <blockquote>
-        "The first draft of anything is shit." - Ernest Hemingway
-        </blockquote>
+        # Get the project and verify ownership
+        try:
+            project = Project.objects.get(id=project_id, author=request.user)
+        except Project.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Project not found or access denied'})
         
-        <p>Use this preview to ensure your writing looks great on every device your readers might use.</p>
-        """,
-        'title': 'Device Preview Demo',
-        'device': 'iphone',
-        'font_family': 'serif',
-        'font_size': 16,
-        'line_height': 1.6,
-    }
-    return render(request, 'writer/device_preview.html', context)
+        # Create the chapter
+        chapter = Chapter.objects.create(
+            project=project,
+            title=title,
+            content=content,
+            author=request.user,
+            order=project.chapters.count() + 1
+        )
+        
+        # Update project word count
+        project.update_word_count()
+        
+        return JsonResponse({
+            'success': True, 
+            'chapter_id': chapter.id,
+            'message': f'Chapter "{title}" created successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 @login_required
 def dashboard(request):
     recent_documents = Document.objects.filter(author=request.user)[:5]
-    recent_projects = Project.objects.filter(
-        Q(author=request.user) | Q(collaborators=request.user)
-    ).distinct()[:3]
     
     total_documents = Document.objects.filter(author=request.user).count()
     total_projects = Project.objects.filter(
@@ -1158,9 +1068,6 @@ def dashboard(request):
     ).distinct().count()
     
     total_words = sum(doc.word_count for doc in Document.objects.filter(author=request.user))
-    total_project_words = sum(project.total_word_count for project in Project.objects.filter(
-        Q(author=request.user) | Q(collaborators=request.user)
-    ).distinct())
     
     # Get user's characters
     user_characters = Character.objects.filter(
@@ -1169,15 +1076,256 @@ def dashboard(request):
         ).distinct()
     ).count()
     
+    # Get user projects for library bookshelf
+    user_projects = Project.objects.filter(author=request.user).select_related('author')
+    
+    # Create shelves with max 7 books each
+    shelves = []
+    projects_list = list(user_projects)
+    for i in range(0, len(projects_list), 7):
+        shelf = projects_list[i:i+7]
+        shelves.append(shelf)
+    
     context = {
         'recent_documents': recent_documents,
-        'recent_projects': recent_projects,
         'total_documents': total_documents,
         'total_projects': total_projects,
-        'total_words': total_words + total_project_words,
+        'total_words': total_words,
         'total_characters': user_characters,
+        'user_projects': user_projects,
+        'shelves': shelves,
     }
     return render(request, 'writer/dashboard.html', context)
+
+
+# Format & Export Views
+@login_required
+def format_page(request):
+    """Format page for styling and export options"""
+    user_projects = Project.objects.filter(
+        Q(author=request.user) | Q(collaborators=request.user)
+    ).distinct()
+    
+    context = {
+        'user_projects': user_projects,
+    }
+    return render(request, 'writer/format_page.html', context)
+
+
+@login_required
+def export_project(request, project_id, format_type):
+    """Export project in various formats"""
+    project = get_object_or_404(Project, id=project_id)
+    
+    # Check permissions
+    if not (project.author == request.user or project.collaborators.filter(id=request.user.id).exists()):
+        messages.error(request, "You don't have permission to export this project.")
+        return redirect('writer:format_page')
+    
+    # Get all chapters in order
+    chapters = Chapter.objects.filter(project=project).order_by('order')
+    
+    if format_type == 'pdf':
+        return export_as_pdf(project, chapters)
+    elif format_type == 'epub':
+        return export_as_epub(project, chapters)
+    elif format_type == 'docx':
+        return export_as_docx(project, chapters)
+    elif format_type == 'gdoc':
+        return export_as_google_doc(project, chapters)
+    else:
+        messages.error(request, "Unsupported export format.")
+        return redirect('writer:format_page')
+
+
+def export_as_pdf(project, chapters):
+    """Export project as PDF"""
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    import io
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+    
+    # Title page
+    title = Paragraph(f"<para align=center><font size=24><b>{project.title}</b></font></para>", styles['Title'])
+    story.append(title)
+    story.append(Spacer(1, 72))
+    
+    if project.description:
+        desc = Paragraph(f"<para align=center><i>{project.description}</i></para>", styles['Normal'])
+        story.append(desc)
+        story.append(Spacer(1, 36))
+    
+    author = Paragraph(f"<para align=center>by {project.author.get_full_name() or project.author.username}</para>", styles['Normal'])
+    story.append(author)
+    story.append(Spacer(1, 72))
+    
+    # Chapters
+    for chapter in chapters:
+        if chapter.title:
+            chapter_title = Paragraph(f"<para><font size=18><b>{chapter.title}</b></font></para>", styles['Heading1'])
+            story.append(chapter_title)
+            story.append(Spacer(1, 12))
+        
+        if chapter.content:
+            # Clean HTML content for PDF
+            import re
+            clean_content = re.sub('<[^<]+?>', '', chapter.content)
+            content = Paragraph(clean_content, styles['Normal'])
+            story.append(content)
+            story.append(Spacer(1, 12))
+    
+    doc.build(story)
+    buffer.seek(0)
+    
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{project.title}.pdf"'
+    return response
+
+
+def export_as_epub(project, chapters):
+    """Export project as EPUB"""
+    from ebooklib import epub
+    import io
+    
+    book = epub.EpubBook()
+    book.set_identifier(f'project_{project.id}')
+    book.set_title(project.title)
+    book.set_language('en')
+    book.add_author(project.author.get_full_name() or project.author.username)
+    
+    if project.description:
+        book.add_metadata('DC', 'description', project.description)
+    
+    # Create chapters
+    epub_chapters = []
+    for i, chapter in enumerate(chapters):
+        epub_chapter = epub.EpubHtml(
+            title=chapter.title or f'Chapter {i+1}',
+            file_name=f'chapter_{i+1}.xhtml',
+            lang='en'
+        )
+        epub_chapter.content = f'''
+        <html xmlns="http://www.w3.org/1999/xhtml">
+        <head><title>{chapter.title or f'Chapter {i+1}'}</title></head>
+        <body>
+        <h1>{chapter.title or f'Chapter {i+1}'}</h1>
+        {chapter.content or ''}
+        </body>
+        </html>
+        '''
+        book.add_item(epub_chapter)
+        epub_chapters.append(epub_chapter)
+    
+    # Create table of contents
+    book.toc = epub_chapters
+    book.add_item(epub.EpubNcx())
+    book.add_item(epub.EpubNav())
+    
+    # Create spine
+    book.spine = ['nav'] + epub_chapters
+    
+    # Generate EPUB
+    buffer = io.BytesIO()
+    epub.write_epub(buffer, book)
+    buffer.seek(0)
+    
+    response = HttpResponse(buffer.getvalue(), content_type='application/epub+zip')
+    response['Content-Disposition'] = f'attachment; filename="{project.title}.epub"'
+    return response
+
+
+def export_as_docx(project, chapters):
+    """Export project as Word document"""
+    from docx import Document
+    from docx.shared import Inches
+    import io
+    
+    doc = Document()
+    
+    # Title page
+    title = doc.add_heading(project.title, 0)
+    title.alignment = 1  # Center alignment
+    
+    if project.description:
+        desc_para = doc.add_paragraph(project.description)
+        desc_para.alignment = 1
+    
+    author_para = doc.add_paragraph(f"by {project.author.get_full_name() or project.author.username}")
+    author_para.alignment = 1
+    
+    doc.add_page_break()
+    
+    # Chapters
+    for chapter in chapters:
+        if chapter.title:
+            doc.add_heading(chapter.title, 1)
+        
+        if chapter.content:
+            # Clean HTML content
+            import re
+            clean_content = re.sub('<[^<]+?>', '', chapter.content)
+            doc.add_paragraph(clean_content)
+        
+        doc.add_page_break()
+    
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{project.title}.docx"'
+    return response
+
+
+def export_as_google_doc(project, chapters):
+    """Export project as Google Doc (HTML format for import)"""
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>{project.title}</title>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: 'Times New Roman', serif; line-height: 1.6; margin: 1in; }}
+            h1 {{ text-align: center; page-break-before: always; }}
+            h2 {{ margin-top: 2em; }}
+            .title-page {{ text-align: center; margin-bottom: 3em; }}
+            .chapter {{ page-break-before: always; }}
+        </style>
+    </head>
+    <body>
+        <div class="title-page">
+            <h1>{project.title}</h1>
+            {f'<p><i>{project.description}</i></p>' if project.description else ''}
+            <p>by {project.author.get_full_name() or project.author.username}</p>
+        </div>
+    """
+    
+    for chapter in chapters:
+        html_content += f'<div class="chapter">'
+        if chapter.title:
+            html_content += f'<h2>{chapter.title}</h2>'
+        if chapter.content:
+            html_content += chapter.content
+        html_content += '</div>'
+    
+    html_content += """
+    </body>
+    </html>
+    """
+    
+    response = HttpResponse(html_content, content_type='text/html')
+    response['Content-Disposition'] = f'attachment; filename="{project.title}_for_google_docs.html"'
+    return response
 
 
 # AI Assistant Views (Enhanced)
@@ -1313,3 +1461,190 @@ def auto_save(request):
             })
     
     return JsonResponse({'status': 'error'})
+
+
+@login_required
+def upload_file(request):
+    """Simple file upload for chapter editor."""
+    if request.method == 'POST' and request.FILES.get('file'):
+        uploaded_file = request.FILES['file']
+        
+        try:
+            # Get file path for processing
+            import tempfile
+            import os
+            
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_file:
+                for chunk in uploaded_file.chunks():
+                    temp_file.write(chunk)
+                temp_file_path = temp_file.name
+            
+            # Extract text content
+            from .document_parser import extract_text_from_file
+            content = extract_text_from_file(temp_file_path)
+            
+            # Clean up temporary file
+            os.unlink(temp_file_path)
+            
+            # Return just the text content for the editor
+            return JsonResponse({
+                'success': True,
+                'content': content
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': 'No file uploaded'
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def reorder_chapters(request, project_id):
+    """Handle drag-and-drop reordering of chapters"""
+    project = get_object_or_404(Project, id=project_id, author=request.user)
+    
+    try:
+        data = json.loads(request.body)
+        chapter_orders = data.get('chapter_orders', [])
+        
+        # Update chapter orders
+        for item in chapter_orders:
+            chapter_id = item.get('id')
+            new_order = item.get('order')
+            Chapter.objects.filter(id=chapter_id, project=project).update(order=new_order)
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_chapter_order(request, project_id, chapter_id):
+    """Manually update chapter order by number input"""
+    project = get_object_or_404(Project, id=project_id, author=request.user)
+    chapter = get_object_or_404(Chapter, id=chapter_id, project=project)
+    
+    try:
+        new_order = int(request.POST.get('order', 0))
+        old_order = chapter.order
+        
+        if new_order != old_order:
+            # Adjust other chapters' orders
+            if new_order > old_order:
+                # Moving down: decrease order of chapters between old and new position
+                Chapter.objects.filter(
+                    project=project,
+                    order__gt=old_order,
+                    order__lte=new_order
+                ).update(order=F('order') - 1)
+            else:
+                # Moving up: increase order of chapters between new and old position
+                Chapter.objects.filter(
+                    project=project,
+                    order__gte=new_order,
+                    order__lt=old_order
+                ).update(order=F('order') + 1)
+            
+            # Set the new order for the moved chapter
+            chapter.order = new_order
+            chapter.save()
+        
+        return JsonResponse({'status': 'success'})
+    except (ValueError, TypeError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid order number'})
+
+
+@login_required
+def get_chapter_list(request, project_id):
+    """Get paginated list of chapters for the sidebar"""
+    project = get_object_or_404(Project, id=project_id, author=request.user)
+    chapters = Chapter.objects.filter(project=project).order_by('order')
+    
+    chapter_data = []
+    for chapter in chapters:
+        chapter_data.append({
+            'id': chapter.id,
+            'title': chapter.title,
+            'order': chapter.order,
+            'word_count': chapter.word_count,
+            'created_at': chapter.created_at.strftime('%b %d, %Y'),
+            'updated_at': chapter.updated_at.strftime('%b %d, %Y %H:%M')
+        })
+    
+    return JsonResponse({
+        'chapters': chapter_data,
+        'total_chapters': len(chapter_data),
+        'project_word_count': project.total_word_count
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def create_new_chapter(request, project_id):
+    """Create a new chapter"""
+    project = get_object_or_404(Project, id=project_id, author=request.user)
+    
+    try:
+        title = request.POST.get('title', 'Untitled Chapter')
+        
+        # Get the next order number safely
+        with transaction.atomic():
+            max_order = Chapter.objects.filter(project=project).aggregate(
+                max_order=models.Max('order')
+            )['max_order']
+            
+            next_order = (max_order or -1) + 1
+            
+            chapter = Chapter.objects.create(
+                title=title,
+                content='',
+                project=project,
+                order=next_order,
+                last_edited_by=request.user
+            )
+        
+        return JsonResponse({
+            'status': 'success',
+            'chapter': {
+                'id': chapter.id,
+                'title': chapter.title,
+                'order': chapter.order,
+                'word_count': chapter.word_count
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_chapter(request, project_id, chapter_id):
+    """Delete a chapter and reorder remaining chapters"""
+    project = get_object_or_404(Project, id=project_id, author=request.user)
+    chapter = get_object_or_404(Chapter, id=chapter_id, project=project)
+    
+    try:
+        deleted_order = chapter.order
+        chapter.delete()
+        
+        # Reorder remaining chapters
+        Chapter.objects.filter(
+            project=project,
+            order__gt=deleted_order
+        ).update(order=F('order') - 1)
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+

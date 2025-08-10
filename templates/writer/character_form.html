@@ -11,10 +11,10 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
                     {% if project %}
-                        <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' project.pk %}">{{ project.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' project.pk %}" style="color: #ffffff !important;">{{ project.title }}</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'writer:character_list' project.pk %}">Characters</a></li>
                     {% elif character %}
-                        <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' character.project.pk %}">{{ character.project.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' character.project.pk %}" style="color: #ffffff !important;">{{ character.project.title }}</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'writer:character_list' character.project.pk %}">Characters</a></li>
                     {% endif %}
                     <li class="breadcrumb-item active">{% if character %}Edit Character{% else %}Add Character{% endif %}</li>

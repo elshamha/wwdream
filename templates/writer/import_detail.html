@@ -4,6 +4,7 @@
 {% block title %}{{ imported_doc.title }} - Import Details - A Writer's Web Dream{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container-fluid p-0">
     <div class="import-detail-hero">
         <div class="container">
@@ -21,13 +22,16 @@
                         <div class="file-icon-large mb-3">
                             <i class="fas fa-file-{{ imported_doc.import_type }} fa-4x"></i>
                         </div>
-                        <h1 class="hero-title">{{ imported_doc.title }}</h1>
+                        <h1 class="hero-title" style="color: #ffffff !important;">{{ imported_doc.title }}</h1>
                         <p class="hero-subtitle">Imported {{ imported_doc.created_at|timesince }} ago</p>
                     </div>
                     <div class="col-lg-4 text-lg-end">
                         <div class="action-buttons">
-                            <button class="btn btn-primary btn-lg me-2" onclick="convertToProject()">
-                                <i class="fas fa-project-diagram me-2"></i>Convert to Project
+                            <button class="btn btn-success btn-lg me-2" onclick="convertToProject()">
+                                <i class="fas fa-plus me-2"></i>Create Project & Edit
+                            </button>
+                            <button class="btn btn-primary btn-lg me-2" onclick="showAddToProjectModal()">
+                                <i class="fas fa-folder-plus me-2"></i>Add to Project
                             </button>
                             <button class="btn btn-outline-light btn-lg" onclick="convertToDocument()">
                                 <i class="fas fa-file-alt me-2"></i>Convert to Document
@@ -46,7 +50,7 @@
                 <!-- Import Information Card -->
                 <div class="glass-card mb-4">
                     <div class="card-header-modern">
-                        <h3><i class="fas fa-info-circle text-info me-2"></i>Import Information</h3>
+                        <h3 style="color: #ffffff !important;"><i class="fas fa-info-circle text-info me-2"></i>Import Information</h3>
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-4">
@@ -74,7 +78,7 @@
                                     <label class="info-label">Target Project</label>
                                     <div class="info-value">
                                         {% if imported_doc.target_project %}
-                                            <a href="{% url 'writer:project_detail' imported_doc.target_project.pk %}" class="project-link">
+                                            <a href="{% url 'writer:project_detail' imported_doc.target_project.pk %}" class="project-link" style="color: #ffffff !important;">
                                                 <i class="fas fa-folder me-1"></i>{{ imported_doc.target_project.title }}
                                             </a>
                                         {% else %}
@@ -102,7 +106,7 @@
                 <!-- Content Preview Card -->
                 <div class="glass-card">
                     <div class="card-header-modern d-flex justify-content-between align-items-center">
-                        <h3><i class="fas fa-file-text text-success me-2"></i>Content Preview</h3>
+                        <h3 style="color: #ffffff !important;"><i class="fas fa-file-text text-success me-2"></i>Content Preview</h3>
                         <div class="btn-group">
                             <button class="btn btn-sm btn-outline-light" onclick="toggleContent()">
                                 <i class="fas fa-eye" id="toggleIcon"></i> <span id="toggleText">Show Full Content</span>
@@ -138,15 +142,13 @@
                                     </div>
                                     <div class="col-6 col-md-3">
                                         <div class="stat-item">
-                                            <div class="stat-number text-warning">~{{ imported_doc.word_count|default:0|floatformat:0 }}</div>
+                                            <div class="stat-number text-warning">{{ imported_doc.word_count|default:0 }}</div>
                                             <div class="stat-label">Word Count</div>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-3">
                                         <div class="stat-item">
-                                            <div class="stat-number text-success">{{ imported_doc.extracted_content|linebreaksbr|striptags|split:"
-
-"|length }}</div>
+                                            <div class="stat-number text-success">{{ imported_doc.paragraph_count|default:0 }}</div>
                                             <div class="stat-label">Paragraphs</div>
                                         </div>
                                     </div>
@@ -155,7 +157,7 @@
                         {% else %}
                             <div class="empty-state">
                                 <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                                <h4>No content extracted</h4>
+                                <h4 style="color: #ffffff !important;">No content extracted</h4>
                                 <p class="text-muted">The document may be empty or in an unsupported format.</p>
                             </div>
                         {% endif %}
@@ -168,7 +170,7 @@
                 <!-- Quick Actions -->
                 <div class="glass-card mb-4">
                     <div class="card-header-modern">
-                        <h5><i class="fas fa-bolt text-warning me-2"></i>Quick Actions</h5>
+                        <h5 style="color: #ffffff !important;"><i class="fas fa-bolt text-warning me-2"></i>Quick Actions</h5>
                     </div>
                     <div class="card-body p-3">
                         <div class="d-grid gap-2">
@@ -195,14 +197,14 @@
                 <!-- File Details -->
                 <div class="glass-card mb-4">
                     <div class="card-header-modern">
-                        <h5><i class="fas fa-file text-secondary me-2"></i>File Details</h5>
+                        <h5 style="color: #ffffff !important;"><i class="fas fa-file text-secondary me-2"></i>File Details</h5>
                     </div>
                     <div class="card-body p-3">
                         <div class="file-preview text-center mb-3">
                             <div class="file-icon-container">
                                 <i class="fas fa-file-{{ imported_doc.import_type }} fa-3x"></i>
                             </div>
-                            <h6 class="mt-2">{{ imported_doc.original_file.name|slice:"-50:" }}</h6>
+                            <h6 class="mt-2" style="color: #ffffff !important;">{{ imported_doc.original_file.name|slice:"-50:" }}</h6>
                             <p class="text-muted small">{{ imported_doc.file_size|filesizeformat }}</p>
                         </div>
                     </div>
@@ -590,18 +592,38 @@ function copyContent() {
 
 // Convert imported document to project
 function convertToProject() {
-    if (confirm('Are you sure you want to convert this imported document to a new project? This will analyze chapters and create a structured project.')) {
+    if (confirm('Are you sure you want to convert this imported document to a new project? This will create a structured project and open it in the editor.')) {
         // Show loading state
         const btn = event.target.closest('button');
         const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Converting...';
         btn.disabled = true;
         
-        // For now, show a success message and redirect to projects
-        setTimeout(() => {
-            alert('Document conversion feature will be implemented soon! Redirecting to projects...');
-            window.location.href = '/writer/projects/';
-        }, 1500);
+        // Make AJAX request to convert the document
+        fetch('{% url "writer:convert_import_to_project" imported_doc.pk %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Redirect to the editor with the new project
+                window.location.href = data.redirect_url;
+            } else {
+                alert('Error converting document: ' + (data.message || 'Unknown error'));
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error converting document. Please try again.');
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        });
     }
 }
 
@@ -755,5 +777,122 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 });
+
+// Add to existing project functionality
+function showAddToProjectModal() {
+    // Create modal HTML
+    const modalHtml = `
+        <div class="modal fade" id="addToProjectModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content glass-card">
+                    <div class="modal-header">
+                        <h5 class="modal-title" style="color: #ffffff;">Add to Existing Project</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-light mb-3">Select a project to add this content as a new chapter:</p>
+                        <div id="projectsList" class="mb-3">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin"></i> Loading projects...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="addToProjectBtn" disabled>Add to Project</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('addToProjectModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Load user's projects
+    fetch('/writer/projects/api/list/')
+        .then(response => response.json())
+        .then(data => {
+            const projectsList = document.getElementById('projectsList');
+            if (data.projects && data.projects.length > 0) {
+                let html = '';
+                data.projects.forEach(project => {
+                    html += `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="selectedProject" 
+                                   id="project${project.id}" value="${project.id}">
+                            <label class="form-check-label text-light" for="project${project.id}">
+                                ${project.title}
+                            </label>
+                        </div>
+                    `;
+                });
+                projectsList.innerHTML = html;
+                
+                // Enable add button when project is selected
+                document.querySelectorAll('input[name="selectedProject"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        document.getElementById('addToProjectBtn').disabled = false;
+                    });
+                });
+                
+                // Handle add to project
+                document.getElementById('addToProjectBtn').addEventListener('click', addToSelectedProject);
+            } else {
+                projectsList.innerHTML = '<p class="text-muted">No projects found. Create a project first.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading projects:', error);
+            document.getElementById('projectsList').innerHTML = '<p class="text-danger">Error loading projects.</p>';
+        });
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addToProjectModal'));
+    modal.show();
+}
+
+function addToSelectedProject() {
+    const selectedProject = document.querySelector('input[name="selectedProject"]:checked');
+    if (!selectedProject) return;
+    
+    const projectId = selectedProject.value;
+    const btn = document.getElementById('addToProjectBtn');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    btn.disabled = true;
+    
+    // Make request to add content to project
+    fetch(`/writer/import/{{ imported_doc.pk }}/add-to-project/${projectId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            bootstrap.Modal.getInstance(document.getElementById('addToProjectModal')).hide();
+            window.location.href = data.redirect_url;
+        } else {
+            alert('Error adding to project: ' + (data.message || 'Unknown error'));
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding to project. Please try again.');
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    });
+}
 </script>
 {% endblock %}
