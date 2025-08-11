@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
-from ckeditor.fields import RichTextField
 import json
 
 
@@ -171,7 +170,7 @@ class ImportedDocument(models.Model):
     original_file = models.FileField(upload_to='imports/', blank=True, null=True)
     google_docs_url = models.URLField(blank=True, null=True, help_text="Google Docs sharing URL")
     import_type = models.CharField(max_length=15, choices=IMPORT_TYPES)
-    extracted_content = RichTextField(blank=True, null=True)
+    extracted_content = models.TextField(blank=True, null=True)
     import_date = models.DateTimeField(auto_now_add=True)
     file_size = models.IntegerField(default=0)
     word_count = models.IntegerField(default=0)
@@ -202,7 +201,7 @@ class ImportedDocument(models.Model):
 class Chapter(models.Model):
     """A chapter within a project"""
     title = models.CharField(max_length=200, default="Untitled Chapter")
-    content = RichTextField(blank=True, null=True)
+    content = models.TextField(blank=True, null=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='chapters')
     order = models.IntegerField(default=0, help_text="Order within the project")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -247,7 +246,7 @@ class Chapter(models.Model):
 
 class Document(models.Model):
     title = models.CharField(max_length=200, default="Untitled Document")
-    content = RichTextField(blank=True, null=True)
+    content = models.TextField(blank=True, null=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
     project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='documents')
     created_at = models.DateTimeField(auto_now_add=True)

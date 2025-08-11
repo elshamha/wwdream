@@ -31,7 +31,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home_redirect, name='home'),
     path('writer/', include('writer.urls')),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('accounts/signup/', include('django.contrib.auth.urls')),
