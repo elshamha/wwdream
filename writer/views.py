@@ -1,3 +1,13 @@
+from django.http import HttpResponseRedirect, HttpResponse
+# Editor shortcut view
+def editor_shortcut(request):
+    from .models import Project
+    project = Project.objects.order_by('id').first()
+    if project:
+        return HttpResponseRedirect(reverse('writer:chapter_editor', args=[project.pk]))
+    else:
+        return HttpResponse('<div style="text-align:center;margin-top:3em;font-size:1.5em;">No projects found. Please create a project first.</div>')
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin

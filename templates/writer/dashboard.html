@@ -770,44 +770,43 @@ body {
                     {# View All link removed #}
                 </div>
                 <div class="card-body">
+                    <!-- Multi-Shelf Bookshelf -->
                     {% if user_projects %}
-                        <!-- Multi-Shelf Bookshelf -->
-                        <div class="bookshelf-container">
-                            {% for shelf_projects in shelves %}
-                            <div class="bookshelf mb-4">
-                                <div class="bookshelf-books">
-                                    {% for project in shelf_projects %}
-                                    <div class="book" 
-                                         onclick="showBookPopup('{{ project.title|escapejs }}', '{{ project.description|default:"A captivating story waiting to be told..."|escapejs }}', '{{ project.genre|default:"Fiction"|escapejs }}', {% if project.chapters.count > 0 %}{{ project.chapters.first.word_count|default:0 }}{% else %}0{% endif %}, '{{ project.updated_at|date:"M j, Y" }}', '{% url 'writer:chapter_editor' project.pk %}')">
-                                        <div class="book-spine">
-                                            <div class="book-cover-title">
-                                                {{ project.title|truncatechars:15 }}
-                                            </div>
+                    <div class="bookshelf-container">
+                        {% for shelf_projects in shelves %}
+                        <div class="bookshelf mb-4">
+                            <div class="bookshelf-books">
+                                {% for project in shelf_projects %}
+                                <div class="book" 
+                                     onclick="showBookPopup('{{ project.title|escapejs }}', '{{ project.description|default:"A captivating story waiting to be told..."|escapejs }}', '{{ project.genre|default:"Fiction"|escapejs }}', {% if project.chapters.count > 0 %}{{ project.chapters.first.word_count|default:0 }}{% else %}0{% endif %}, '{{ project.updated_at|date:"M j, Y" }}', '{% url 'writer:chapter_editor' project.pk %}')">
+                                    <div class="book-spine">
+                                        <div class="book-cover-title">
+                                            {{ project.title|truncatechars:15 }}
                                         </div>
                                     </div>
-                                    {% endfor %}
-                                    
-                                    <!-- Fill remaining slots with empty books if less than 7 -->
-                                    {% for i in "1234567"|make_list %}
-                                        {% if forloop.counter0 >= shelf_projects|length %}
-                                        <div class="book empty-book">
-                                            <div class="book-spine empty-spine"></div>
-                                        </div>
-                                        {% endif %}
-                                    {% endfor %}
                                 </div>
-                                
-                                <!-- Bookshelf base -->
-                                <div class="bookshelf-base"></div>
+                                {% endfor %}
+                                <!-- Fill remaining slots with empty books if less than 7 -->
+                                {% for i in "1234567"|make_list %}
+                                    {% if forloop.counter0 >= shelf_projects|length %}
+                                    <div class="book empty-book">
+                                        <div class="book-spine empty-spine"></div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
                             </div>
-                            {% endfor %}
+                            <!-- Bookshelf base -->
+                            <div class="bookshelf-base"></div>
                         </div>
-                    {% else %}
-                        <div class="empty-library-state">
-                            <i class="fas fa-book-open ethereal-icon-glow mb-3" style="font-size: 3rem; color: #ffffff; opacity: 0.3;"></i>
-                            <h6 style="color: #ffffff; opacity: 0.7;">Your library is waiting for its first book</h6>
-                            <p style="color: #ffffff; opacity: 0.5; font-size: 0.9rem;">Create your first project or import a document to get started</p>
-                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if not user_projects %}
+                    <div class="empty-library-state">
+                        <i class="fas fa-book-open ethereal-icon-glow mb-3" style="font-size: 3rem; color: #ffffff; opacity: 0.3;"></i>
+                        <h6 style="color: #ffffff; opacity: 0.7;">Your library is waiting for its first book</h6>
+                        <p style="color: #ffffff; opacity: 0.5; font-size: 0.9rem;">Create your first project or import a document to get started</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>

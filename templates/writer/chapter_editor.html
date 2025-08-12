@@ -1415,7 +1415,11 @@ body.dark-theme .toolbar-btn:hover {
             <div class="editor-container wordpad-container">
                 <form method="post" id="chapter-form">
                     {% csrf_token %}
-                    
+                    <!-- Title Input -->
+                    <div class="mb-3">
+                        <label for="chapter-title" class="form-label">Title</label>
+                        <input type="text" id="chapter-title" name="title" class="form-control" placeholder="Enter chapter title..." value="{{ current_chapter.title|default:'' }}">
+                    </div>
                     <!-- Editor Toolbar -->
                     <div class="editor-toolbar">
                         <button type="button" class="btn btn-ethereal btn-sm" onclick="toggleEditorTheme()" id="theme-toggle">

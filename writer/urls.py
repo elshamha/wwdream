@@ -4,6 +4,8 @@ from . import views
 app_name = 'writer'
 
 urlpatterns = [
+    # Editor shortcut
+    path('editor/', views.editor_shortcut, name='editor_shortcut'),
     # Dashboard
     path('', views.dashboard, name='dashboard'),
     
