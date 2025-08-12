@@ -2424,7 +2424,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // loadChapterList(); // Removed - no sidebar to populate
     
     // Get current chapter ID from URL or form
-    currentChapterId = {{ chapter.id|default:'null' }};
+    currentChapterId = {{ current_chapter.id|default:'null' }};
     
     // Focus on content area
     const contentArea = document.getElementById('id_content');
