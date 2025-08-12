@@ -713,29 +713,11 @@
                             <i class="fas fa-folder-open me-1"></i>Projects
                         </a>
                     </li>
-                    <li class="nav-item d-lg-none">
-                        <a class="nav-link" href="{% url 'writer:personal_library' %}">
-                            <i class="fas fa-book-open me-1"></i>Library
-                        </a>
-                    </li>
-                    <li class="nav-item d-lg-none">
-                        {% if recent_projects %}
-                            <a class="nav-link" href="{% url 'writer:chapter_editor' recent_projects.0.pk %}">
-                                <i class="fas fa-feather-alt me-1"></i>Editor
-                            </a>
-                        {% else %}
-                            <a class="nav-link" href="{% url 'writer:project_create' %}">
-                                <i class="fas fa-feather-alt me-1"></i>Editor
-                            </a>
-                        {% endif %}
-                    </li>
+                    {# Library link removed from mobile nav #}
+                    <!-- Editor link removed from mobile nav -->
                     
                     <!-- Desktop dropdowns -->
-                    <li class="nav-item d-none d-lg-block">
-                        <a class="nav-link" href="{% url 'writer:personal_library' %}">
-                            <i class="fas fa-book-open me-1"></i>My Library
-                        </a>
-                    </li>
+                    {# My Library link removed from desktop nav #}
                     <li class="nav-item dropdown d-none d-lg-block">
                         <a class="nav-link dropdown-toggle" href="#" id="projectsDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-folder-open me-1"></i>Projects
@@ -744,23 +726,17 @@
                             <li><a class="dropdown-item" href="{% url 'writer:project_list' %}">
                                 <i class="fas fa-list me-2"></i>All Projects
                             </a></li>
-                            <li><a class="dropdown-item" href="{% url 'writer:project_create' %}">
-                                <i class="fas fa-plus me-2"></i>New Project
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'writer:document_list' %}">
-                                <i class="fas fa-file-alt me-2"></i>All Documents
-                            </a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown d-none d-lg-block">
                         <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-magic me-1"></i>Tools
+                            <i class="fas fa-magic me-1"></i>Coming Soon
                         </a>
                         <ul class="dropdown-menu dropdown-menu-modern">
-                            <li><a class="dropdown-item" href="#" onclick="showWritingSettings()">
-                                <i class="fas fa-cog me-2"></i>Writing Preferences
+                            <li><a class="dropdown-item" href="{% url 'writer:document_list' %}">
+                                <i class="fas fa-file-alt me-2"></i>All Documents
                             </a></li>
+                            <!-- Coming soon: new tools will appear here -->
                         </ul>
                     </li>
                     <li class="nav-item dropdown d-none d-lg-block">
@@ -794,9 +770,7 @@
                                 <i class="fas fa-user-circle me-2"></i>{{ user.username }}
                             </h6></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'writer:personal_library' %}">
-                                <i class="fas fa-book-open me-2"></i>My Library
-                            </a></li>
+                            {# My Library removed from user dropdown #}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
                                 <i class="fas fa-sign-out-alt me-2"></i>Logout

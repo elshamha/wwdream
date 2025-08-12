@@ -57,37 +57,33 @@ def extract_from_txt(file_path: str) -> str:
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
-        
         # Convert plain text to HTML with paragraph breaks
         content = content.replace('\r\n', '\n').replace('\r', '\n')
         paragraphs = content.split('\n\n')
         html_content = ''
-        
         for paragraph in paragraphs:
             paragraph = paragraph.strip()
             if paragraph:
                 # Preserve line breaks within paragraphs
                 paragraph = paragraph.replace('\n', '<br>')
                 html_content += f'<p>{paragraph}</p>\n'
-        
-        return html_content if html_content else f'<p>{content.replace("\n", "<br>")}</p>'
-        
+        content_with_br = content.replace("\n", "<br>")
+        return html_content if html_content else f'<p>{content_with_br}</p>'
     except UnicodeDecodeError:
         # Try with different encoding
         with open(file_path, 'r', encoding='latin-1') as file:
             content = file.read()
-            # Convert to HTML format
-            content = content.replace('\r\n', '\n').replace('\r', '\n')
-            paragraphs = content.split('\n\n')
-            html_content = ''
-            
-            for paragraph in paragraphs:
-                paragraph = paragraph.strip()
-                if paragraph:
-                    paragraph = paragraph.replace('\n', '<br>')
-                    html_content += f'<p>{paragraph}</p>\n'
-            
-            return html_content if html_content else f'<p>{content.replace("\n", "<br>")}</p>'
+        # Convert to HTML format
+        content = content.replace('\r\n', '\n').replace('\r', '\n')
+        paragraphs = content.split('\n\n')
+        html_content = ''
+        for paragraph in paragraphs:
+            paragraph = paragraph.strip()
+            if paragraph:
+                paragraph = paragraph.replace('\n', '<br>')
+                html_content += f'<p>{paragraph}</p>\n'
+        content_with_br = content.replace("\n", "<br>")
+        return html_content if html_content else f'<p>{content_with_br}</p>'
 
 def extract_from_html(file_path: str) -> str:
     """Extract text from HTML file while preserving structure."""

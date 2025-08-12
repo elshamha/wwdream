@@ -1421,7 +1421,10 @@ body.dark-theme .toolbar-btn:hover {
                         <button type="button" class="btn btn-ethereal btn-sm" onclick="toggleEditorTheme()" id="theme-toggle">
                             <i class="fas fa-moon me-1"></i>Dark Mode
                         </button>
-                        
+                        <!-- Save Button -->
+                        <button type="button" class="btn btn-success-ethereal btn-sm ms-2" onclick="saveChapter(false)">
+                            <i class="fas fa-save me-1"></i>Save
+                        </button>
                         <!-- Collaboration Toggle -->
                         <div class="collaboration-controls">
                             <button type="button" class="btn btn-outline-light btn-sm" id="private-btn" onclick="setCollaborationMode('private')">
@@ -1431,7 +1434,6 @@ body.dark-theme .toolbar-btn:hover {
                                 <i class="fas fa-users me-1"></i>Collaborate
                             </button>
                         </div>
-                        
                         <!-- Collaboration Link (shown when in collaborate mode) -->
                         <div class="collaboration-link" id="collaboration-link" style="display: none;">
                             <input type="text" class="form-control form-control-sm" id="share-link" readonly>
@@ -1439,7 +1441,6 @@ body.dark-theme .toolbar-btn:hover {
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
-                        
                         <div class="save-status" id="save-status">
                             <span style="color: rgba(255, 255, 255, 0.7);">Ready</span>
                         </div>

@@ -749,12 +749,10 @@ body {
             <h1 class="hero-title">Welcome back, {{ user.first_name|default:user.username }}!</h1>
             <p class="hero-subtitle">Ready to create something amazing today?</p>
             <div class="mt-4">
-                <a href="{% url 'writer:project_create' %}" class="action-button primary">
-                    <i class="fas fa-plus me-2"></i>New Project
+                <a href="{% url 'writer:project_list' %}" class="action-button primary">
+                    <i class="fas fa-folder-open me-2"></i>My Writing Projects
                 </a>
-                <a href="{% url 'writer:import_document' %}" class="action-button">
-                    <i class="fas fa-upload me-2"></i>Import Document
-                </a>
+                <!-- Import Document link removed -->
             </div>
         </div>
     </div>
@@ -769,9 +767,7 @@ body {
                     <h6 style="color: #ffffff !important;">
                         <i class="fas fa-book-open me-2 ethereal-icon-glow"></i>My Personal Library
                     </h6>
-                    <a href="{% url 'writer:personal_library' %}" class="btn btn-sm ethereal-btn ethereal-btn-outline-primary">
-                        <i class="fas fa-expand-arrows-alt me-1"></i>View All
-                    </a>
+                    {# View All link removed #}
                 </div>
                 <div class="card-body">
                     {% if user_projects %}
@@ -839,10 +835,7 @@ body {
                             <i class="fas fa-users"></i>
                             <span>Users</span>
                         </a>
-                        <a href="/admin/writer/importeddocument/" class="admin-tool-button" target="_blank" title="Manage Imports">
-                            <i class="fas fa-file-import"></i>
-                            <span>Imports</span>
-                        </a>
+                        <!-- Imports link removed from Admin Tools -->
                     </div>
                 </div>
             </div>

@@ -380,8 +380,10 @@ class ChapterDeleteView(LoginRequiredMixin, DeleteView):
 @login_required
 def chapter_editor(request, project_id):
     """Integrated chapter management and editor view"""
-    
-    project = get_object_or_404(Project, id=project_id, author=request.user)
+    # Allow both author and collaborators
+    project = get_object_or_404(Project, id=project_id)
+    if not (project.author == request.user or project.collaborators.filter(id=request.user.id).exists()):
+        return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
     all_chapters = Chapter.objects.filter(project=project).order_by('order')
     
     # Get the current chapter being edited (default to first or create one)
