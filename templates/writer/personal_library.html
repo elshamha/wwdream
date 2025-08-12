@@ -65,9 +65,11 @@
                     <h3 style="color: #ffffff !important;">
                         <i class="fas fa-folder-open ethereal-icon-glow me-2"></i> 
                         My Magical Projects
-                        <a href="{% url 'writer:chapter_editor' 1 %}" class="btn btn-primary btn-sm ms-3" style="vertical-align: middle;">
+                        {% if projects %}
+                        <a href="{% url 'writer:chapter_editor' projects.0.pk %}" class="btn btn-primary btn-sm ms-3" style="vertical-align: middle;">
                             <i class="fas fa-pen-nib"></i> Go to Editor
                         </a>
+                        {% endif %}
                         <a href="{% url 'writer:project_list' %}" class="btn btn-outline-light btn-sm ms-2" style="vertical-align: middle;">
                             <i class="fas fa-list"></i> All Writing Projects
                         </a>

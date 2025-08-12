@@ -77,7 +77,7 @@ body {
     font-family: 'Times New Roman', Times, serif !important;
     font-size: 12pt !important;
     line-height: 2.0; /* MLA double spacing */
-    padding: 1in; /* MLA 1-inch margins */
+    padding: 1.5rem; /* Reduced padding for cleaner look */
     min-height: 60vh;
     width: 100%;
     max-width: 8.5in; /* Standard letter size */
@@ -370,7 +370,10 @@ body.dark-theme .toolbar-btn:hover {
     backdrop-filter: blur(15px);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    display: flex;
+        /* Center the toolbar */
+        display: flex;
+        justify-content: center;
+        align-items: center;
     flex-wrap: wrap;
     gap: 0.75rem;
     align-items: center;
@@ -1418,7 +1421,7 @@ body.dark-theme .toolbar-btn:hover {
                     <!-- Title Input -->
                     <div class="mb-3">
                         <label for="chapter-title" class="form-label">Title</label>
-                        <input type="text" id="chapter-title" name="title" class="form-control" placeholder="Enter chapter title..." value="{{ current_chapter.title|default:'' }}">
+                        <input type="text" id="chapter-title" name="title" class="form-control" placeholder="Enter chapter title..." value="{{ current_chapter.title|default:'' }}" style="color: #222; background: #fff;">
                     </div>
                     <!-- Editor Toolbar -->
                     <div class="editor-toolbar">
@@ -1636,9 +1639,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setupDragAndDrop();
     loadThemePreference();
     
-    // Focus on content area
+    // Only focus on content area if not editing the title
     const contentArea = document.getElementById('id_content');
-    if (contentArea && !contentArea.value) {
+    const titleInput = document.getElementById('chapter-title');
+    if (contentArea && !contentArea.value && document.activeElement !== titleInput) {
         contentArea.focus();
     }
 });
