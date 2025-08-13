@@ -1,225 +1,245 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Chapter Editor - Writer's Web Dream{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">A Writer's Web Processor</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="text" id="ckeditor-title" name="title" class="form-control mb-3" placeholder="Chapter Title" value="{{ chapter.title|default:'' }}" required>
 
-{% block extra_css %}
+                        <div id="ckeditor-pagination-container" style="width:100%;">
+                            <textarea id="ckeditor-content" name="content" style="min-height:600px;height:600px;width:100%;resize:vertical;">{{ chapter.content|default:'' }}</textarea>
+                            <div class="d-flex align-items-center mt-2">
+                                <button type="button" class="btn btn-secondary btn-sm me-2" id="prev-page-btn" onclick="goToPrevPage()">Previous</button>
+                                <span id="page-indicator" style="font-size:1em;"></span>
+                                <button type="button" class="btn btn-secondary btn-sm ms-2" id="next-page-btn" onclick="goToNextPage()">Next</button>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary" onclick="saveCKEditor()">Save</button>
+                            <button type="button" class="btn btn-info" onclick="saveCKEditorToLibrary()">Save to Library</button>
+                            <button type="button" class="btn btn-warning" onclick="aiHelpCreativity()">
+                                <i class="fas fa-magic me-1"></i>AI Help
+                            </button>
+                            <span class="ms-auto align-self-center" id="ckeditor-autosave-status" style="font-size:0.95em;color:#888;">Autosave: Enabled</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div id="ckeditor-save-status" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+
+<!-- CKEditor 5 Classic CDN -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+<script>
+// Pagination logic for CKEditor (500 words per page, last char a period)
+let paginatedContent = [];
+let currentPage = 0;
+function splitContentToPages(text) {
+    // Remove HTML tags for word count, but keep original for display
+    const plain = text.replace(/<[^>]+>/g, ' ');
+    const words = plain.match(/\b\w+\b/g) || [];
+    let pages = [];
+    let wordIdx = 0;
+    let htmlIdx = 0;
+    let lastPeriodIdx = 0;
+    let wordCount = 0;
+    let lastPageEnd = 0;
+    while (wordIdx < words.length) {
+        wordCount = 0;
+        let pageEnd = lastPageEnd;
+        let periodFound = false;
+        // Find 500th word
+        for (let i = 0; i < 500 && wordIdx + i < words.length; i++) {
+            wordCount++;
+        }
+        // Find the index of the 500th word in the plain text
+        let regex = new RegExp(`((?:\\b\\w+\\b\\W*){${wordCount}})`);
+        let match = plain.slice(lastPageEnd).match(regex);
+        if (match) {
+            pageEnd = lastPageEnd + match[1].length;
+        } else {
+            pageEnd = plain.length;
+        }
+        // Ensure last character is a period
+        let pageText = plain.slice(lastPageEnd, pageEnd);
+        let lastPeriod = pageText.lastIndexOf('.');
+        if (lastPeriod !== -1 && lastPeriod !== pageText.length - 1) {
+            pageEnd = lastPageEnd + lastPeriod + 1;
+        }
+        pages.push(text.slice(lastPageEnd, pageEnd));
+        lastPageEnd = pageEnd;
+        wordIdx += wordCount;
+        if (lastPageEnd >= plain.length) break;
+    }
+    return pages;
+}
+function updatePagination() {
+    const content = ckeditorInstance.getData();
+    paginatedContent = splitContentToPages(content);
+    if (currentPage >= paginatedContent.length) currentPage = paginatedContent.length - 1;
+    if (currentPage < 0) currentPage = 0;
+    ckeditorInstance.setData(paginatedContent[currentPage] || '');
+    document.getElementById('page-indicator').textContent = `Page ${currentPage + 1} of ${paginatedContent.length}`;
+    document.getElementById('prev-page-btn').disabled = currentPage === 0;
+    document.getElementById('next-page-btn').disabled = currentPage === paginatedContent.length - 1;
+}
+function goToPrevPage() {
+    if (currentPage > 0) {
+        currentPage--;
+        updatePagination();
+    }
+}
+function goToNextPage() {
+    if (currentPage < paginatedContent.length - 1) {
+        currentPage++;
+        updatePagination();
+    }
+}
+// Hook pagination to CKEditor changes
+function setupCKEditorPagination() {
+    updatePagination();
+    ckeditorInstance.model.document.on('change:data', () => {
+        updatePagination();
+    });
+}
+// Wait for CKEditor to be ready, then setup pagination
+ClassicEditor.create(document.querySelector('#ckeditor-content'), {
+    toolbar: [],
+    heading: {
+        options: []
+    },
+    removePlugins: [
+        'Heading',
+        'HeadingButtonsUI',
+        'Title',
+        'BlockToolbar',
+        'BalloonToolbar',
+        'ContextMenu',
+        'List',
+        'ListProperties',
+        'Table',
+        'TableToolbar',
+        'TableProperties',
+        'TableCellProperties',
+        'TableColumnResize',
+        'TableCaption',
+        'TableCellSelection',
+        'TableSelection',
+        'TableKeyboard',
+        'TableMouse',
+        'TableUtils',
+        'TableWalker',
+        'TableClipboard',
+        'TableEditing',
+        'TableUI',
+    ],
+}).then(editor => {
+    // Make sure the editor container stretches to full width/height
+    editor.ui.view.editable.element.style.minHeight = '600px';
+    editor.ui.view.editable.element.style.height = '600px';
+    editor.ui.view.editable.element.style.width = '100%';
+    editor.ui.view.editable.element.style.resize = 'vertical';
+    editor.ui.view.editable.element.style.color = '#000';
+    editor.ui.view.editable.element.style.background = '#fff';
+    editor.ui.view.editable.element.style.opacity = '1';
+    editor.ui.view.editable.element.style.filter = 'none';
+    // Remove the textarea from the DOM after CKEditor is initialized
+    const ta = document.getElementById('ckeditor-content');
+    if (ta) ta.parentNode.removeChild(ta);
+    // ...existing code...
+function aiHelpCreativity() {
+    // Placeholder for AI creativity integration
+    alert('AI Help: This will provide creative suggestions or completions. (Integrate with backend AI API)');
+}
+</script>
+<script>
+let ckeditorInstance;
+ClassicEditor.create(document.querySelector('#ckeditor-content'), {
+    toolbar: [],
+    removePlugins: ['Heading'],
+}).then(editor => {
+    ckeditorInstance = editor;
+    editor.model.document.on('change:data', () => {
+        clearTimeout(window.ckAutoSaveTimeout);
+        window.ckAutoSaveTimeout = setTimeout(function() {
+            saveCKEditor(false);
+            document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Just now';
+            setTimeout(() => {
+                document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Enabled';
+            }, 2000);
+        }, 2000);
+    });
+}).catch(error => { console.error(error); });
+
+function saveCKEditor(showMessage=true) {
+    const title = document.getElementById('ckeditor-title').value;
+    const content = ckeditorInstance.getData();
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            action: 'save',
+            title: title,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (showMessage) {
+            showCKSaveStatus(data.status === 'success' ? 'Saved!' : (data.message || 'Save failed.'), data.status);
+        }
+    })
+    .catch(() => {
+        if (showMessage) showCKSaveStatus('Error saving.', 'danger');
+    });
+}
+
+function saveCKEditorToLibrary() {
+    const title = document.getElementById('ckeditor-title').value;
+    const content = ckeditorInstance.getData();
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            action: 'save_to_library',
+            title: title,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showCKSaveStatus(data.status === 'success' ? 'Saved to library!' : (data.message || 'Save failed.'), data.status);
+    })
+    .catch(() => {
+        showCKSaveStatus('Error saving to library.', 'danger');
+    });
+}
+
+function showCKSaveStatus(message, status) {
+    const el = document.getElementById('ckeditor-save-status');
+    el.innerHTML = `<div class="alert alert-${status === 'success' ? 'success' : 'danger'}">${message}</div>`;
+    setTimeout(() => { el.innerHTML = ''; }, 3000);
+}
+
+</script>
 <style>
-/* Reduce page margins for more writing space */
-body {
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-/* Chapter Editor Container Override */
-.wordpad-container {
-    background: #ffffff !important;
-    color: #000000 !important;
-}
-
-.wordpad-container *, 
-.wordpad-container h1, 
-.wordpad-container h2, 
-.wordpad-container h3, 
-.wordpad-container h4, 
-.wordpad-container h5, 
-.wordpad-container h6, 
-.wordpad-container p, 
-.wordpad-container span, 
-.wordpad-container div, 
-.wordpad-container label, 
-.wordpad-container small {
-    color: #333333 !important;
-}
-
-/* Chapter Editor Specific Styles */
-.editor-container {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(20px);
-    padding: 2rem;
-    margin: 1rem 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.editor-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    opacity: 0.02;
-    pointer-events: none;
-    border-radius: 20px;
-}
-
-.editor-header {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-}
-
-/* WordPad-Style Editor with MLA Standards */
-.wordpad-editor {
-    background: #ffffff !important;
-    color: #000000 !important;
-    border: 1px solid #c0c0c0;
-    border-radius: 2px;
-    font-family: 'Times New Roman', Times, serif !important;
-    font-size: 12pt !important;
-    line-height: 2.0; /* MLA double spacing */
-    padding: 1.5rem; /* Reduced padding for cleaner look */
-    min-height: 60vh;
-    width: 100%;
-    max-width: 8.5in; /* Standard letter size */
-    margin: 0 auto;
-    text-align: left;
-    text-indent: 0.5in; /* MLA paragraph indent */
-    transition: all 0.3s ease;
-    overflow-y: auto;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-    outline: none;
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.05);
-}
-
-/* Override global white text for WordPad editor */
-.wordpad-editor, 
-.wordpad-editor *, 
-.wordpad-editor h1, 
-.wordpad-editor h2, 
-.wordpad-editor h3, 
-.wordpad-editor h4, 
-.wordpad-editor h5, 
-.wordpad-editor h6, 
-.wordpad-editor p, 
-.wordpad-editor span, 
-.wordpad-editor div, 
-.wordpad-editor a, 
-.wordpad-editor li, 
-.wordpad-editor td, 
-.wordpad-editor th, 
-.wordpad-editor label, 
-.wordpad-editor small, 
-.wordpad-editor strong, 
-.wordpad-editor em {
-    color: #000000 !important;
-    font-family: 'Times New Roman', Times, serif !important;
-}
-
-/* Force clean styling for any pasted content */
-.wordpad-editor [style*="color"],
-.wordpad-editor [style*="background"],
-.wordpad-editor [style*="font"] {
-    color: #000000 !important;
-    background: transparent !important;
-    font-family: 'Times New Roman', Times, serif !important;
-}
-
-.wordpad-editor:focus {
-    border-color: #0078d4;
-    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3), inset 1px 1px 2px rgba(0,0,0,0.1);
-}
-
-.wordpad-editor[data-placeholder]:empty:before {
-    content: attr(data-placeholder);
-    color: #999999;
-    font-style: italic;
-    pointer-events: none;
-}
-
-/* MLA Typography Styles */
-.wordpad-editor h1 {
-    font-size: 12pt; /* MLA: Same size as body text */
-    font-weight: bold;
-    text-align: center;
-    margin: 0 0 12pt 0;
-    color: #000000;
-    text-indent: 0; /* No indent for titles */
-}
-
-.wordpad-editor h2 {
-    font-size: 12pt; /* MLA: Same size as body text */
-    font-weight: bold;
-    margin: 12pt 0 0 0;
-    color: #000000;
-    text-indent: 0; /* No indent for headings */
-}
-
-.wordpad-editor h3 {
-    font-size: 12pt; /* MLA: Same size as body text */
-    font-weight: bold;
-    margin: 12pt 0 0 0;
-    color: #000000;
-    text-indent: 0; /* No indent for headings */
-}
-
-.wordpad-editor h4 {
-    font-size: 12pt; /* MLA: Same size as body text */
-    font-weight: bold;
-    margin: 12pt 0 0 0;
-    color: #000000;
-    text-indent: 0; /* No indent for headings */
-}
-
-.wordpad-editor p {
-    margin: 0; /* MLA: No extra spacing between paragraphs */
-    text-indent: 0.5in; /* MLA: First line indent */
-    color: #000000;
-}
-
-/* First paragraph or paragraph after heading - no indent */
-.wordpad-editor h1 + p,
-.wordpad-editor h2 + p,
-.wordpad-editor h3 + p,
-.wordpad-editor h4 + p,
-.wordpad-editor p:first-child {
-    text-indent: 0;
-}
-    color: #000000;
-}
-
-.wordpad-editor strong, .wordpad-editor b {
-    font-weight: bold;
-}
-
-.wordpad-editor em, .wordpad-editor i {
-    font-style: italic;
-}
-
-.wordpad-editor u {
-    text-decoration: underline;
-}
-
-/* Dark theme for WordPad editor */
-.wordpad-editor.dark-theme {
-    background: #2d2d2d !important;
-    color: #ffffff !important;
-    border-color: #555555;
-}
-
-.wordpad-editor.dark-theme:focus {
-    border-color: #4facfe;
-    box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.3), inset 1px 1px 2px rgba(0,0,0,0.3);
-}
-
-.wordpad-editor.dark-theme[data-placeholder]:empty:before {
-    color: #cccccc;
-}
-
-/* Override all text elements in dark theme */
-.wordpad-editor.dark-theme,
-.wordpad-editor.dark-theme *,
-.wordpad-editor.dark-theme h1,
 .wordpad-editor.dark-theme h2,
 .wordpad-editor.dark-theme h3,
 .wordpad-editor.dark-theme h4,
@@ -1387,119 +1407,8 @@ body.dark-theme .toolbar-btn:hover {
         margin: 0 0.25rem;
     }
 }
-</style>
-{% endblock %}
-
-{% block content %}
-<!-- Chapter Sidebar Manager -->
-<div class="chapter-sidebar" id="chapter-sidebar">
-    <div class="chapter-sidebar-header">
-        <h3 class="chapter-sidebar-title">Chapters</h3>
-        <button class="chapter-close-btn" onclick="toggleChapterSidebar()">&times;</button>
-    </div>
-    <div class="chapter-list-container">
-        <ul class="chapter-list" id="chapter-list">
-            <!-- Chapters will be populated here -->
-        </ul>
-    </div>
-</div>
-
-<!-- Chapter Toggle Button -->
-<button class="chapter-toggle-btn" id="chapter-toggle-btn" onclick="toggleChapterSidebar()">
-    <i class="fas fa-bars"></i>
-</button>
-
-<div class="main-content" id="main-content">
-<div class="container-fluid px-2 py-2">
-    <div class="row">
-        <!-- Main Editor Area -->
-        <div class="col-12">
-            <!-- Main Editor Container -->
-            <div class="editor-container wordpad-container">
-                <form method="post" id="chapter-form">
-                    {% csrf_token %}
-                    <!-- Title Input -->
-                    <div class="mb-3">
-                        <label for="chapter-title" class="form-label">Title</label>
-                        <input type="text" id="chapter-title" name="title" class="form-control" placeholder="Enter chapter title..." value="{{ current_chapter.title|default:'' }}" style="color: #222; background: #fff;">
-                    </div>
-                    <!-- Editor Toolbar -->
-                    <div class="editor-toolbar">
-                        <button type="button" class="btn btn-ethereal btn-sm" onclick="toggleEditorTheme()" id="theme-toggle">
-                            <i class="fas fa-moon me-1"></i>Dark Mode
-                        </button>
-                        <!-- Save Button -->
-                        <button type="button" class="btn btn-success-ethereal btn-sm ms-2" onclick="saveChapter(false)">
-                            <i class="fas fa-save me-1"></i>Save
-                        </button>
-                        <!-- Collaboration Toggle -->
-                        <div class="collaboration-controls">
-                            <button type="button" class="btn btn-outline-light btn-sm" id="private-btn" onclick="setCollaborationMode('private')">
-                                <i class="fas fa-lock me-1"></i>Private
-                            </button>
-                            <button type="button" class="btn btn-outline-warning btn-sm" id="collaborate-btn" onclick="setCollaborationMode('collaborate')">
-                                <i class="fas fa-users me-1"></i>Collaborate
-                            </button>
-                        </div>
-                        <!-- Collaboration Link (shown when in collaborate mode) -->
-                        <div class="collaboration-link" id="collaboration-link" style="display: none;">
-                            <input type="text" class="form-control form-control-sm" id="share-link" readonly>
-                            <button type="button" class="btn btn-info btn-sm" onclick="copyShareLink()">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
-                        <div class="save-status" id="save-status">
-                            <span style="color: rgba(255, 255, 255, 0.7);">Ready</span>
-                        </div>
-                        <div class="autosave-indicator">
-                            <i class="fas fa-sync-alt me-1"></i>
-                            <span id="autosave-status">Enabled</span>
-                        </div>
-                    </div>
-
-                    <!-- Page Navigation Controls -->
-                    <!-- Rich Text Formatting Toolbar -->
-                    <div class="formatting-toolbar mb-3">
-                        <div class="toolbar-section">
-                            <!-- Basic Formatting -->
-                            <button type="button" class="toolbar-btn" onclick="formatText('bold')" title="Bold (Ctrl+B)">
-                                <i class="fas fa-bold"></i>
-                            </button>
-                            <button type="button" class="toolbar-btn" onclick="formatText('italic')" title="Italic (Ctrl+I)">
-                                <i class="fas fa-italic"></i>
-                            </button>
-                            <button type="button" class="toolbar-btn" onclick="formatText('underline')" title="Underline (Ctrl+U)">
-                                <i class="fas fa-underline"></i>
-                            </button>
-                            
-                            <div class="toolbar-divider"></div>
-                            
-                            <!-- Headers Dropdown -->
-                            <div class="dropdown">
-                                <button type="button" class="toolbar-btn dropdown-toggle" data-bs-toggle="dropdown" title="Headers">
-                                    <i class="fas fa-heading"></i>
-                                    <span class="ms-1">Headers</span>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-dark">
-                                    <li><a class="dropdown-item" href="#" onclick="formatText('h1')">
-                                        <h1 class="mb-0" style="font-size: 1.5rem;">Heading 1</h1>
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="formatText('h2')">
-                                        <h2 class="mb-0" style="font-size: 1.3rem;">Heading 2</h2>
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="formatText('h3')">
-                                        <h3 class="mb-0" style="font-size: 1.1rem;">Heading 3</h3>
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="formatText('h4')">
-                                        <h4 class="mb-0" style="font-size: 1rem;">Heading 4</h4>
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="formatText('paragraph')">
-                                        <p class="mb-0">Normal Text</p>
-                                    </a></li>
-                                </ul>
-                            </div>
-                            
-                            <div class="toolbar-divider"></div>
+    </style>
+                            <!-- Removed custom toolbar and headers dropdown for distraction-free editor -->
                         </div>
                     </div>
 
@@ -1515,57 +1424,13 @@ body.dark-theme .toolbar-btn:hover {
                             contenteditable="true"
                             data-placeholder="Begin writing your chapter here..."
                             onkeydown="handleKeyDown(event)"
-                            oninput="handleContentChange();"
+                            oninput="handleContentChange(); autoSaveChapter();"
                         >{{ form.content.value|default:""|safe }}</div>
                     </div>
                 </form>
             </div>
 
-            <!-- Readability Score Section -->
-            <div class="editor-container">
-                <h5 class="mb-3">
-                    <i class="fas fa-chart-line me-2"></i>Readability Analysis
-                </h5>
-                <div class="readability-dashboard">
-                    <div class="readability-card">
-                        <div class="readability-score-main">
-                            <div class="score-circle" onclick="toggleReadabilityDetails()" style="cursor: pointer;">
-                                <span class="score-number">--</span>
-                                <span class="score-label">Score</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Expandable Details -->
-                        <div class="readability-details" id="readability-details" style="display: none; margin-top: 1rem;">
-                            <div class="score-description-small" id="score-description-text">
-                                Click to see readability analysis
-                            </div>
-                            <div class="readability-metrics-small">
-                                <div class="metric-row">
-                                    <span class="metric-label-small">Grade Level:</span>
-                                    <span class="metric-value-small" id="grade-level">--</span>
-                                </div>
-                                <div class="metric-row">
-                                    <span class="metric-label-small">Avg. Sentence Length:</span>
-                                    <span class="metric-value-small" id="avg-sentence-length">--</span>
-                                </div>
-                                <div class="metric-row">
-                                    <span class="metric-label-small">Avg. Word Length:</span>
-                                    <span class="metric-value-small" id="avg-word-length">--</span>
-                                </div>
-                                <div class="metric-row">
-                                    <span class="metric-label-small">Complex Words:</span>
-                                    <span class="metric-value-small" id="complex-words">--</span>
-                                </div>
-                                <div class="metric-row">
-                                    <span class="metric-label-small">Reading Time:</span>
-                                    <span class="metric-value-small" id="reading-time">--</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Removed Readability Score Section for distraction-free editor -->
 
             <!-- File Upload Section -->
             <div class="editor-container">
@@ -1629,10 +1494,55 @@ body.dark-theme .toolbar-btn:hover {
 </div>
 
 <script>
+// Save to Library button uses the same saveChapter logic, but can be extended for library-specific logic if needed
+function autoSaveChapter() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(function() {
+        saveChapter(false);
+    }, 2000); // Autosave after 2 seconds of inactivity
+}
 // Global variables
 let autoSaveTimeout;
 let paginationUpdateTimeout;
 let isLightTheme = true;
+
+// Publish chapter logic
+function publishChapter() {
+    const chapterId = document.querySelector('input[name="chapter_id"]')?.value || '{{ current_chapter.id|default:"" }}';
+    const title = document.getElementById('chapter-title').value;
+    const content = document.getElementById('id_content').innerHTML;
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    if (!chapterId) {
+        showStatusMessage('No chapter selected to publish.', 'danger');
+        return;
+    }
+
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            action: 'publish_chapter',
+            chapter_id: chapterId,
+            title: title,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showStatusMessage('Chapter published to your library!', 'success');
+        } else {
+            showStatusMessage(data.message || 'Failed to publish chapter.', 'danger');
+        }
+    })
+    .catch(() => {
+        showStatusMessage('Error publishing chapter.', 'danger');
+    });
+}
 
 // Initialize editor on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -2750,20 +2660,18 @@ function loadChapterList() {
 
 function displayChapterList(chapters) {
     const chapterList = document.getElementById('chapter-list-items');
-    
     if (!chapterList) return;
-    
     if (chapters.length === 0) {
         chapterList.innerHTML = '<p class="text-muted mb-0">No chapters yet. Create your first chapter!</p>';
         return;
     }
-    
     let html = '';
-    chapters.forEach(chapter => {
+    chapters.forEach((chapter, idx) => {
         const isActive = chapter.id === currentChapterId ? 'active' : '';
-        
         html += `
-            <div class="chapter-item-small" data-chapter-id="${chapter.id}">
+            <div class="chapter-item d-flex align-items-center" data-chapter-id="${chapter.id}" draggable="true">
+                <span class="chapter-drag-handle me-2" title="Drag to reorder" style="cursor: grab;">&#9776;</span>
+                <input type="number" class="form-control form-control-sm chapter-number-input me-2" value="${chapter.order + 1}" min="1" style="width: 60px;" onchange="changeChapterNumber(${chapter.id}, this.value)">
                 <button type="button" class="btn btn-sm btn-outline-light chapter-btn ${isActive}"
                         onclick="loadChapter(${chapter.id})">
                     ${chapter.title.length > 20 ? chapter.title.substring(0, 20) + '...' : chapter.title}
@@ -2776,14 +2684,69 @@ function displayChapterList(chapters) {
             </div>
         `;
     });
-    
     chapterList.innerHTML = html;
-    
     // Update current chapter title in the bar
     const currentChapter = chapters.find(ch => ch.id === currentChapterId);
     if (currentChapter) {
         document.getElementById('current-chapter-title').textContent = currentChapter.title;
     }
+    // Add Save Order button if not present
+    if (!document.getElementById('save-chapter-order-btn')) {
+        const saveBtn = document.createElement('button');
+        saveBtn.id = 'save-chapter-order-btn';
+        saveBtn.className = 'btn btn-success btn-sm mt-2';
+        saveBtn.textContent = 'Save Order';
+        saveBtn.onclick = saveManualChapterOrder;
+        chapterList.parentElement.appendChild(saveBtn);
+    }
+}
+
+function changeChapterNumber(chapterId, newOrder) {
+    // Collect all chapter numbers and send to backend
+    const chapterItems = document.querySelectorAll('.chapter-item');
+    const chapterOrders = Array.from(chapterItems).map((item, idx) => {
+        return {
+            id: parseInt(item.dataset.chapterId),
+            order: parseInt(item.querySelector('.chapter-number-input').value) - 1
+        };
+    });
+    // Optionally, sort and update UI immediately
+    chapterOrders.sort((a, b) => a.order - b.order);
+    // Save to backend
+    saveManualChapterOrder(chapterOrders);
+}
+
+function saveManualChapterOrder(chapterOrders) {
+    // If not provided, collect from UI
+    if (!chapterOrders) {
+        const chapterItems = document.querySelectorAll('.chapter-item');
+        chapterOrders = Array.from(chapterItems).map((item, idx) => {
+            return {
+                id: parseInt(item.dataset.chapterId),
+                order: parseInt(item.querySelector('.chapter-number-input').value) - 1
+            };
+        });
+    }
+    fetch(`/writer/projects/${projectId}/chapters/reorder/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+        },
+        body: JSON.stringify({ chapters: chapterOrders })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadChapterList();
+            showMessage('Chapter order updated!', 'success');
+        } else {
+            showMessage('Error updating order: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Error updating order', 'error');
+    });
 }
 
 function updateProjectStats(data) {

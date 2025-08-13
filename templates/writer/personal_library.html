@@ -43,6 +43,27 @@
                         </a>
                     </div>
                 </div>
+                <!-- Prominent Start Writing Button -->
+                <div class="text-center mb-3">
+                    {% if latest_project %}
+                        <a href="{% url 'writer:chapter_editor' latest_project.pk %}"
+                           class="btn ethereal-btn ethereal-btn-warning ethereal-glow btn-lg px-5 py-3"
+                           style="font-size:1.3rem; font-weight:700;"
+                           title="Jump to your most recent project editor"
+                           aria-label="Start Writing in your latest project">
+                            <i class="fas fa-feather-alt"></i> Start Writing
+                        </a>
+                    {% else %}
+                        <a href="{% url 'writer:project_create' %}"
+                           class="btn ethereal-btn ethereal-btn-warning ethereal-glow btn-lg px-5 py-3"
+                           style="font-size:1.3rem; font-weight:700;"
+                           title="Create your first project and start writing!"
+                           aria-label="Create your first project and start writing">
+                            <i class="fas fa-feather-alt"></i> Start Writing
+                        </a>
+                    {% endif %}
+                </div>
+                </div>
             </div>
         </div>
     </div>
@@ -65,8 +86,8 @@
                     <h3 style="color: #ffffff !important;">
                         <i class="fas fa-folder-open ethereal-icon-glow me-2"></i> 
                         My Magical Projects
-                        {% if projects %}
-                        <a href="{% url 'writer:chapter_editor' projects.0.pk %}" class="btn btn-primary btn-sm ms-3" style="vertical-align: middle;">
+                        {% if latest_project %}
+                        <a href="{% url 'writer:chapter_editor' latest_project.pk %}" class="btn btn-primary btn-sm ms-3" style="vertical-align: middle;">
                             <i class="fas fa-pen-nib"></i> Go to Editor
                         </a>
                         {% endif %}
@@ -84,18 +105,24 @@
                                     <div class="ethereal-card-body p-4">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <h4 class="card-title mb-0" style="color: #ffffff !important;">
+                                                {% if project.pk %}
                                                 <a href="{% url 'writer:chapter_editor' project.pk %}" class="text-decoration-none ethereal-glow-on-hover" style="color: #ffffff !important;" title="Open in Editor">
                                                     {{ project.title }}
                                                 </a>
+                                                {% else %}
+                                                    {{ project.title }}
+                                                {% endif %}
                                             </h4>
                                             <div class="dropdown">
                                                 <button class="btn ethereal-btn-minimal p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="fas fa-ellipsis-v ethereal-text-muted fs-5"></i>
                                                 </button>
                                                 <ul class="dropdown-menu ethereal-dropdown">
+                                                    {% if project.pk %}
                                                     <li><a class="dropdown-item ethereal-dropdown-item" href="{% url 'writer:chapter_editor' project.pk %}">
                                                         <i class="fas fa-edit me-2"></i> Open Editor
                                                     </a></li>
+                                                    {% endif %}
                                                     <li><a class="dropdown-item ethereal-dropdown-item" href="{% url 'writer:project_detail' project.pk %}">
                                                         <i class="fas fa-info-circle me-2"></i> Project Details
                                                     </a></li>
@@ -265,6 +292,15 @@
                     <div class="row text-center">
                         <div class="col-6">
                             <div class="ethereal-stat-box p-3 rounded">
+
+                                        <!-- Save for Later Button -->
+                                        <div class="d-grid gap-2 mb-2">
+                                            {% if project.pk %}
+                                            <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn btn-outline-info btn-sm ethereal-glow-on-hover" title="Continue editing this project">
+                                                <i class="fas fa-save me-1"></i>Save for Later / Continue Editing
+                                            </a>
+                                            {% endif %}
+                                        </div>
                                 <h4 class="ethereal-pulse" style="color: #ffffff !important;">{{ projects.count }}</h4>
                                 <small style="color: #ffffff !important; opacity: 0.8;">Projects</small>
                             </div>

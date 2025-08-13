@@ -2,11 +2,25 @@
 {% block title %}Dashboard - Writer's Web Dream{% endblock %}
 
 {% block content %}
+
+<div class="container mb-4">
+    <div class="quick-actions">
+
+    </div>
+</div>
+
 <style>
 /* Dashboard Modern Styling */
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
+}
+
+body, body:not(.dark-mode) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+body.dark-mode {
+    background: linear-gradient(135deg, #232946 0%, #121629 100%);
 }
 
 /* Hero Welcome Section */
@@ -780,14 +794,13 @@ body {
                         <div class="bookshelf mb-4">
                             <div class="bookshelf-books">
                                 {% for project in shelf_projects %}
-                                <div class="book" 
-                                     onclick="showBookPopup('{{ project.title|escapejs }}', '{{ project.description|default:"A captivating story waiting to be told..."|escapejs }}', '{{ project.genre|default:"Fiction"|escapejs }}', {% if project.chapters.count > 0 %}{{ project.chapters.first.word_count|default:0 }}{% else %}0{% endif %}, '{{ project.updated_at|date:"M j, Y" }}', '{% url 'writer:chapter_editor' project.pk %}')">
+                                <a class="book" href="{% url 'writer:personal_library' %}?project_id={{ project.pk }}" style="text-decoration: none;">
                                     <div class="book-spine">
                                         <div class="book-cover-title">
                                             {{ project.title|truncatechars:15 }}
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                                 {% endfor %}
                                 <!-- Fill remaining slots with empty books if less than 7 -->
                                 {% for i in "1234567"|make_list %}

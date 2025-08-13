@@ -4,8 +4,10 @@ from . import views
 app_name = 'writer'
 
 urlpatterns = [
+    path('tinymce-editor/', views.tinymce_editor, name='tinymce_editor'),
+    path('simple-editor/', views.simple_editor, name='simple_editor'),
     # Editor shortcut
-    path('editor/', views.editor_shortcut, name='editor_shortcut'),
+    path('editor/', views.latest_editor_shortcut, name='editor_shortcut'),
     # Dashboard
     path('', views.dashboard, name='dashboard'),
     

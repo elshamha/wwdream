@@ -210,6 +210,7 @@ class Chapter(models.Model):
     notes = models.TextField(blank=True, null=True, help_text="Private notes for this chapter")
     characters_mentioned = models.ManyToManyField(Character, blank=True, related_name='mentioned_in_chapters')
     last_edited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    is_published = models.BooleanField(default=False)
     
     class Meta:
         ordering = ['project', 'order']

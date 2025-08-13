@@ -1,19 +1,45 @@
-from django.http import HttpResponseRedirect, HttpResponse
-# Editor shortcut view
-def editor_shortcut(request):
+# Shortcut: /writer/editor/ → latest project editor or project create
+from django.contrib.auth.decorators import login_required
+@login_required
+def latest_editor_shortcut(request):
     from .models import Project
-    project = Project.objects.order_by('id').first()
-    if project:
-        return HttpResponseRedirect(reverse('writer:chapter_editor', args=[project.pk]))
+    latest_project = Project.objects.filter(author=request.user).order_by('-updated_at').first()
+    if latest_project:
+        return redirect('writer:chapter_editor', project_id=latest_project.pk)
     else:
-        return HttpResponse('<div style="text-align:center;margin-top:3em;font-size:1.5em;">No projects found. Please create a project first.</div>')
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404, redirect
+        return redirect('writer:project_create')
+# TinyMCE Editor View (for both documents and chapters)
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+@login_required
+def tinymce_editor(request):
+    # For demo: store in session, or extend to DB as needed
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        title = request.POST.get('title', '')
+        content = request.POST.get('content', '')
+        if action == 'save':
+            request.session['tinymce_editor_title'] = title
+            request.session['tinymce_editor_content'] = content
+            return JsonResponse({'status': 'success'})
+        elif action == 'save_to_library':
+            # Save as a Document for now
+            doc = Document.objects.create(
+                title=title or 'Untitled',
+                content=content,
+                author=request.user
+            )
+            return JsonResponse({'status': 'success', 'message': 'Saved to library!'})
+        return JsonResponse({'status': 'error', 'message': 'Invalid action'})
+    title = request.session.get('tinymce_editor_title', '')
+    content = request.session.get('tinymce_editor_content', '')
+    return render(request, 'writer/tinymce_editor.html', {'title': title, 'content': content})
+
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
-from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login
@@ -35,28 +61,67 @@ from django.conf import settings
 from .document_parser import extract_text_from_file  # , is_google_docs_url
 import tempfile
 
+# Simple Editor View
+@login_required
+def simple_editor(request):
+    # For demo: store in session, or extend to DB as needed
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        title = request.POST.get('title', '')
+        content = request.POST.get('content', '')
+        if action == 'save':
+            request.session['simple_editor_title'] = title
+            request.session['simple_editor_content'] = content
+            return JsonResponse({'status': 'success'})
+        elif action == 'save_to_library':
+            # Save as a Document for now
+            doc = Document.objects.create(
+                title=title or 'Untitled',
+                content=content,
+                author=request.user
+            )
+            return JsonResponse({'status': 'success', 'message': 'Saved to library!'})
+        return JsonResponse({'status': 'error', 'message': 'Invalid action'})
+    title = request.session.get('simple_editor_title', '')
+    content = request.session.get('simple_editor_content', '')
+    return render(request, 'writer/simple_editor.html', {'title': title, 'content': content})
+
+# Editor shortcut view
+def editor_shortcut(request):
+    from .models import Project
+    project = Project.objects.order_by('id').first()
+    if project:
+        return HttpResponseRedirect(reverse('writer:chapter_editor', args=[project.pk]))
+    else:
+        return HttpResponse('<div style="text-align:center;margin-top:3em;font-size:1.5em;">No projects found. Please create a project first.</div>')
+
 
 # Personal Library Views
 @login_required
 def personal_library(request):
     try:
         library, created = PersonalLibrary.objects.get_or_create(user=request.user)
-        # Simplified queries to prevent operational errors
-        user_projects = Project.objects.filter(author=request.user).select_related('author').prefetch_related('chapters')
-        imported_docs = ImportedDocument.objects.filter(user=request.user).order_by('-created_at')
-        
+        user_projects = Project.objects.filter(author=request.user).select_related('author').prefetch_related('chapters').order_by('-updated_at')
+        imported_docs = ImportedDocument.objects.filter(user=request.user).order_by('-import_date')
+
+        latest_project = user_projects.first() if user_projects else None
+
         context = {
             'library': library,
             'projects': user_projects,
             'imported_documents': imported_docs,
+            'latest_project': latest_project,
         }
         return render(request, 'writer/personal_library.html', context)
     except Exception as e:
-        # Fallback in case of database issues
+        import logging
+        logging.error(f"Error loading personal library for user {request.user}: {e}")
+        print(f"Error loading personal library for user {request.user}: {e}")
         context = {
             'library': None,
             'projects': [],
             'imported_documents': [],
+            'latest_project': None,
             'error_message': 'There was an issue loading your library. Please try again.'
         }
         return render(request, 'writer/personal_library.html', context)
@@ -395,19 +460,35 @@ def chapter_editor(request, project_id):
     if not (project.author == request.user or project.collaborators.filter(id=request.user.id).exists()):
         return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
     all_chapters = Chapter.objects.filter(project=project).order_by('order')
-    
+
+    # Ensure at least one chapter exists for this project
+    if not all_chapters.exists():
+        default_chapter = Chapter.objects.create(
+            title="Untitled Chapter",
+            content="",
+            project=project,
+            order=0
+        )
+        all_chapters = Chapter.objects.filter(project=project).order_by('order')
+
     # Get the current chapter being edited (default to first or create one)
     current_chapter_id = request.GET.get('chapter_id')
     current_chapter = None
-    
+
     if current_chapter_id:
         current_chapter = get_object_or_404(Chapter, id=current_chapter_id, project=project)
-    elif all_chapters.exists():
+    else:
         current_chapter = all_chapters.first()
     
     if request.method == 'POST':
         action = request.POST.get('action')
-        
+
+        # Map TinyMCE actions to chapter actions for compatibility
+        if action == 'save':
+            action = 'save_chapter'
+        elif action == 'save_to_library':
+            action = 'publish_chapter'
+
         if action == 'reorder':
             # Handle drag-and-drop reordering
             chapter_ids = request.POST.getlist('chapter_ids[]')
@@ -427,7 +508,12 @@ def chapter_editor(request, project_id):
                 chapter.title = title
                 chapter.content = content
                 chapter.save()
-                
+                # After save, fix duplicate orders if any
+                chapters = Chapter.objects.filter(project=project).order_by('order', 'id')
+                for idx, ch in enumerate(chapters):
+                    if ch.order != idx:
+                        ch.order = idx
+                        ch.save(update_fields=['order'])
                 return JsonResponse({
                     'status': 'success',
                     'word_count': chapter.word_count,
@@ -435,17 +521,23 @@ def chapter_editor(request, project_id):
                 })
             else:
                 # Create new chapter if none exists
-                max_order = Chapter.objects.filter(project=project).aggregate(
-                    max_order=models.Max('order')
-                )['max_order'] or -1
-                
+                # Always assign next available order
+                used_orders = set(Chapter.objects.filter(project=project).values_list('order', flat=True))
+                order = 0
+                while order in used_orders:
+                    order += 1
                 chapter = Chapter.objects.create(
                     title=title,
                     content=content,
                     project=project,
-                    order=max_order + 1
+                    order=order
                 )
-                
+                # After create, fix duplicate orders if any
+                chapters = Chapter.objects.filter(project=project).order_by('order', 'id')
+                for idx, ch in enumerate(chapters):
+                    if ch.order != idx:
+                        ch.order = idx
+                        ch.save(update_fields=['order'])
                 return JsonResponse({
                     'status': 'success',
                     'chapter_id': chapter.id,
@@ -497,6 +589,24 @@ def chapter_editor(request, project_id):
             
             return JsonResponse({'status': 'success'})
         
+        elif action == 'publish_chapter':
+            # Handle publishing chapter to library
+            chapter_id = request.POST.get('chapter_id')
+            title = request.POST.get('title', 'Untitled Chapter')
+            content = request.POST.get('content', '')
+            if chapter_id:
+                chapter = get_object_or_404(Chapter, id=chapter_id, project=project)
+                chapter.title = title
+                chapter.content = content
+                chapter.is_published = True
+                chapter.save()
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Chapter published successfully',
+                    'word_count': chapter.word_count
+                })
+            else:
+                return JsonResponse({'status': 'error', 'message': 'No chapter selected to publish.'})
         elif action == 'split_long_chapter':
             # Handle automatic chapter splitting when content is too long
             try:
