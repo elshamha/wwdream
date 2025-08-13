@@ -1,44 +1,184 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">A Writer's Web Processor</h4>
+<div class="container-fluid py-5 position-relative" style="overflow:visible;">
+    <!-- Ethereal Particle Background -->
+    <div id="ethereal-particles" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;"></div>
+        <div class="row">
+            <!-- Editor Main -->
+            <div class="col-md-9">
+                <div class="card ethereal-glass shadow-sm animate__animated animate__fadeInLeft" style="border-radius:20px; box-shadow:0 8px 32px rgba(102,126,234,0.18);">
+            <div class="card-header editor-header d-flex justify-content-between align-items-center animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius:20px 20px 0 0; box-shadow:0 2px 12px rgba(240,147,251,0.12);">
+                      <h4 class="mb-0 animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size:2rem;">A Writer's Web Dream</h4>
+                      <button id="toggle-theme" class="btn btn-outline-primary btn-sm animate__animated animate__pulse animate__infinite"><i class="fas fa-moon"></i> Theme</button>
                 </div>
-                <div class="card-body">
+                <div class="card-body editor-container" style="border-radius:0 0 20px 20px;">
+                    <!-- Word Editing Toolbar -->
+                                <div id="word-toolbar" class="editor-toolbar mb-4 animate__animated animate__fadeInUp" style="box-shadow:0 2px 12px rgba(102,126,234,0.10);">
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="replaceWord()"><i class="fas fa-exchange-alt me-1"></i> <span>Replace Word</span></button>
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="countWords()"><i class="fas fa-sort-numeric-up me-1"></i> <span>Word Count</span></button>
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="highlightWord()"><i class="fas fa-highlighter me-1"></i> <span>Highlight Word</span></button>
+                                    <span class="toolbar-divider"></span>
+                                    <button class="toolbar-btn btn-success-ethereal animate__animated animate__pulse animate__infinite" onclick="saveCKEditor()"><i class="fas fa-save me-1"></i> <span>Save</span></button>
+                                    <button class="toolbar-btn btn-warning-ethereal animate__animated animate__pulse animate__infinite" onclick="saveCKEditorToLibrary()"><i class="fas fa-book me-1"></i> <span>Save to Library</span></button>
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="aiHelpCreativity()"><i class="fas fa-magic me-1"></i> <span>AI Help</span></button>
+                                    <span class="ms-auto align-self-center animate__animated animate__fadeIn" id="ckeditor-autosave-status" style="font-size:0.95em;color:#a5f3fc;">Autosave: Enabled</span>
+                                </div>
                     <form method="post">
                         {% csrf_token %}
-                        <input type="text" id="ckeditor-title" name="title" class="form-control mb-3" placeholder="Chapter Title" value="{{ chapter.title|default:'' }}" required>
-
+                        <input type="text" id="ckeditor-title" name="title" class="form-control mb-3 ethereal-glass animate__animated animate__fadeIn" placeholder="Chapter Title (Ethereal)" value="{{ chapter.title|default:'' }}" required style="border-radius:12px; font-size:1.3rem; background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:#fff;">
                         <div id="ckeditor-pagination-container" style="width:100%;">
                             <textarea id="ckeditor-content" name="content" style="min-height:600px;height:600px;width:100%;resize:vertical;">{{ chapter.content|default:'' }}</textarea>
-                            <div class="d-flex align-items-center mt-2">
-                                <button type="button" class="btn btn-secondary btn-sm me-2" id="prev-page-btn" onclick="goToPrevPage()">Previous</button>
-                                <span id="page-indicator" style="font-size:1em;"></span>
-                                <button type="button" class="btn btn-secondary btn-sm ms-2" id="next-page-btn" onclick="goToNextPage()">Next</button>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <button type="button" class="btn btn-primary" onclick="saveCKEditor()">Save</button>
-                            <button type="button" class="btn btn-info" onclick="saveCKEditorToLibrary()">Save to Library</button>
-                            <button type="button" class="btn btn-warning" onclick="aiHelpCreativity()">
-                                <i class="fas fa-magic me-1"></i>AI Help
-                            </button>
-                            <span class="ms-auto align-self-center" id="ckeditor-autosave-status" style="font-size:0.95em;color:#888;">Autosave: Enabled</span>
+                                            <div class="d-flex align-items-center mt-2 page-navigation-bar animate__animated animate__fadeInUp" style="box-shadow:0 2px 12px rgba(102,126,234,0.08); border-radius:10px;">
+                                                <button type="button" class="btn btn-outline-primary btn-sm me-2 animate__animated animate__pulse animate__infinite" id="prev-page-btn" onclick="goToPrevPage()"><i class="fas fa-arrow-left"></i> Previous</button>
+                                                <span id="page-indicator" class="page-info" style="font-size:1.1em; color:#a5f3fc;"></span>
+                                                <button type="button" class="btn btn-outline-primary btn-sm ms-2 animate__animated animate__pulse animate__infinite" id="next-page-btn" onclick="goToNextPage()">Next <i class="fas fa-arrow-right"></i></button>
+                                            </div>
                         </div>
                     </form>
                 </div>
             </div>
-            <div id="ckeditor-save-status" class="mt-3"></div>
-        </div>
+            </div>
+            <!-- Chapter Sidebar (moved to right) -->
+            <div class="col-md-3 chapter-sidebar ethereal-glass open animate__animated animate__fadeInRight" style="min-height:700px; border-radius:20px; box-shadow: var(--ethereal-shadow);">
+                <div class="chapter-sidebar-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:20px 20px 0 0; padding: 1.5rem; box-shadow: 0 4px 24px rgba(102,126,234,0.15);">
+                    <h5 class="chapter-sidebar-title animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #a5f3fc 0%, #f0f9ff 50%, #cffafe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size:1.6rem;">Chapters</h5>
+                    <button class="btn btn-success-ethereal btn-sm animate__animated animate__pulse animate__infinite" onclick="addChapter()"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                <ul id="chapter-list" class="chapter-list chapter-list-container py-2 animate__animated animate__fadeIn" style="min-height:500px;">
+                    {% for ch in chapters %}
+                    <li class="chapter-item d-flex justify-content-between align-items-center ethereal-glass animate__animated animate__fadeInUp" draggable="true" data-id="{{ ch.id }}" style="box-shadow:0 2px 12px rgba(102,126,234,0.08);">
+                        <span class="chapter-title" style="font-size:1.1rem;">{{ ch.title }}</span>
+                        <button class="chapter-action-btn delete animate__animated animate__pulse animate__infinite" onclick="deleteChapter({{ ch.id }})"><i class="fas fa-trash"></i></button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="ckeditor-save-status" class="mt-3 animate__animated animate__fadeIn"></div>
+        <!-- Animate.css CDN for beautiful animations -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+        <script>
+        // Ethereal Particle Background
+        function createEtherealParticles() {
+            const container = document.getElementById('ethereal-particles');
+            if (!container) return;
+            for (let i = 0; i < 18; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 8px;
+                    height: 8px;
+                    background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(102,126,234,0.5) 70%, rgba(240,147,251,0.3) 100%);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    left: ${Math.random()*100}vw;
+                    top: ${Math.random()*100}vh;
+                    opacity: ${0.2+Math.random()*0.5};
+                    filter: blur(${Math.random()*2+1}px);
+                    z-index:0;
+                `;
+                container.appendChild(particle);
+                animateParticle(particle);
+            }
+        }
+        function animateParticle(particle) {
+            const duration = 12000 + Math.random()*12000;
+            const startLeft = parseFloat(particle.style.left);
+            const startTop = parseFloat(particle.style.top);
+            const endLeft = Math.random()*100;
+            const endTop = Math.random()*100;
+            particle.animate([
+                { left: startLeft+'vw', top: startTop+'vh', opacity: particle.style.opacity },
+                { left: ((startLeft+endLeft)/2)+'vw', top: ((startTop+endTop)/2)+'vh', opacity: 1 },
+                { left: endLeft+'vw', top: endTop+'vh', opacity: particle.style.opacity }
+            ], {
+                duration: duration,
+                easing: 'ease-in-out'
+            }).addEventListener('finish', () => {
+                particle.style.left = Math.random()*100+'vw';
+                particle.style.top = Math.random()*100+'vh';
+                animateParticle(particle);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', createEtherealParticles);
+        </script>
     </div>
 </div>
+<script>
+// Chapter drag-and-drop logic
+const chapterList = document.getElementById('chapter-list');
+let draggedItem = null;
+chapterList && chapterList.addEventListener('dragstart', function(e) {
+    draggedItem = e.target;
+});
+chapterList && chapterList.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(chapterList, e.clientY);
+    if (afterElement == null) {
+        chapterList.appendChild(draggedItem);
+    } else {
+        chapterList.insertBefore(draggedItem, afterElement);
+    }
+});
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.chapter-item:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+chapterList && chapterList.addEventListener('drop', function(e) {
+    e.preventDefault();
+    // TODO: Send new order to backend via AJAX
+});
 
-<!-- CKEditor 5 Classic CDN -->
-<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+// Chapter add/delete (placeholder)
+function addChapter() {
+    alert('Add chapter logic here');
+}
+function deleteChapter(id) {
+    alert('Delete chapter ' + id);
+}
+
+// Word editing toolbar logic
+function replaceWord() {
+    const word = prompt('Word to replace:');
+    const replacement = prompt('Replace with:');
+    if (!word || !replacement) return;
+    const editor = window.ckeditorInstance;
+    if (editor) {
+        const content = editor.getData();
+        const regex = new RegExp(word, 'g');
+        editor.setData(content.replace(regex, replacement));
+    }
+}
+function countWords() {
+    const editor = window.ckeditorInstance;
+    if (editor) {
+        const text = editor.getData().replace(/<[^>]+>/g, ' ');
+        const words = text.match(/\b\w+\b/g) || [];
+        alert('Word count: ' + words.length);
+    }
+}
+function highlightWord() {
+    const word = prompt('Word to highlight:');
+    if (!word) return;
+    const editor = window.ckeditorInstance;
+    if (editor) {
+        const content = editor.getData();
+        const regex = new RegExp(`(${word})`, 'gi');
+        editor.setData(content.replace(regex, '<span style="background:yellow;">$1</span>'));
+    }
+}
+</script>
+
+<!-- CKEditor 5 Full Build CDN -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/full/ckeditor.js"></script>
 <script>
 // Pagination logic for CKEditor (500 words per page, last char a period)
 let paginatedContent = [];
@@ -113,37 +253,104 @@ function setupCKEditorPagination() {
 }
 // Wait for CKEditor to be ready, then setup pagination
 ClassicEditor.create(document.querySelector('#ckeditor-content'), {
-    toolbar: [],
-    heading: {
-        options: []
-    },
-    removePlugins: [
-        'Heading',
-        'HeadingButtonsUI',
-        'Title',
-        'BlockToolbar',
-        'BalloonToolbar',
-        'ContextMenu',
-        'List',
-        'ListProperties',
-        'Table',
-        'TableToolbar',
-        'TableProperties',
-        'TableCellProperties',
-        'TableColumnResize',
-        'TableCaption',
-        'TableCellSelection',
-        'TableSelection',
-        'TableKeyboard',
-        'TableMouse',
-        'TableUtils',
-        'TableWalker',
-        'TableClipboard',
-        'TableEditing',
-        'TableUI',
+    toolbar: [
+        'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'code', 'subscript', 'superscript',
+        'bulletedList', 'numberedList', 'todoList', '|', 'outdent', 'indent', '|',
+        'link', 'blockQuote', 'insertTable', 'imageUpload', 'mediaEmbed', 'codeBlock', '|',
+        'undo', 'redo', 'findAndReplace', 'selectAll', 'horizontalLine', 'specialCharacters', 'exportPdf', 'exportWord'
     ],
+    image: {
+        toolbar: [
+            'imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side', 'linkImage'
+        ]
+    },
+    table: {
+        contentToolbar: [
+            'tableColumn', 'tableRow', 'mergeTableCells', 'tableCellProperties', 'tableProperties'
+        ]
+    },
+    heading: {
+        options: [
+            { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+            { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+            { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+            { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
+        ]
+    },
+    autosave: {
+        save(editor) {
+            // Autosave logic: save every change
+            const title = document.getElementById('ckeditor-title').value;
+            const content = editor.getData();
+            const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: new URLSearchParams({
+                    action: 'save',
+                    title: title,
+                    content: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Just now';
+                setTimeout(() => {
+                    document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Enabled';
+                }, 2000);
+            })
+            .catch(() => {
+                document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Error';
+            });
+        }
+    },
+    simpleUpload: {
+        uploadUrl: '/media/imports/', // Change to your Django upload endpoint
+        headers: {
+            'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+        }
+    },
+    ui: {
+        viewportOffset: { top: 60, bottom: 60 },
+    },
+    theme: window.localStorage.getItem('editorTheme') === 'dark' ? 'dark' : 'light',
 }).then(editor => {
-    // Make sure the editor container stretches to full width/height
+    window.ckeditorInstance = editor;
+    setEditorTheme(window.localStorage.getItem('editorTheme') || 'light');
+// Theme toggle logic
+document.getElementById('toggle-theme').onclick = function() {
+    const current = window.localStorage.getItem('editorTheme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    window.localStorage.setItem('editorTheme', next);
+    setEditorTheme(next);
+};
+
+function setEditorTheme(theme) {
+    if (theme === 'dark') {
+        const editorContainer = document.querySelector('.ck-editor__editable');
+        document.body.classList.add('ck-dark-mode', 'dark-theme');
+        document.body.classList.remove('ck-light-mode');
+        document.querySelector('.chapter-sidebar').style.background = '#222';
+        document.querySelector('.chapter-sidebar').style.color = '#fff';
+        if (editorContainer) {
+            editorContainer.style.background = '#222';
+            editorContainer.style.color = '#fff';
+        }
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.background = '#222';
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.color = '#fff';
+    } else {
+        document.body.classList.remove('ck-dark-mode', 'dark-theme');
+        document.body.classList.add('ck-light-mode');
+        document.querySelector('.chapter-sidebar').style.background = '#f8f9fa';
+        document.querySelector('.chapter-sidebar').style.color = '#222';
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.background = '#fff';
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.color = '#222';
+    }
+}
+    // Make sure the editor container stretches to full width/height and is readable
     editor.ui.view.editable.element.style.minHeight = '600px';
     editor.ui.view.editable.element.style.height = '600px';
     editor.ui.view.editable.element.style.width = '100%';

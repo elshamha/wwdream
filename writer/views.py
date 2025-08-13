@@ -812,7 +812,7 @@ def chapter_editor(request, project_id):
         'all_chapters': all_chapters,
         'current_chapter': current_chapter,
     }
-    return render(request, 'writer/chapter_editor.html', context)
+    return render(request, 'writer/chapter_editor_clean.html', context)
 
 @login_required
 def upload_test(request):

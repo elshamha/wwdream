@@ -198,7 +198,7 @@ body.dark-mode {
     background: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.5);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    color: #ffffff !important;
+    color: #ffffff
 }
 
 .action-button.primary {
@@ -466,8 +466,8 @@ body.dark-mode {
 }
 
 .book, .book-slot {
-    min-width: 70px;
-    max-width: 90px;
+    min-width: 110px;
+    max-width: 140px;
     position: relative;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform-origin: bottom center;
@@ -505,14 +505,37 @@ body.dark-mode {
         var(--book-color-2, #764ba2) 50%,
         var(--book-color-1, #667eea) 100%);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px 12px 6px 6px;
-    padding: 15px 10px;
+    border-radius: 16px 16px 8px 8px;
+    padding: 22px 16px;
     box-shadow: 
         0 4px 15px rgba(0, 0, 0, 0.2),
         inset 0 1px 3px rgba(255, 255, 255, 0.3);
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(10px);
+    }
+    background: linear-gradient(120deg, 
+        var(--book-color-1, #667eea) 0%, 
+        var(--book-color-2, #764ba2) 60%,
+        #fff 100%);
+    border: 1.5px solid #b8b8b8;
+    border-radius: 16px 16px 8px 8px;
+    padding: 22px 16px;
+    box-shadow: 0 10px 32px rgba(0,0,0,0.22),
+        0 1.5px 6px rgba(0,0,0,0.08),
+        inset 0 0 18px 2px rgba(255,255,255,0.12),
+        inset 0 0 8px 0 rgba(0,0,0,0.10);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+    /* Add spine shadow */
+    box-shadow: 0 10px 32px rgba(0,0,0,0.22),
+        0 1.5px 6px rgba(0,0,0,0.08),
+        inset 0 0 18px 2px rgba(255,255,255,0.12),
+        inset 0 0 8px 0 rgba(0,0,0,0.10),
+        8px 0 18px -8px rgba(0,0,0,0.18);
+    /* Subtle highlight */
+    position: relative;
 }
 
 .book-spine::before {
@@ -524,7 +547,7 @@ body.dark-mode {
     height: 2px;
     background: rgba(255, 255, 255, 0.3);
     border-radius: 1px;
-}
+    }
 
 .book-spine::after {
     content: '';
@@ -535,11 +558,21 @@ body.dark-mode {
     height: 1px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 1px;
-}
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 8px;
+    right: 8px;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.1) 100%);
+    border-radius: 2px;
+    opacity: 0.7;
+    }
+
 
 .book-title {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+    /* writing-mode: vertical-rl; */
+    /* text-orientation: mixed; */
     font-size: 12px;
     font-weight: 600;
     color: #ffffff;
@@ -551,8 +584,16 @@ body.dark-mode {
     justify-content: center;
     word-break: break-word;
     font-family: 'Lora', serif;
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.05) 100%);
+    border-radius: 2px;
+    opacity: 0.5;
 }
-
 /* Modern Color Variations */
 .book:nth-child(odd) {
     --book-color-1: #667eea;
@@ -586,23 +627,23 @@ body.dark-mode {
 
 /* Book Heights for Variety */
 .book:nth-child(2n) .book-spine {
-    height: 160px;
+    height: 220px;
 }
 
 .book:nth-child(3n) .book-spine {
-    height: 180px;
+    height: 240px;
 }
 
 .book:nth-child(4n) .book-spine {
-    height: 140px;
-}
-
-.book:nth-child(5n) .book-spine {
     height: 200px;
 }
 
+.book:nth-child(5n) .book-spine {
+    height: 260px;
+}
+
 .book .book-spine {
-    height: 170px;
+    height: 230px;
 }
 
 /* Pop-out Book Effect */
@@ -662,6 +703,7 @@ body.dark-mode {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: left;
 }
 
 .book-cover::before {
@@ -797,7 +839,11 @@ body.dark-mode {
                                 <a class="book" href="{% url 'writer:personal_library' %}?project_id={{ project.pk }}" style="text-decoration: none;">
                                     <div class="book-spine">
                                         <div class="book-cover-title">
-                                            {{ project.title|truncatechars:15 }}
+                                                {% if project.cover_text %}
+                                                    {{ project.cover_text|truncatewords:2 }}
+                                                {% else %}
+                                                    {{ project.title|truncatechars:15 }}
+                                                {% endif %}
                                         </div>
                                     </div>
                                 </a>
