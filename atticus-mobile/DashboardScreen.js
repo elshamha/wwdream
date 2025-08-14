@@ -2,15 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, StatusBar, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 import { Picker } from '@react-native-picker/picker';
-import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import DashboardScreen from './DashboardScreen';
-import ProfileScreen from './ProfileScreen';
 
-const Tab = createBottomTabNavigator();
-
-export default function App() {
+export default function DashboardScreen() {
 	const richText = useRef();
 	const [editorContent, setEditorContent] = useState('');
 	const [saving, setSaving] = useState(false);
@@ -20,7 +13,6 @@ export default function App() {
 	const [selectedType, setSelectedType] = useState('document');
 	const [selectedId, setSelectedId] = useState(null);
 
-	// Fetch documents and chapters on mount
 	useEffect(() => {
 		fetch('http://127.0.0.1:8000/api/documents/')
 			.then(res => res.json())
@@ -30,7 +22,6 @@ export default function App() {
 			.then(data => setChapters(data));
 	}, []);
 
-	// Load content when selection changes
 	useEffect(() => {
 		if (!selectedId) return;
 		setLoading(true);
@@ -47,7 +38,6 @@ export default function App() {
 			.catch(() => setLoading(false));
 	}, [selectedType, selectedId]);
 
-	// Save handler
 	const saveContent = async () => {
 		if (!selectedId) return;
 		setSaving(true);
@@ -67,68 +57,59 @@ export default function App() {
 	};
 
 	return (
-		<NavigationContainer>
-			<Tab.Navigator>
-				<Tab.Screen name="Dashboard">
-					{() => (
-						<SafeAreaView style={styles.container}>
-							<StatusBar barStyle="dark-content" />
-							<ScrollView contentContainerStyle={styles.scrollContent}>
-								<View style={styles.header}>
-									<Text style={styles.title}>Writer's Web Dream</Text>
-								</View>
-								<View style={styles.section}>
-									<Text style={styles.sectionTitle}>Select Type</Text>
-									<Picker
-										selectedValue={selectedType}
-										style={styles.picker}
-										onValueChange={setSelectedType}
-									>
-										<Picker.Item label="Document" value="document" />
-										<Picker.Item label="Chapter" value="chapter" />
-									</Picker>
-									<Text style={styles.sectionTitle}>Select {selectedType === 'document' ? 'Document' : 'Chapter'}</Text>
-									<Picker
-										selectedValue={selectedId}
-										style={styles.picker}
-										onValueChange={setSelectedId}
-									>
-										{(selectedType === 'document' ? documents : chapters).map(item => (
-											<Picker.Item key={item.id} label={item.title || `Untitled ${selectedType}`} value={item.id} />
-										))}
-									</Picker>
-								</View>
-								<View style={styles.section}>
-									<Text style={styles.sectionTitle}>Rich Text Editor</Text>
-									{loading ? (
-										<ActivityIndicator size="large" color="#4F8EF7" />
-									) : (
-										<>
-											<RichEditor
-												ref={richText}
-												style={styles.richEditor}
-												placeholder="Start writing here..."
-												initialContentHTML={editorContent}
-												onChange={setEditorContent}
-											/>
-											<RichToolbar
-												editor={richText}
-												actions={[actions.setBold, actions.setItalic, actions.insertBulletsList, actions.insertOrderedList, actions.insertLink]}
-												style={styles.richToolbar}
-											/>
-											<TouchableOpacity style={styles.button} onPress={saveContent} disabled={saving || !selectedId}>
-												<Text style={styles.buttonText}>{saving ? 'Saving...' : 'Save'}</Text>
-											</TouchableOpacity>
-										</>
-									)}
-								</View>
-							</ScrollView>
-						</SafeAreaView>
+		<SafeAreaView style={styles.container}>
+			<StatusBar barStyle="dark-content" />
+			<ScrollView contentContainerStyle={styles.scrollContent}>
+				<View style={styles.header}>
+					<Text style={styles.title}>Writer's Web Dream</Text>
+				</View>
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Select Type</Text>
+					<Picker
+						selectedValue={selectedType}
+						style={styles.picker}
+						onValueChange={setSelectedType}
+					>
+						<Picker.Item label="Document" value="document" />
+						<Picker.Item label="Chapter" value="chapter" />
+					</Picker>
+					<Text style={styles.sectionTitle}>Select {selectedType === 'document' ? 'Document' : 'Chapter'}</Text>
+					<Picker
+						selectedValue={selectedId}
+						style={styles.picker}
+						onValueChange={setSelectedId}
+					>
+						{(selectedType === 'document' ? documents : chapters).map(item => (
+							<Picker.Item key={item.id} label={item.title || `Untitled ${selectedType}`} value={item.id} />
+						))}
+					</Picker>
+				</View>
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Rich Text Editor</Text>
+					{loading ? (
+						<ActivityIndicator size="large" color="#4F8EF7" />
+					) : (
+						<>
+							<RichEditor
+								ref={richText}
+								style={styles.richEditor}
+								placeholder="Start writing here..."
+								initialContentHTML={editorContent}
+								onChange={setEditorContent}
+							/>
+							<RichToolbar
+								editor={richText}
+								actions={[actions.setBold, actions.setItalic, actions.insertBulletsList, actions.insertOrderedList, actions.insertLink]}
+								style={styles.richToolbar}
+							/>
+							<TouchableOpacity style={styles.button} onPress={saveContent} disabled={saving || !selectedId}>
+								<Text style={styles.buttonText}>{saving ? 'Saving...' : 'Save'}</Text>
+							</TouchableOpacity>
+						</>
 					)}
-				</Tab.Screen>
-				<Tab.Screen name="Profile" component={ProfileScreen} />
-			</Tab.Navigator>
-		</NavigationContainer>
+				</View>
+			</ScrollView>
+		</SafeAreaView>
 	);
 }
 
