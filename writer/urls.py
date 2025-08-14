@@ -4,6 +4,7 @@ from . import views
 app_name = 'writer'
 
 urlpatterns = [
+    path('stats/', views.stats_api, name='stats_api'),
     path('tinymce-editor/', views.tinymce_editor, name='tinymce_editor'),
     path('simple-editor/', views.simple_editor, name='simple_editor'),
     # Editor shortcut

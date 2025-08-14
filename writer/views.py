@@ -1,3 +1,21 @@
+# Writing Stats API endpoint
+from django.http import JsonResponse
+
+def stats_api(request):
+    # Replace these with real stats from your models
+    data = {
+        "wordCount": 12450,
+        "streak": 7,
+        "progress": 62
+    }
+    return JsonResponse(data)
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # ...existing code...
+    path('api/stats/', views.stats_api, name='stats_api'),
+]
 # Shortcut: /writer/editor/ → latest project editor or project create
 from django.contrib.auth.decorators import login_required
 @login_required
