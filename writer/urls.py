@@ -78,4 +78,11 @@ urlpatterns = [
     # AJAX endpoints
     path('ajax/create-chapter/', views.ajax_create_chapter, name='ajax_create_chapter'),
     path('upload-file/', views.upload_file, name='upload_file'),
+    
+    # Document Collaboration API
+    path('documents/<int:document_id>/share/', views.share_document_api, name='share_document_api'),
+    path('documents/<int:document_id>/collaborators/', views.get_document_collaborators_api, name='get_document_collaborators_api'),
+    
+    # Users API
+    path('api/users/', views.users_api, name='users_api'),
 ]

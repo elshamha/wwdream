@@ -1,5 +1,6 @@
 {
   "expo": {
+    "sdkVersion": "53.0.0",
     "name": "atticus-mobile",
     "slug": "atticus-mobile",
     "version": "1.0.0",

@@ -1787,4 +1787,47 @@ def delete_chapter(request, project_id, chapter_id):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .models import Document, User
+import json
+
+@csrf_exempt
+@login_required
+def share_document_api(request, document_id):
+    """Share a document with other users"""
+    if request.method == 'POST':
+        try:
+            doc = Document.objects.get(id=document_id, author=request.user)
+            data = json.loads(request.body)
+            user_ids = data.get('user_ids', [])
+            users = User.objects.filter(id__in=user_ids)
+            doc.shared_with.set(users)
+            doc.save()
+            return JsonResponse({'success': True, 'shared_with': [u.username for u in users]})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    return JsonResponse({'error': 'POST required'}, status=405)
+
+@login_required
+def get_document_collaborators_api(request, document_id):
+    """Get list of collaborators for a document"""
+    try:
+        doc = Document.objects.get(id=document_id)
+        collaborators = doc.shared_with.all()
+        return JsonResponse({'collaborators': [u.username for u in collaborators]})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+def users_api(request):
+    users = User.objects.all()
+    data = [
+        {'id': user.id, 'username': user.username}
+        for user in users
+    ]
+    return JsonResponse(data, safe=False)
+
+
 

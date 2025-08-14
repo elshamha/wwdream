@@ -255,6 +255,7 @@ class Document(models.Model):
     is_published = models.BooleanField(default=False)
     word_count = models.IntegerField(default=0)
     characters_mentioned = models.ManyToManyField(Character, blank=True, related_name='mentioned_in_documents')
+    shared_with = models.ManyToManyField(User, blank=True, related_name='shared_documents', help_text="Users with whom this document is shared")
     
     class Meta:
         ordering = ['-updated_at']
