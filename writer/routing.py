@@ -14,4 +14,9 @@ websocket_urlpatterns = [
     re_path(r'ws/wordcount/$', consumers.WordCountConsumer.as_asgi()),
     re_path(r'ws/todo/$', consumers.TodoConsumer.as_asgi()),
     re_path(r'ws/quiz/$', consumers.QuizConsumer.as_asgi()),
+    re_path(r'ws/comment/$', consumers.CommentConsumer.as_asgi()),
+    re_path(r'ws/undoredo/$', consumers.UndoRedoConsumer.as_asgi()),
+    re_path(r'ws/timer/$', consumers.TimerConsumer.as_asgi()),
+    re_path(r'ws/ideaboard/$', consumers.IdeaBoardConsumer.as_asgi()),
+    re_path(r'ws/theme/$', consumers.ThemeConsumer.as_asgi()),
 ]

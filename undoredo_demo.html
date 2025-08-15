@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Undo/Redo Broadcast Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8fafc; }
+        #undoredo { width: 400px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #ccc; padding: 24px; }
+        #actions { margin-bottom: 16px; font-size: 16px; color: #333; }
+        input, button { padding: 8px; margin: 4px 0; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #4F8EF7; color: #fff; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="undoredo">
+        <h2>Undo/Redo Broadcast</h2>
+        <div id="actions">No actions yet.</div>
+        <input type="text" id="user" placeholder="Your name..." />
+        <button onclick="sendAction('undo')">Undo</button>
+        <button onclick="sendAction('redo')">Redo</button>
+    </div>
+    <script>
+        const ws = new WebSocket('ws://127.0.0.1:8000/ws/undoredo/');
+        const actionsDiv = document.getElementById('actions');
+        let actions = [];
+
+        ws.onmessage = function(event) {
+            let data;
+            try { data = JSON.parse(event.data); } catch { return; }
+            if (data.action !== undefined) {
+                actions.push({user: data.user, action: data.action});
+                updateActions();
+            }
+        };
+
+        function sendAction(action) {
+            const user = document.getElementById('user').value || 'Anonymous';
+            ws.send(JSON.stringify({user: user, action: action}));
+        }
+
+        function updateActions() {
+            actionsDiv.innerHTML = actions.map(a => `<div><b>${a.user}:</b> ${a.action.toUpperCase()}</div>`).join('');
+        }
+    </script>
+</body>
+</html>

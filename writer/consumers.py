@@ -1,3 +1,139 @@
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+class ThemeConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = 'theme_room'
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        # Expect: {"theme": "light" or "dark" or other style}
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'theme_update',
+                'theme': data.get('theme', 'light')
+            }
+        )
+
+    async def theme_update(self, event):
+        await self.send(text_data=json.dumps({
+            'theme': event['theme']
+        }))
+class IdeaBoardConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = 'ideaboard_room'
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        # Expect: {"idea": "...", "user": "...", "action": "add" or "vote"}
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'ideaboard_update',
+                'idea': data.get('idea', ''),
+                'user': data.get('user', 'Anonymous'),
+                'action': data.get('action', 'add')
+            }
+        )
+
+    async def ideaboard_update(self, event):
+        await self.send(text_data=json.dumps({
+            'idea': event['idea'],
+            'user': event['user'],
+            'action': event['action']
+        }))
+class TimerConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = 'timer_room'
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        # Expect: {"seconds": 60, "action": "start"}
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'timer_update',
+                'seconds': data.get('seconds', 0),
+                'action': data.get('action', '')
+            }
+        )
+
+    async def timer_update(self, event):
+        await self.send(text_data=json.dumps({
+            'seconds': event['seconds'],
+            'action': event['action']
+        }))
+class UndoRedoConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = 'undoredo_room'
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        # Expect: {"action": "undo" or "redo", "user": "..."}
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'undoredo_update',
+                'action': data.get('action', ''),
+                'user': data.get('user', 'Anonymous')
+            }
+        )
+
+    async def undoredo_update(self, event):
+        await self.send(text_data=json.dumps({
+            'action': event['action'],
+            'user': event['user']
+        }))
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+class CommentConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_group_name = 'comment_room'
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        # Expect: {"comment": "...", "user": "..."}
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'comment_update',
+                'comment': data.get('comment', ''),
+                'user': data.get('user', 'Anonymous')
+            }
+        )
+
+    async def comment_update(self, event):
+        await self.send(text_data=json.dumps({
+            'comment': event['comment'],
+            'user': event['user']
+        }))
 class QuizConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = 'quiz_room'
