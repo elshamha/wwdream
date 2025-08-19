@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scene Transition Effects Demo</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            background: #222;
+            color: #fff;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 4em auto;
+            padding: 2em;
+            background: rgba(30,30,40,0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
+            position: relative;
+        }
+        .scene {
+            opacity: 0;
+            transform: scale(0.98) translateY(20px);
+            transition: opacity 1s, transform 1s;
+            position: absolute;
+            width: 100%;
+            left: 0; top: 0;
+        }
+        .scene.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            position: relative;
+        }
+        .fade {
+            animation: fadeInScene 1.2s;
+        }
+        .slide {
+            animation: slideInScene 1.2s;
+        }
+        .blur {
+            animation: blurInScene 1.2s;
+        }
+        @keyframes fadeInScene {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInScene {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(0); }
+        }
+        @keyframes blurInScene {
+            from { filter: blur(16px); opacity: 0; }
+            to { filter: blur(0); opacity: 1; }
+        }
+        .controls {
+            margin-top: 2em;
+            text-align: center;
+        }
+        button {
+            background: #444;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.7em 1.5em;
+            margin: 0 0.5em;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #666;
+        }
+        select {
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5em;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="scene1" class="scene active fade">
+            <h2>Scene 1: The Forest</h2>
+            <p>The sun filters through the leaves, painting golden patterns on the mossy ground. Birds sing in the distance.</p>
+        </div>
+        <div id="scene2" class="scene">
+            <h2>Scene 2: The Lake</h2>
+            <p>Ripples shimmer across the water as a gentle breeze stirs the surface. The air is cool and fresh.</p>
+        </div>
+        <div id="scene3" class="scene">
+            <h2>Scene 3: The Mountain</h2>
+            <p>Clouds drift past the rocky peaks. The world below seems small and silent from this height.</p>
+        </div>
+        <div class="controls">
+            <button onclick="prevScene()">Previous</button>
+            <button onclick="nextScene()">Next</button>
+            <select id="transitionType">
+                <option value="fade">Fade</option>
+                <option value="slide">Slide</option>
+                <option value="blur">Blur</option>
+            </select>
+        </div>
+    </div>
+    <script>
+        const scenes = [
+            document.getElementById('scene1'),
+            document.getElementById('scene2'),
+            document.getElementById('scene3')
+        ];
+        let current = 0;
+        function showScene(idx, effect) {
+            scenes.forEach((scene, i) => {
+                scene.classList.remove('active', 'fade', 'slide', 'blur');
+                scene.style.zIndex = i === idx ? 1 : 0;
+            });
+            scenes[idx].classList.add('active', effect);
+        }
+        function nextScene() {
+            const effect = document.getElementById('transitionType').value;
+            current = (current + 1) % scenes.length;
+            showScene(current, effect);
+        }
+        function prevScene() {
+            const effect = document.getElementById('transitionType').value;
+            current = (current - 1 + scenes.length) % scenes.length;
+            showScene(current, effect);
+        }
+        document.getElementById('transitionType').addEventListener('change', function() {
+            showScene(current, this.value);
+        });
+    </script>
+</body>
+</html>
