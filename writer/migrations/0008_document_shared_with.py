@@ -2,7 +2,6 @@
 from django.db import migrations, models
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('writer', '0007_chapter_is_published'),
     ]

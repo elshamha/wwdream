@@ -73,6 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'atticus_writer.wsgi.application'
+ASGI_APPLICATION = 'atticus_writer.asgi.application'
 
 
 # Database

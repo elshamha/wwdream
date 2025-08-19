@@ -1,26 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simple Collaborative Editor</title>
+    <title>Collaborative Editor Demo</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f8fafc; }
-        #editor { width: 400px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #ccc; padding: 24px; }
-        #content { width: 100%; height: 80px; border-radius: 6px; border: 1px solid #ddd; padding: 8px; font-size: 16px; margin-bottom: 16px; }
+        #editor { width: 500px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #ccc; padding: 24px; }
+        #content { width: 100%; height: 120px; border-radius: 6px; border: 1px solid #ddd; padding: 8px; font-size: 16px; margin-bottom: 16px; }
         #status { margin-bottom: 12px; color: #4F8EF7; font-weight: bold; }
+        #users { margin-bottom: 12px; color: #333; font-size: 14px; }
     </style>
 </head>
 <body>
     <div id="editor">
-        <h2>Simple Collaborative Editor</h2>
+        <h2>Collaborative Editor</h2>
         <div id="status">Connecting...</div>
-        <textarea id="content" placeholder="Type here..."></textarea>
+        <div id="users"></div>
+        <textarea id="content" placeholder="Start editing..."></textarea>
     </div>
     <script>
-        const documentId = 1; // Change this to your document ID
+        // Change this to your actual document ID
+        const documentId = 1;
         const ws = new WebSocket(`ws://127.0.0.1:8000/ws/collab/${documentId}/`);
         const content = document.getElementById('content');
         const status = document.getElementById('status');
+        const users = document.getElementById('users');
         let ignoreNext = false;
+        let userList = [];
 
         ws.onopen = function() {
             status.textContent = 'Connected';
@@ -39,6 +44,9 @@
                 ignoreNext = true;
                 content.value = data.content;
                 setTimeout(() => { ignoreNext = false; }, 100);
+            }
+            if (data.event === 'presence') {
+                users.textContent = `${data.user} has ${data.action}`;
             }
         };
 

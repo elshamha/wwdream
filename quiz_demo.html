@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Quiz Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8fafc; }
+        #quiz { width: 400px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #ccc; padding: 24px; }
+        #question { font-size: 18px; color: #333; margin-bottom: 12px; }
+        input, button { padding: 8px; margin: 4px 0; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #4F8EF7; color: #fff; border: none; cursor: pointer; }
+        #answers { margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div id="quiz">
+        <h2>Quick Quiz</h2>
+        <div id="question">No question yet.</div>
+        <input type="text" id="new-question" placeholder="Type a question..." />
+        <input type="text" id="new-answer" placeholder="Type the answer..." />
+        <button onclick="sendQuiz()">Send Quiz</button>
+        <div id="answers"></div>
+    </div>
+    <script>
+        const ws = new WebSocket('ws://127.0.0.1:8000/ws/quiz/');
+        const questionDiv = document.getElementById('question');
+        const answersDiv = document.getElementById('answers');
+        let currentQuestion = '';
+        let currentAnswer = '';
+
+        ws.onmessage = function(event) {
+            let data;
+            try { data = JSON.parse(event.data); } catch { return; }
+            if (data.question !== undefined) {
+                currentQuestion = data.question;
+                currentAnswer = data.answer;
+                questionDiv.textContent = currentQuestion || 'No question yet.';
+                answersDiv.innerHTML = '';
+            }
+        };
+
+        function sendQuiz() {
+            const q = document.getElementById('new-question').value;
+            const a = document.getElementById('new-answer').value;
+            if (q && a) {
+                ws.send(JSON.stringify({question: q, answer: a}));
+                document.getElementById('new-question').value = '';
+                document.getElementById('new-answer').value = '';
+            }
+        }
+    </script>
+</body>
+</html>

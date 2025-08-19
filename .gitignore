@@ -30,4 +30,8 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+<<<<<<< HEAD
+=======
+node_modules
+>>>>>>> 3389f914da0411493cf474311f9d9216daa86411
 node_modules
