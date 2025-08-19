@@ -8,9 +8,7 @@ class AtticusWebviewApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: WebViewScreen(),
-    );
+    return MaterialApp(home: WebViewScreen());
   }
 }
 
@@ -27,9 +25,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   void initState() {
     super.initState();
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..loadRequest(Uri.parse('http://192.168.1.100:8000'));
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse('http://10.0.2.2:8000'));
   }
 
   @override
