@@ -4,6 +4,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 void main() => runApp(AtticusWebviewApp());
 
 class AtticusWebviewApp extends StatelessWidget {
+  const AtticusWebviewApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -13,6 +15,8 @@ class AtticusWebviewApp extends StatelessWidget {
 }
 
 class WebViewScreen extends StatefulWidget {
+  const WebViewScreen({super.key});
+
   @override
   State<WebViewScreen> createState() => _WebViewScreenState();
 }
