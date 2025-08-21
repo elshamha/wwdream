@@ -30,7 +30,58 @@
 <!-- CKEditor 5 Classic CDN -->
 <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
 <script>
-ClassicEditor.create(document.querySelector('#ckeditor-content'), {
+// Auto-save and local backup
+let autosaveTimeout = null;
+function autoSaveCKEditor() {
+    if (autosaveTimeout) clearTimeout(autosaveTimeout);
+    autosaveTimeout = setTimeout(() => {
+        const title = document.getElementById('ckeditor-title').value;
+        const content = window.ckeditorInstance.getData();
+        localStorage.setItem('editorDraft', JSON.stringify({ title, content }));
+        document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Draft saved locally.';
+    }, 1500);
+}
+
+function restoreDraft() {
+    const draft = localStorage.getItem('editorDraft');
+    if (draft) {
+        try {
+            const { title, content } = JSON.parse(draft);
+            document.getElementById('ckeditor-title').value = title || '';
+            window.ckeditorInstance.setData(content || '');
+            document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Draft recovered.';
+        } catch {}
+    }
+}
+
+function saveCKEditor(showMessage=true) {
+    const title = document.getElementById('ckeditor-title').value;
+    const content = window.ckeditorInstance.getData();
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            action: 'save',
+            title: title,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (showMessage) {
+            document.getElementById('ckeditor-save-status').textContent = data.status === 'success' ? 'Saved!' : (data.message || 'Save failed.');
+        }
+        // Remove local draft after successful save
+        if (data.status === 'success') localStorage.removeItem('editorDraft');
+    })
+    .catch(() => {
+        if (showMessage) document.getElementById('ckeditor-save-status').textContent = 'Error saving.';
+    });
+}
     toolbar: [],
     heading: { options: [] },
     removePlugins: [
@@ -54,6 +105,10 @@ ClassicEditor.create(document.querySelector('#ckeditor-content'), {
     const ta = document.getElementById('ckeditor-content');
     if (ta) ta.parentNode.removeChild(ta);
     window.ckeditorInstance = editor;
+    // Restore draft on load
+    restoreDraft();
+    // Auto-save on change
+    editor.model.document.on('change:data', autoSaveCKEditor);
 }).catch(error => { console.error(error); });
 
 function saveCKEditor(showMessage=true) {

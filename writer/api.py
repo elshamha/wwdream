@@ -1,4 +1,42 @@
-# All imports at the top
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status, viewsets, permissions
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from .models import Document, Project, Chapter, Character, ImportedDocument, ProjectCollaborator, WritingTheme, PersonalLibrary, WritingSession, AIAssistanceRequest
+from .serializers import DocumentSerializer, ProjectSerializer, ChapterSerializer, CharacterSerializer, ImportedDocumentSerializer, ProjectCollaboratorSerializer, WritingThemeSerializer, PersonalLibrarySerializer, WritingSessionSerializer, AIAssistanceRequestSerializer
+# EPUB export endpoint
+from django.http import HttpResponse
+from ebooklib import epub
+import io
+
+@api_view(['GET'])
+def export_document_epub(request, document_id):
+    try:
+        doc = Document.objects.get(pk=document_id)
+        book = epub.EpubBook()
+        book.set_identifier(str(doc.id))
+        book.set_title(doc.title)
+        book.set_language('en')
+        book.add_author(doc.author.username)
+
+        # Add content as a chapter
+        chapter = epub.EpubHtml(title=doc.title, file_name='chapter1.xhtml', lang='en')
+        chapter.content = f'<h1>{doc.title}</h1><p>{doc.content}</p>'
+        book.add_item(chapter)
+        book.spine = ['nav', chapter]
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+
+        # Write to bytes
+        out = io.BytesIO()
+        epub.write_epub(out, book)
+        out.seek(0)
+        response = HttpResponse(out.read(), content_type='application/epub+zip')
+        response['Content-Disposition'] = f'attachment; filename="{doc.title or "document"}.epub"'
+        return response
+    except Document.DoesNotExist:
+        return Response({'error': 'Document not found.'}, status=status.HTTP_404_NOT_FOUND)
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
@@ -19,6 +57,7 @@ def user_profile(request):
         'first_name': user.first_name,
         'last_name': user.last_name,
     })
+
 # Registration endpoint
 @api_view(['POST'])
 def register(request):
@@ -31,9 +70,6 @@ def register(request):
         return Response({'error': 'Username already exists.'}, status=status.HTTP_400_BAD_REQUEST)
     user = User.objects.create_user(username=username, password=password, email=email)
     return Response({'success': 'User registered successfully.'}, status=status.HTTP_201_CREATED)
-from rest_framework import viewsets, permissions
-from .models import Document, Project, Chapter, Character, ImportedDocument, ProjectCollaborator, WritingTheme, PersonalLibrary, WritingSession, AIAssistanceRequest
-from .serializers import DocumentSerializer, ProjectSerializer, ChapterSerializer, CharacterSerializer, ImportedDocumentSerializer, ProjectCollaboratorSerializer, WritingThemeSerializer, PersonalLibrarySerializer, WritingSessionSerializer, AIAssistanceRequestSerializer
 
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()

@@ -1,5 +1,14 @@
 .App {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 0 0 40px 0;
 }
 
 .App-logo {
@@ -14,14 +23,38 @@
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background-color: var(--primary);
+  min-height: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: #fff;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  padding: 24px 16px 0 16px;
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .App {
+    max-width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+  .App-header {
+    padding: 18px 6px 0 6px;
+    font-size: 1.1em;
+  }
+  .card {
+    margin: 12px 2px;
+    padding: 10px;
+  }
+  button, input, textarea, select {
+    font-size: 1em;
+    padding: 8px;
+  }
 }
 
 .App-link {

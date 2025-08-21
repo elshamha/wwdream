@@ -1,6 +1,14 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework import routers
+from .api import DocumentViewSet, ProjectViewSet
 from . import views
 from . import api
+
+
+# DRF router for API endpoints
+router = routers.DefaultRouter()
+router.register(r'api/documents', DocumentViewSet, basename='document')
+router.register(r'api/projects', ProjectViewSet, basename='project')
 
 app_name = 'writer'
 
@@ -75,6 +83,7 @@ urlpatterns = [
     # Format & Export
     path('format/', views.format_page, name='format_page'),
     path('export/<int:project_id>/<str:format_type>/', views.export_project, name='export_project'),
+    path('api/documents/<int:document_id>/export_epub/', api.export_document_epub, name='export_document_epub'),
     
     # Auto-save
     path('auto-save/', views.auto_save, name='auto_save'),
@@ -89,4 +98,13 @@ urlpatterns = [
     
     # Users API
     path('api/users/', api.user_profile, name='users_api'),
+    # API endpoints for documents and projects
+    path('', include(router.urls)),
 ]
+    
+
+
+# DRF router for API endpoints
+router = routers.DefaultRouter()
+router.register(r'api/documents', DocumentViewSet, basename='document')
+router.register(r'api/projects', ProjectViewSet, basename='project')
