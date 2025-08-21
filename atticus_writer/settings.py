@@ -42,9 +42,13 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'rest_framework',
+    'rest_framework_simplejwt',
+        'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -138,6 +142,19 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication Settings
+# Django REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True
+# For more security, you can use:
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     # Add your frontend URL here
+# ]
 # Authentication Settings
 LOGIN_REDIRECT_URL = '/writer/'
 LOGIN_URL = '/accounts/login/'

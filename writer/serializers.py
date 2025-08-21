@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Document, Project, Chapter, Character, ImportedDocument, ProjectCollaborator, WritingTheme, PersonalLibrary, WritingSession, AIAssistanceRequest, DocumentVersion, IdeaJotPad, DreamLog
+from .models import Document, Project, Chapter, Character, ImportedDocument, ProjectCollaborator, WritingTheme, PersonalLibrary, WritingSession, AIAssistanceRequest
 
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,17 +51,3 @@ class AIAssistanceRequestSerializer(serializers.ModelSerializer):
         model = AIAssistanceRequest
         fields = '__all__'
 
-class DocumentVersionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DocumentVersion
-        fields = '__all__'
-
-class IdeaJotPadSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IdeaJotPad
-        fields = '__all__'
-
-class DreamLogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DreamLog
-        fields = '__all__'

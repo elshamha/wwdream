@@ -1,5 +1,22 @@
 {
   "dependencies": {
-    "expo": "^53.0.20"
+    "@testing-library/react-native": "^13.3.0",
+    "@ui-kitten/components": "^5.3.1",
+    "axios": "^1.11.0",
+    "expo": "^53.0.20",
+    "formik": "^2.4.6",
+    "jest": "^30.0.5",
+    "nativewind": "^4.1.23",
+    "react-hook-form": "^7.62.0",
+    "react-native-gesture-handler": "^2.28.0",
+    "react-native-paper": "^5.14.5",
+    "react-native-reanimated": "^4.0.2",
+    "react-native-vector-icons": "^10.3.0",
+    "react-native-webview": "13.13.5",
+    "react-navigation": "^4.4.4",
+    "react-navigation-stack": "^2.10.4",
+    "react-router-dom": "^7.8.1",
+    "redux-toolkit": "^1.1.2",
+    "zustand": "^5.0.8"
   }
 }

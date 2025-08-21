@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api
 
 app_name = 'writer'
 
@@ -63,7 +64,10 @@ urlpatterns = [
     
     # API URLs
     path('projects/api/list/', views.projects_api_list, name='projects_api_list'),
+    path('api/ai/quotes/', views.ai_quote_extraction, name='ai_quote_extraction'),
     path('upload-test/', views.upload_test, name='upload_test'),
+        path('endpoint/', views.api_endpoint, name='api-endpoint'),
+    path('register/', api.register, name='api_register'),
     
     # AI Assistant
     path('ai-assistant/', views.ai_assistant, name='ai_assistant'),
@@ -84,5 +88,5 @@ urlpatterns = [
     path('documents/<int:document_id>/collaborators/', views.get_document_collaborators_api, name='get_document_collaborators_api'),
     
     # Users API
-    path('api/users/', views.users_api, name='users_api'),
+    path('api/users/', api.user_profile, name='users_api'),
 ]

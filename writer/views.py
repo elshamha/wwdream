@@ -1,5 +1,64 @@
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+import requests
+
+# AI Quote Extraction & Summarization Endpoint
+@csrf_exempt
+@login_required
+def ai_quote_extraction(request):
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        chapter_text = data.get('chapter_text', '')
+        if not chapter_text:
+            return JsonResponse({'success': False, 'error': 'No chapter text provided.'}, status=400)
+
+        # Call OpenAI API (or other AI provider)
+        OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+        if not OPENAI_API_KEY:
+            return JsonResponse({'success': False, 'error': 'OpenAI API key not configured.'}, status=500)
+
+        prompt = (
+            "Extract the most important quotes from the following chapter. "
+            "For each quote, provide a brief summary explaining its relevance to the central story. "
+            "Return a JSON array of objects with 'quote' and 'summary'.\n\nChapter:\n" + chapter_text
+        )
+
+        headers = {
+            'Authorization': f'Bearer {OPENAI_API_KEY}',
+            'Content-Type': 'application/json',
+        }
+        payload = {
+            'model': 'gpt-3.5-turbo',
+            'messages': [
+                {'role': 'system', 'content': 'You are a helpful literary assistant.'},
+                {'role': 'user', 'content': prompt}
+            ],
+            'max_tokens': 800,
+            'temperature': 0.7,
+        }
+        try:
+            response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            ai_text = result['choices'][0]['message']['content']
+            # Try to parse JSON from AI response
+            import json as pyjson
+            try:
+                quotes = pyjson.loads(ai_text)
+            except Exception:
+                quotes = ai_text  # Fallback: return raw text
+            return JsonResponse({'success': True, 'quotes': quotes})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    return JsonResponse({'error': 'POST required'}, status=405)
 # Writing Stats API endpoint
 from django.http import JsonResponse
+from django.http import JsonResponse
+
+def api_endpoint(request):
+    data = {"message": "Hello from Django!", "date": "2025-08-21"}
+    return JsonResponse(data)
 
 def stats_api(request):
     # Replace these with real stats from your models
@@ -11,6 +70,11 @@ def stats_api(request):
     return JsonResponse(data)
 from django.urls import path
 from . import views
+
+urlpatterns = [
+    # ...existing code...
+    path('api/stats/', views.stats_api, name='stats_api'),
+]
 
 urlpatterns = [
     # ...existing code...
