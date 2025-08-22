@@ -28,20 +28,22 @@ import FaxPanel from './FaxPanel';
 import DocumentTemplateSelector from './DocumentTemplateSelector';
 import EditProjectForm from './EditProjectForm';
 import EditDocumentForm from './EditDocumentForm';
+import CompactSection from './CompactSection';
 
 function App() {
   const [showFax, setShowFax] = useState(false);
   const [activeTab, setActiveTab] = useState('Home');
   const [templateContent, setTemplateContent] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true); // Default to dark mode for better text visibility
 
   useEffect(() => {
     document.body.className = darkMode ? 'dark-mode' : '';
   }, [darkMode]);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(localStorage.getItem('token') || 'demo-token');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isDemoMode = !localStorage.getItem('token');
   const [userInfo, setUserInfo] = useState({ username: '', email: '', first_name: '', last_name: '' });
   const [projects, setProjects] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -50,43 +52,85 @@ function App() {
 
   useEffect(() => {
     if (!token) return;
-    fetch('http://127.0.0.1:8000/api/endpoint/', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
-      .then((json) => {
-        setData(json);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-
-    fetch('http://127.0.0.1:8000/api/users/', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to fetch user info');
-        return response.json();
-      })
-      .then((userData) => {
+    
+    if (isDemoMode) {
+      // Demo mode with mock data
+      setTimeout(() => {
         setUserInfo({
-          username: userData.username || '',
-          email: userData.email || '',
-          first_name: userData.first_name || '',
-          last_name: userData.last_name || ''
+          username: 'demo_user',
+          email: 'demo@example.com',
+          first_name: 'Demo',
+          last_name: 'User'
         });
-        fetchProjects();
-        fetchDocuments();
+        setProjects([
+          { id: 1, title: 'My First Novel', description: 'A thrilling adventure story' },
+          { id: 2, title: 'Poetry Collection', description: 'Personal poems and thoughts' }
+        ]);
+        setDocuments([
+          { id: 1, title: 'Chapter 1: The Beginning', is_published: false },
+          { id: 2, title: 'Character Outline', is_published: true }
+        ]);
+        setData({ message: 'Demo mode active', status: 'connected' });
+        setLoading(false);
+      }, 1000);
+      return;
+    }
+    
+    const controller = new AbortController();
+    
+    Promise.all([
+      fetch('http://127.0.0.1:8000/api/endpoint/', {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal
+      }),
+      fetch('http://127.0.0.1:8000/api/users/', {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal
       })
-      .catch(() => {
-        setUserInfo({ username: '', email: '', first_name: '', last_name: '' });
+    ])
+    .then(async ([endpointResponse, usersResponse]) => {
+      if (!endpointResponse.ok) {
+        if (endpointResponse.status === 401) {
+          handleLogout();
+          throw new Error('Session expired. Please log in again.');
+        }
+        console.warn('API endpoint not available');
+      }
+      
+      if (!usersResponse.ok) {
+        throw new Error('Failed to fetch user info');
+      }
+      
+      const [endpointData, userData] = await Promise.all([
+        endpointResponse.ok ? endpointResponse.json() : null,
+        usersResponse.json()
+      ]);
+      
+      if (endpointData) {
+        setData(endpointData);
+      }
+      
+      setUserInfo({
+        username: userData.username || '',
+        email: userData.email || '',
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || ''
       });
-  }, [token]);
+      
+      setLoading(false);
+      fetchProjects();
+      fetchDocuments();
+    })
+    .catch((err) => {
+      if (err.name === 'AbortError') return;
+      console.warn('API request failed:', err.message);
+      setError(`Unable to connect to server. ${err.message.includes('Failed to fetch') ? 'Please check if the server is running at http://127.0.0.1:8000' : err.message}`);
+      setLoading(false);
+      setUserInfo({ username: '', email: '', first_name: '', last_name: '' });
+    });
+    
+    return () => controller.abort();
+  }, [token, isDemoMode]);
 
   function fetchProjects() {
     fetch('http://127.0.0.1:8000/api/projects/', {
@@ -191,13 +235,30 @@ function App() {
                 <div className="App">
                   <header className="App-header">
                     <h1 style={{marginBottom:16}}>Atticus Writer Mobile</h1>
-                    <button style={{position:'absolute',top:16,right:16,background:darkMode?'#222':'#fff',color:darkMode?'#fff':'#222',border:'1px solid #cce',borderRadius:8,padding:'6px 14px',fontSize:'0.95em',zIndex:10}} onClick={()=>setDarkMode(dm=>!dm)}>
-                      {darkMode ? 'Light Mode' : 'Dark Mode'}
+                    <button 
+                      className="theme-toggle"
+                      style={{
+                        position:'absolute',
+                        top:20,
+                        right:20,
+                        background: 'var(--surface)',
+                        color: 'var(--text)',
+                        border:'1px solid var(--glass-border)',
+                        borderRadius: 'var(--border-radius)',
+                        padding:'10px 18px',
+                        fontSize:'0.9em',
+                        zIndex:10,
+                        backdropFilter: 'var(--backdrop-blur)',
+                        fontWeight: 500
+                      }} 
+                      onClick={()=>setDarkMode(dm=>!dm)}
+                    >
+                      {darkMode ? '○ Light' : '● Dark'}
                     </button>
                     {userInfo.username && (
                       <div className="card" style={{margin:'18px 0',padding:'16px',textAlign:'left'}}>
                         <span style={{fontWeight:600}}>Logged in as <strong>{userInfo.username}</strong></span>
-                        <button style={{marginLeft:20,background:'var(--danger)',color:'#fff'}} onClick={handleLogout}>Logout</button>
+                        <button className="danger" style={{marginLeft:20}} onClick={handleLogout}>Logout</button>
                         <div style={{marginTop:10, fontSize:'0.95em'}}>
                           <div>Email: {userInfo.email}</div>
                           <div>Name: {userInfo.first_name} {userInfo.last_name}</div>
@@ -207,108 +268,194 @@ function App() {
                   </header>
                   {/* Tab content */}
                   {activeTab === 'Home' && (
-                    <div className="card" style={{margin:'24px 0',padding:'18px'}}>
-                      <div style={{textAlign:'center',marginBottom:18}}>
-                        <a href="https://your-webapp-url.com" target="_blank" rel="noopener noreferrer" style={{display:'inline-block',padding:'12px 28px',background:'var(--primary)',color:'#fff',borderRadius:12,fontWeight:700,fontSize:'1.1em',boxShadow:'0 2px 8px #cce',textDecoration:'none',transition:'background 0.2s'}}>
-                          🌐 Open Full Web App
+                    <div style={{padding:'12px'}}>
+                      <div style={{textAlign:'center',marginBottom:16}}>
+                        <a href="https://elshamha.pythonanywhere.com" target="_blank" rel="noopener noreferrer" className="web-app-link">
+                          ◉ Open Full Web App
                         </a>
                       </div>
-                      <ProfileEdit token={token} userInfo={userInfo} onUpdated={updated => setUserInfo({...userInfo, ...updated})} />
-                      <ProgressTracker token={token} />
-                      <AdvancedStats token={token} />
-                      <AnalyticsDashboard token={token} />
-                      <button style={{margin:'18px auto',display:'block',background:'var(--accent)',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontWeight:700,fontSize:'1em',boxShadow:'0 2px 8px #cce',cursor:'pointer'}} onClick={()=>setShowFax(s=>!s)}>
-                        {showFax ? 'Hide Fax Panel' : 'Send a Fax'}
-                      </button>
-                      {showFax && <FaxPanel token={token} />}
+                      
+                      <CompactSection title="Profile" icon="⬟" defaultExpanded={true}>
+                        <ProfileEdit token={token} userInfo={userInfo} onUpdated={updated => setUserInfo({...userInfo, ...updated})} />
+                      </CompactSection>
+                      
+                      <CompactSection title="Writing Progress" icon="▣" >
+                        <ProgressTracker token={token} />
+                      </CompactSection>
+                      
+                      <CompactSection title="Statistics" icon="◪">
+                        <AdvancedStats token={token} />
+                      </CompactSection>
+                      
+                      <CompactSection title="Analytics Dashboard" icon="▦">
+                        <AnalyticsDashboard token={token} />
+                      </CompactSection>
+                      
+                      <CompactSection title="Fax Services" icon="◯">
+                        <FaxPanel token={token} />
+                      </CompactSection>
                     </div>
                   )}
-                  {activeTab === 'Reminders' && <Reminders token={token} />}
+                  {activeTab === 'Reminders' && (
+                    <div style={{padding:'12px'}}>
+                      <CompactSection title="Writing Reminders" icon="◈" defaultExpanded={true}>
+                        <Reminders token={token} />
+                      </CompactSection>
+                    </div>
+                  )}
                   {activeTab === 'AI' && (
-                    <>
-                      <AIAssistantPanel />
-                      <AdvancedAIPanel />
-                      <MoreAIFeaturesPanel />
-                      <CustomAIPromptPanel />
-                      <AdvancedCustomAIPromptPanel />
-                    </>
+                    <div style={{padding:'12px'}}>
+                      <CompactSection title="AI Assistant" icon="◇" defaultExpanded={true}>
+                        <AIAssistantPanel />
+                      </CompactSection>
+                      
+                      <CompactSection title="Advanced AI Tools" icon="◎">
+                        <AdvancedAIPanel />
+                      </CompactSection>
+                      
+                      <CompactSection title="Custom AI Prompts" icon="◐">
+                        <CustomAIPromptPanel />
+                      </CompactSection>
+                      
+                      <CompactSection title="Advanced Custom Prompts" icon="◑">
+                        <AdvancedCustomAIPromptPanel />
+                      </CompactSection>
+                      
+                      <CompactSection title="More AI Features" icon="◒">
+                        <MoreAIFeaturesPanel />
+                      </CompactSection>
+                    </div>
                   )}
                   {activeTab === 'Projects' && (
-                    <div style={{marginTop:20}}>
-                      <h3>Your Projects</h3>
-                      <ProjectForm token={token} onCreated={handleProjectCreate} />
+                    <div style={{padding:'12px'}}>
+                      <CompactSection title="Create New Project" icon="◊" defaultExpanded={true}>
+                        <ProjectForm token={token} onCreated={handleProjectCreate} />
+                      </CompactSection>
+                      
                       {editingProject && (
-                        <EditProjectForm
-                          project={editingProject}
-                          onUpdate={handleProjectUpdate}
-                          onCancel={() => setEditingProject(null)}
-                        />
+                        <CompactSection title="Edit Project" icon="◈" defaultExpanded={true}>
+                          <EditProjectForm
+                            project={editingProject}
+                            onUpdate={handleProjectUpdate}
+                            onCancel={() => setEditingProject(null)}
+                          />
+                        </CompactSection>
                       )}
-                      {projects.length === 0 ? (
-                        <div>No projects found.</div>
-                      ) : (
-                        <ul>
-                          {projects.map((proj) => (
-                            <li key={proj.id} style={{marginBottom:20}}>
-                              <strong>{proj.title}</strong> - {proj.description}
-                              <button style={{marginLeft:10}} onClick={() => handleProjectEdit(proj)}>Edit</button>
-                              <button style={{marginLeft:5}} onClick={() => handleProjectDelete(proj.id)}>Delete</button>
-                              {/* Chapter Management */}
-                              <div style={{marginTop:10, marginLeft:20}}>
-                                <ChapterForm token={token} projectId={proj.id} onCreated={() => {}} />
-                                {/* List chapters for this project (placeholder) */}
-                                {/* You can fetch and display chapters here */}
-                                {/* Collaboration: Comments for first chapter (example) */}
-                                <CommentPanel token={token} chapterId={proj.first_chapter_id || ''} />
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                      
+                      <CompactSection title={`Your Projects (${projects.length})`} icon="⬢" defaultExpanded={true}>
+                        {projects.length === 0 ? (
+                          <div style={{textAlign:'center',color:'var(--text-muted)',padding:'20px'}}>
+                            No projects yet. Create your first project above!
+                          </div>
+                        ) : (
+                          <ul>
+                            {projects.map((proj) => (
+                              <li key={proj.id} style={{marginBottom:12}}>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'8px'}}>
+                                  <div>
+                                    <strong>{proj.title}</strong>
+                                    <div style={{fontSize:'0.9em',color:'var(--text-muted)'}}>{proj.description}</div>
+                                  </div>
+                                  <div style={{display:'flex',gap:'4px'}}>
+                                    <button className="secondary" style={{padding:'6px 12px',fontSize:'0.8em'}} onClick={() => handleProjectEdit(proj)}>Edit</button>
+                                    <button className="danger" style={{padding:'6px 12px',fontSize:'0.8em'}} onClick={() => handleProjectDelete(proj.id)}>Delete</button>
+                                  </div>
+                                </div>
+                                
+                                <CompactSection title="Chapters & Comments" icon="▤" defaultExpanded={false}>
+                                  <ChapterForm token={token} projectId={proj.id} onCreated={() => {}} />
+                                  <CommentPanel token={token} chapterId={proj.first_chapter_id || ''} />
+                                </CompactSection>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </CompactSection>
                     </div>
                   )}
                   {activeTab === 'Documents' && (
-                    <div style={{marginTop:20}}>
-                      <h3>Your Documents</h3>
-                      <DocumentTemplateSelector onSelect={setTemplateContent} />
-                      <DocumentForm token={token} projects={projects} onCreated={handleDocumentCreate} initialContent={templateContent} />
+                    <div style={{padding:'12px'}}>
+                      <CompactSection title="Document Templates" icon="▥">
+                        <DocumentTemplateSelector onSelect={setTemplateContent} />
+                      </CompactSection>
+                      
+                      <CompactSection title="Create New Document" icon="◊" defaultExpanded={true}>
+                        <DocumentForm token={token} projects={projects} onCreated={handleDocumentCreate} initialContent={templateContent} />
+                      </CompactSection>
+                      
                       {editingDocument && (
-                        <EditDocumentForm
-                          document={editingDocument}
-                          projects={projects}
-                          onUpdate={handleDocumentUpdate}
-                          onCancel={() => setEditingDocument(null)}
-                        />
+                        <CompactSection title="Edit Document" icon="◈" defaultExpanded={true}>
+                          <EditDocumentForm
+                            document={editingDocument}
+                            projects={projects}
+                            onUpdate={handleDocumentUpdate}
+                            onCancel={() => setEditingDocument(null)}
+                          />
+                        </CompactSection>
                       )}
-                      {documents.length === 0 ? (
-                        <div>No documents found.</div>
-                      ) : (
-                        <ul>
-                          {documents.map((doc) => (
-                            <li key={doc.id}>
-                              <strong>{doc.title}</strong> - {doc.is_published ? 'Published' : 'Draft'}
-                              <button style={{marginLeft:10}} onClick={() => handleDocumentEdit(doc)}>Edit</button>
-                              <button style={{marginLeft:5}} onClick={() => handleDocumentDelete(doc.id)}>Delete</button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                      
+                      <CompactSection title={`Your Documents (${documents.length})`} icon="⬛" defaultExpanded={true}>
+                        {documents.length === 0 ? (
+                          <div style={{textAlign:'center',color:'var(--text-muted)',padding:'20px'}}>
+                            No documents yet. Create your first document above!
+                          </div>
+                        ) : (
+                          <ul>
+                            {documents.map((doc) => (
+                              <li key={doc.id} style={{marginBottom:12}}>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'8px'}}>
+                                  <div>
+                                    <strong>{doc.title}</strong>
+                                    <div style={{fontSize:'0.9em',color:'var(--text-muted)'}}>
+                                      {doc.is_published ? '● Published' : '○ Draft'}
+                                    </div>
+                                  </div>
+                                  <div style={{display:'flex',gap:'4px'}}>
+                                    <button className="secondary" style={{padding:'6px 12px',fontSize:'0.8em'}} onClick={() => handleDocumentEdit(doc)}>Edit</button>
+                                    <button className="danger" style={{padding:'6px 12px',fontSize:'0.8em'}} onClick={() => handleDocumentDelete(doc.id)}>Delete</button>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </CompactSection>
                     </div>
                   )}
                   {activeTab === 'Profile' && (
-                    <div style={{marginTop:20}}>
-                      <ProfileEdit token={token} userInfo={userInfo} onUpdated={updated => setUserInfo({...userInfo, ...updated})} />
+                    <div style={{padding:'12px'}}>
+                      <CompactSection title="Profile Settings" icon="⬟" defaultExpanded={true}>
+                        <ProfileEdit token={token} userInfo={userInfo} onUpdated={updated => setUserInfo({...userInfo, ...updated})} />
+                      </CompactSection>
                     </div>
                   )}
                   <MobileTabBar active={activeTab} onTab={setActiveTab} />
-                  <FloatingActionButton onClick={()=>alert('Quick Create! (Implement action)')} label="Create" icon="➕" />
-                  {/* ...existing code... */}
-                  {loading && <p>Loading...</p>}
-                  {error && <p style={{color:'red'}}>Error: {error}</p>}
+                  <FloatingActionButton onClick={()=>alert('Quick Create! (Implement action)')} label="Create" icon="◊" />
+                  {loading && (
+                    <div className="card" style={{textAlign:'center',margin:'24px 20px'}}>
+                      <div style={{fontSize:'1.2em',marginBottom:'12px'}}>◯</div>
+                      <p style={{margin:0,color:'var(--text-secondary)'}}>Loading your data...</p>
+                    </div>
+                  )}
+                  {error && (
+                    <div className="card" style={{margin:'24px 20px',background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626'}}>
+                      <div style={{fontSize:'1.2em',marginBottom:'8px'}}>△ Connection Issue</div>
+                      <p style={{margin:0,fontSize:'0.95em'}}>{error}</p>
+                      <button 
+                        className="danger"
+                        style={{marginTop:'12px',padding:'8px 16px',fontSize:'0.9em'}} 
+                        onClick={() => window.location.reload()}
+                      >
+                        Retry Connection
+                      </button>
+                    </div>
+                  )}
                   {data && (
-                    <div style={{marginTop:20}}>
-                      <strong>API Response:</strong>
-                      <pre>{JSON.stringify(data, null, 2)}</pre>
+                    <div className="card" style={{margin:'24px 20px',fontSize:'0.9em'}}>
+                      <details>
+                        <summary style={{cursor:'pointer',fontWeight:600,marginBottom:'8px'}}>▣ API Response Data</summary>
+                        <pre style={{fontSize:'0.8em',background:'var(--card)',padding:'12px',borderRadius:'8px',overflow:'auto'}}>{JSON.stringify(data, null, 2)}</pre>
+                      </details>
                     </div>
                   )}
                 </div>

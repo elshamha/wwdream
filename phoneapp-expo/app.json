@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Atticus Writer Mobile",
+    "slug": "atticuswriter-mobile",
+    "version": "1.0.0",
+    "sdkVersion": "50.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "orientation": "portrait",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#4A90E2"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.atticuswriter.mobile"
+    },
+    "android": {
+      "package": "com.atticuswriter.mobile"
+    },
+    "web": {},
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
