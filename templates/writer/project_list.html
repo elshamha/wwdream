@@ -32,15 +32,15 @@
                 
                 <div class="row text-center mb-3">
                     <div class="col-4">
-                        <small class="text-muted d-block">Chapters</small>
+                        <small class="d-block" style="color: #ffffff !important;">Chapters</small>
                         <strong>{{ project.chapter_count }}</strong>
                     </div>
                     <div class="col-4">
-                        <small class="text-muted d-block">Words</small>
+                        <small class="d-block" style="color: #ffffff !important;">Words</small>
                         <strong>{{ project.total_word_count|floatformat:0 }}</strong>
                     </div>
                     <div class="col-4">
-                        <small class="text-muted d-block">Target</small>
+                        <small class="d-block" style="color: #ffffff !important;">Target</small>
                         <strong>{{ project.target_word_count|floatformat:0 }}</strong>
                     </div>
                 </div>
@@ -58,9 +58,6 @@
                 {% endif %}
                 
                 <div class="btn-group w-100" role="group">
-                    <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn btn-primary btn-sm" title="Open in Editor">
-                        <i class="fas fa-feather-alt"></i> Write
-                    </a>
                     <a href="{% url 'writer:project_delete' project.pk %}" class="btn btn-outline-danger btn-sm" title="Delete Project">
                         <i class="fas fa-trash"></i>
                     </a>

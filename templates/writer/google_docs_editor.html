@@ -1,0 +1,1958 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Document Editor - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+
+<!-- Mobile Detection and Redirect -->
+<script>
+(function() {
+    // Detect if user is on a mobile device
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+               || (window.innerWidth <= 768);
+    }
+    
+    // Check on page load
+    if (isMobileDevice()) {
+        // Prevent mobile users from using the editor
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;">
+                    <div style="text-align: center; max-width: 400px;">
+                        <div style="font-size: 4rem; margin-bottom: 2rem;">
+                            <i class="fas fa-mobile-alt" style="color: #667eea;"></i>
+                        </div>
+                        <h2 style="color: #ffffff; margin-bottom: 1rem;">Mobile Editor Coming Soon!</h2>
+                        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 2rem; line-height: 1.6;">
+                            We're building a special mobile-friendly editor for phone users. 
+                            The current editor is optimized for desktop use only.
+                        </p>
+                        <p style="color: rgba(255, 255, 255, 0.6); margin-bottom: 2rem;">
+                            Please use a desktop computer to access the full editor, or wait for our upcoming mobile version.
+                        </p>
+                        <a href="{% url 'writer:dashboard' %}" class="btn btn-primary" style="padding: 12px 24px; border-radius: 10px;">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            `;
+        });
+        return; // Stop executing the rest of the page
+    }
+})();
+</script>
+
+<!-- Desktop Editor Content (only shown on desktop) -->
+<div class="docs-editor-container" id="desktop-editor">
+    <!-- Chapter Sidebar -->
+    <div class="chapter-sidebar" id="chapter-sidebar">
+        <div class="chapter-sidebar-header">
+            <h4><i class="fas fa-book-open me-2"></i>Chapters</h4>
+            <div class="chapter-controls">
+                <button class="btn-chapter-control" onclick="addNewChapter()" title="Add New Chapter">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="btn-chapter-control" onclick="toggleChapterSidebar()" title="Toggle Sidebar">
+                    <i class="fas fa-chevron-left" id="sidebar-toggle-icon"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chapter-list" id="chapter-list">
+            <!-- Chapters will be loaded here dynamically -->
+        </div>
+        
+        <div class="chapter-sidebar-footer">
+            <button class="btn-chapter-action" onclick="saveChapterOrder()" title="Save Chapter Order">
+                <i class="fas fa-save me-1"></i>Save Order
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div class="docs-main-content" id="docs-main-content">
+        <!-- Header -->
+        <div class="docs-header">
+        <div class="docs-header-left">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                {% if project %}
+                <a href="{% url 'writer:project_detail' project.id %}" class="docs-btn docs-btn-link" title="Back to Project">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                {% else %}
+                <a href="{% url 'writer:dashboard' %}" class="docs-btn docs-btn-link" title="Back to Dashboard">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                {% endif %}
+                <div class="docs-title-container">
+                    <input type="text" id="document-title" class="docs-title-input" 
+                           value="{% if current_chapter %}{{ current_chapter.title|default:'Untitled Chapter' }}{% else %}{{ document.title|default:'Untitled Document' }}{% endif %}" 
+                           placeholder="{% if current_chapter %}Untitled Chapter{% else %}Untitled Document{% endif %}"
+                           aria-label="Document title"
+                           title="Edit document title">
+                    <div class="docs-subtitle">{{ project.title|default:'Personal Document' }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="docs-header-right">
+            <div class="docs-save-status" id="save-status">
+                <i class="fas fa-check-circle"></i>
+                <span>All changes saved</span>
+            </div>
+            <div class="docs-actions">
+                <button class="docs-btn docs-btn-secondary" onclick="shareDocument()">
+                    <i class="fas fa-share"></i>
+                    Share
+                </button>
+                <button class="docs-btn docs-btn-primary" onclick="saveDocument()">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editor Container -->
+    <div class="docs-editor-wrapper">
+        <!-- Toolbar -->
+        <div id="docs-toolbar" class="docs-toolbar">
+            <!-- Undo/Redo -->
+            <div class="toolbar-group">
+                <button class="ql-undo" title="Undo">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="ql-redo" title="Redo">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+
+            <!-- Font -->
+            <div class="toolbar-group">
+                <select class="ql-font">
+                    <option value="serif" selected>Times New Roman</option>
+                    <option value="arial">Arial</option>
+                    <option value="monospace">Courier New</option>
+                    <option value="helvetica">Helvetica</option>
+                    <option value="georgia">Georgia</option>
+                </select>
+                <select class="ql-size">
+                    <option value="small">10pt</option>
+                    <option value="normal" selected>12pt (MLA)</option>
+                    <option value="large">14pt</option>
+                    <option value="huge">16pt</option>
+                </select>
+            </div>
+
+            <!-- Formatting -->
+            <div class="toolbar-group">
+                <button class="ql-bold" title="Bold"></button>
+                <button class="ql-italic" title="Italic"></button>
+                <button class="ql-underline" title="Underline"></button>
+                <button class="ql-strike" title="Strikethrough"></button>
+            </div>
+
+            <!-- Colors -->
+            <div class="toolbar-group">
+                <select class="ql-color">
+                    <option value="red"></option>
+                    <option value="green"></option>
+                    <option value="blue"></option>
+                    <option value="orange"></option>
+                    <option value="violet"></option>
+                    <option value="#d0d1d2"></option>
+                    <option selected></option>
+                </select>
+                <select class="ql-background">
+                    <option value="red"></option>
+                    <option value="green"></option>
+                    <option value="blue"></option>
+                    <option value="orange"></option>
+                    <option value="violet"></option>
+                    <option value="#d0d1d2"></option>
+                    <option selected></option>
+                </select>
+            </div>
+
+            <!-- Alignment -->
+            <div class="toolbar-group">
+                <select class="ql-align">
+                    <option selected></option>
+                    <option value="center"></option>
+                    <option value="right"></option>
+                    <option value="justify"></option>
+                </select>
+            </div>
+
+            <!-- Lists -->
+            <div class="toolbar-group">
+                <button class="ql-list" value="ordered" title="Numbered List"></button>
+                <button class="ql-list" value="bullet" title="Bullet List"></button>
+                <button class="ql-indent" value="-1" title="Decrease Indent"></button>
+                <button class="ql-indent" value="+1" title="Increase Indent"></button>
+            </div>
+
+            <!-- Insert -->
+            <div class="toolbar-group">
+                <button class="ql-link" title="Insert Link"></button>
+                <button class="ql-image" title="Insert Image"></button>
+                <button class="ql-video" title="Insert Video"></button>
+                <button class="ql-formula" title="Insert Formula"></button>
+            </div>
+
+            <!-- Extra -->
+            <div class="toolbar-group">
+                <button class="ql-blockquote" title="Blockquote"></button>
+                <button class="ql-code-block" title="Code Block"></button>
+                <select class="ql-header">
+                    <option value="1">Heading 1</option>
+                    <option value="2">Heading 2</option>
+                    <option value="3">Heading 3</option>
+                    <option selected>Normal</option>
+                </select>
+            </div>
+
+            <!-- Clean -->
+            <div class="toolbar-group">
+                <button class="ql-clean" title="Remove Formatting"></button>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="docs-editor-content">
+            <div id="docs-editor" aria-label="Document editor" role="textbox" aria-multiline="true">
+                {% if current_chapter %}{{ current_chapter.content|default:'' }}{% else %}{{ document.content|default:'' }}{% endif %}
+            </div>
+        </div>
+    </div>
+    </div> <!-- Close docs-main-content -->
+
+    <!-- Footer Stats -->
+    <div class="docs-footer">
+        <div class="docs-stats">
+            <span id="word-count">0 words</span>
+            <span id="char-count">0 characters</span>
+            <span id="page-count">Page 1</span>
+        </div>
+        <div class="docs-footer-right">
+            <button class="docs-btn docs-btn-link" onclick="toggleFullscreen()">
+                <i class="fas fa-expand"></i>
+                Fullscreen
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="share-modal" class="docs-modal">
+    <div class="docs-modal-content">
+        <div class="docs-modal-header">
+            <h3>Share Document</h3>
+            <button class="docs-modal-close" onclick="closeShareModal()">&times;</button>
+        </div>
+        <div class="docs-modal-body">
+            <div class="share-option">
+                <label>Share with people</label>
+                <div class="share-input-container">
+                    <input type="email" placeholder="Enter email address" id="share-email">
+                    <button class="docs-btn docs-btn-primary" onclick="addCollaborator()">Add</button>
+                </div>
+            </div>
+            <div class="share-option">
+                <label>Get shareable link</label>
+                <div class="share-link-container">
+                    <input type="text" readonly id="share-link" value="{{ request.build_absolute_uri|escape }}">
+                    <button class="docs-btn docs-btn-secondary" onclick="copyShareLink()">Copy</button>
+                </div>
+            </div>
+            <div class="collaborators-list" id="collaborators-list">
+                <!-- Collaborators will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Google Docs-like Styling */
+.docs-editor-container {
+    background: #f8f9fa;
+    min-height: 100vh;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    flex-direction: row;
+}
+
+/* Chapter Sidebar */
+.chapter-sidebar {
+    width: 300px;
+    min-width: 300px;
+    background: rgba(255, 255, 255, 0.95);
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    position: relative;
+}
+
+.chapter-sidebar.collapsed {
+    width: 50px;
+    min-width: 50px;
+    overflow: hidden;
+}
+
+.chapter-sidebar.collapsed .chapter-sidebar-header h4,
+.chapter-sidebar.collapsed .chapter-list,
+.chapter-sidebar.collapsed .chapter-sidebar-footer {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.chapter-sidebar.collapsed .chapter-controls {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.chapter-sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.chapter-sidebar-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white !important;
+}
+
+.chapter-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-chapter-control {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.btn-chapter-control:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.chapter-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.chapter-item {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.chapter-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+}
+
+.chapter-item.active {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.chapter-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.chapter-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chapter-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 28px;
+    cursor: pointer;
+}
+
+.chapter-number.editing {
+    background: #ff6b6b;
+}
+
+.chapter-number input {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: white;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 50%;
+}
+
+.chapter-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chapter-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.chapter-meta {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    gap: 12px;
+}
+
+.chapter-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chapter-item:hover .chapter-actions {
+    opacity: 1;
+}
+
+.btn-chapter-small {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 12px;
+}
+
+.btn-chapter-small:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-chapter-small.danger:hover {
+    background: #fff5f5;
+    color: #e53e3e;
+}
+
+.chapter-drag-handle {
+    color: #ccc;
+    cursor: grab;
+    padding: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chapter-item:hover .chapter-drag-handle {
+    opacity: 1;
+}
+
+.chapter-drag-handle:active {
+    cursor: grabbing;
+}
+
+.chapter-sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #e0e0e0;
+    background: white;
+}
+
+.btn-chapter-action {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-chapter-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Main Content Area */
+.docs-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.docs-header {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.docs-title-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.docs-title-input {
+    border: none;
+    outline: none;
+    font-size: 18px;
+    font-weight: 400;
+    color: #000000;
+    background: transparent;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.docs-title-input:hover {
+    background: #f1f3f4;
+}
+
+.docs-title-input:focus {
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.docs-subtitle {
+    font-size: 12px;
+    color: #5f6368;
+    margin-left: 8px;
+}
+
+.docs-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.docs-save-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #5f6368;
+}
+
+.docs-save-status.saving {
+    color: #1a73e8;
+}
+
+.docs-save-status.error {
+    color: #d93025;
+}
+
+.docs-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.docs-btn {
+    background: transparent;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.docs-btn:hover {
+    background: #f8f9fa;
+    border-color: #bdc1c6;
+}
+
+.docs-btn-primary {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: white;
+}
+
+.docs-btn-primary:hover {
+    background: #1557b0;
+}
+
+.docs-btn-secondary {
+    background: white;
+    color: #1a73e8;
+}
+
+.docs-btn-link {
+    border: none;
+    color: #1a73e8;
+    background: transparent;
+}
+
+.docs-editor-wrapper {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    min-height: calc(100vh - 120px);
+    flex: 1;
+}
+
+.docs-toolbar {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #f8f9fa;
+}
+
+/* Fix toolbar button and text colors */
+.docs-toolbar button,
+.docs-toolbar select,
+.docs-toolbar .ql-picker-label,
+.docs-toolbar .ql-picker-item {
+    color: #202124 !important;
+}
+
+.ql-toolbar .ql-picker-label,
+.ql-toolbar .ql-picker-item {
+    color: #202124 !important;
+}
+
+.ql-toolbar button {
+    color: #202124 !important;
+}
+
+.ql-toolbar select {
+    color: #202124 !important;
+    background: white !important;
+    border: 1px solid #dadce0 !important;
+}
+
+.ql-snow .ql-picker-label {
+    color: #202124 !important;
+}
+
+.ql-snow .ql-picker-options {
+    background: white !important;
+    border: 1px solid #dadce0 !important;
+}
+
+.ql-snow .ql-picker-item {
+    color: #202124 !important;
+}
+
+.ql-snow .ql-picker-item:hover {
+    background: #f1f3f4 !important;
+}
+
+/* Additional fixes for toolbar visibility */
+.ql-snow .ql-tooltip {
+    background: white !important;
+    border: 1px solid #dadce0 !important;
+    color: #202124 !important;
+}
+
+.ql-snow .ql-tooltip input {
+    color: #202124 !important;
+}
+
+.ql-snow .ql-formats {
+    margin-right: 15px;
+}
+
+.ql-snow button:hover,
+.ql-snow button:focus {
+    color: #1a73e8 !important;
+}
+
+.ql-snow button.ql-active {
+    color: #1a73e8 !important;
+}
+
+/* Override any inherited white text */
+#docs-toolbar *,
+.docs-toolbar *,
+.ql-toolbar * {
+    color: #202124 !important;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    border-right: 1px solid #e0e0e0;
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+}
+
+.docs-editor-content {
+    padding: 0;
+    min-height: 600px;
+    display: flex;
+    justify-content: center;
+    background: #f0f0f0;
+}
+
+#docs-editor {
+    /* MLA Standard Page Size: 8.5" x 11" */
+    width: 8.5in;
+    min-height: 11in;
+    max-width: 8.5in;
+    
+    /* MLA Standard Margins: 1 inch on all sides */
+    padding: 1in;
+    margin: 20px auto;
+    
+    /* MLA Standard Font and Spacing */
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 2.0; /* Double-spaced */
+    color: #000000;
+    
+    /* Page appearance */
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    
+    /* Print-like appearance */
+    border: 1px solid #ddd;
+}
+
+/* Chapter Detection Highlight */
+.chapter-highlight {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    border-left: 4px solid #667eea;
+    margin: 10px 0;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+}
+
+.chapter-highlight::after {
+    content: "Click to create chapter";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.chapter-highlight:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+}
+
+.docs-footer {
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    padding: 8px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #5f6368;
+    position: sticky;
+    bottom: 0;
+}
+
+.docs-stats {
+    display: flex;
+    gap: 16px;
+}
+
+/* Quill Editor Customization */
+.ql-toolbar.ql-snow {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+.ql-toolbar.ql-snow * {
+    color: #202124 !important;
+}
+
+.ql-toolbar.ql-snow button {
+    color: #202124 !important;
+}
+
+.ql-toolbar.ql-snow .ql-stroke {
+    stroke: #202124 !important;
+}
+
+.ql-toolbar.ql-snow .ql-fill {
+    fill: #202124 !important;
+}
+
+.ql-container.ql-snow {
+    border: none !important;
+    font-size: inherit !important;
+}
+
+.ql-editor {
+    font-family: 'Times New Roman', Times, serif !important;
+    font-size: 12pt !important;
+    line-height: 2.0 !important; /* Double-spaced */
+    color: #000000 !important;
+    padding: 0 !important;
+    text-align: left !important;
+}
+
+.ql-editor * {
+    color: #000000 !important;
+    font-family: 'Times New Roman', Times, serif !important;
+}
+
+.ql-editor p, .ql-editor div, .ql-editor span, .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor h4, .ql-editor h5, .ql-editor h6, .ql-editor li, .ql-editor blockquote {
+    color: #000000 !important;
+    font-family: 'Times New Roman', Times, serif !important;
+    line-height: 2.0 !important;
+}
+
+.ql-editor.ql-blank::before {
+    color: #5f6368 !important;
+    font-style: italic;
+}
+
+.ql-editor h1 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 0;
+    text-align: center;
+    line-height: 2.0 !important;
+}
+
+.ql-editor h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 0;
+    line-height: 2.0 !important;
+}
+
+.ql-editor h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 0;
+    line-height: 2.0 !important;
+}
+
+.ql-editor p {
+    margin: 0;
+    line-height: 2.0 !important;
+    text-indent: 0.5in; /* MLA paragraph indent */
+}
+
+.ql-editor p:first-child {
+    text-indent: 0; /* No indent for first paragraph */
+}
+
+.ql-editor blockquote {
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+    margin-left: 1in; /* MLA block quote indent */
+    margin-right: 1in;
+    font-style: normal;
+    line-height: 2.0 !important;
+}
+
+.ql-editor ul, .ql-editor ol {
+    margin: 0;
+    padding-left: 0.5in;
+    line-height: 2.0 !important;
+}
+
+.ql-editor li {
+    line-height: 2.0 !important;
+    margin: 0;
+}
+
+/* Modal Styles */
+.docs-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+}
+
+.docs-modal-content {
+    background: white;
+    margin: 10% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.docs-modal-header {
+    padding: 24px 24px 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.docs-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.docs-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #5f6368;
+}
+
+.docs-modal-body {
+    padding: 24px;
+}
+
+.share-option {
+    margin-bottom: 24px;
+}
+
+.share-option label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #202124;
+}
+
+.share-input-container,
+.share-link-container {
+    display: flex;
+    gap: 8px;
+}
+
+.share-input-container input,
+.share-link-container input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .docs-header {
+        padding: 8px 16px;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .docs-editor-wrapper {
+        margin: 0 8px;
+    }
+
+    .docs-editor-content {
+        padding: 16px 8px;
+        background: white;
+    }
+
+    #docs-editor {
+        width: 100%;
+        max-width: 100%;
+        min-height: 500px;
+        padding: 0.5in;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+    }
+
+    .docs-toolbar {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .toolbar-group {
+        padding: 0 4px;
+        gap: 2px;
+    }
+}
+
+@media print {
+    .docs-header,
+    .docs-toolbar,
+    .docs-footer {
+        display: none !important;
+    }
+    
+    .docs-editor-wrapper {
+        box-shadow: none !important;
+        margin: 0 !important;
+        max-width: none !important;
+    }
+    
+    .docs-editor-content {
+        background: white !important;
+        padding: 0 !important;
+    }
+    
+    #docs-editor {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
+
+/* Animation Classes */
+.saving-animation {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Full Screen Mode */
+.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+    background: white;
+}
+
+.fullscreen-mode .docs-editor-wrapper {
+    max-width: none;
+    height: 100vh;
+    margin: 0;
+    box-shadow: none;
+}
+
+.fullscreen-mode .docs-editor-content {
+    height: calc(100vh - 160px);
+    overflow-y: auto;
+}
+</style>
+
+<!-- Include Quill.js -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+<script>
+// Global variables
+let quill;
+let currentDocumentId = {% if current_chapter %}{{ current_chapter.id }}{% elif document %}{{ document.id|default:'null' }}{% else %}null{% endif %};
+let projectId = {{ project.id|default:'null' }};
+let currentChapterId = {% if current_chapter %}{{ current_chapter.id }}{% else %}null{% endif %};
+let autoSaveTimeout;
+let lastSavedContent = '';
+let chapters = [];
+let sidebarCollapsed = false;
+let chapterDetectionEnabled = true;
+
+// Initialize the editor
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Quill is loaded
+    if (typeof Quill === 'undefined') {
+        console.error('Quill.js failed to load from CDN');
+        document.getElementById('docs-editor').innerHTML = '<div style="padding: 20px; color: red; background: white; border: 1px solid red;">Error: Quill.js editor failed to load. Please refresh the page or check your internet connection.</div>';
+        return;
+    }
+    
+    console.log('Quill.js loaded successfully');
+    initializeEditor();
+    setupAutoSave();
+    setupEventListeners();
+    loadChapters();
+    setupChapterDetection();
+    
+    // Delay word count update to ensure quill is ready
+    setTimeout(updateWordCount, 500);
+});
+
+function initializeEditor() {
+    try {
+        console.log('Initializing Quill editor...');
+        
+        // Check if elements exist
+        const editorElement = document.getElementById('docs-editor');
+        const toolbarElement = document.getElementById('docs-toolbar');
+        
+        if (!editorElement) {
+            console.error('Editor element #docs-editor not found');
+            return;
+        }
+        
+        if (!toolbarElement) {
+            console.error('Toolbar element #docs-toolbar not found');
+            return;
+        }
+        
+        console.log('Elements found, initializing Quill...');
+        
+        // Initialize Quill with custom toolbar
+        quill = new Quill('#docs-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: '#docs-toolbar',
+                    handlers: {
+                        'undo': function() {
+                            this.quill.history.undo();
+                        },
+                        'redo': function() {
+                            this.quill.history.redo();
+                        }
+                    }
+                },
+                history: {
+                    delay: 1000,
+                    maxStack: 500,
+                    userOnly: true
+                }
+            },
+            placeholder: 'Start writing your document...',
+            formats: [
+                'header', 'font', 'size',
+                'bold', 'italic', 'underline', 'strike',
+                'color', 'background',
+                'align', 'list', 'indent',
+                'blockquote', 'code-block',
+                'link', 'image', 'video', 'formula'
+            ]
+        });
+        
+        console.log('Quill editor initialized successfully');
+        
+        // Set initial content after Quill is initialized
+        {% if current_chapter and current_chapter.content %}
+            const initialContent = `{{ current_chapter.content|escapejs }}`;
+            if (initialContent && initialContent.trim()) {
+                console.log('Loading chapter content...');
+                quill.root.innerHTML = initialContent;
+            }
+        {% elif document.content %}
+            const initialContent = `{{ document.content|escapejs }}`;
+            if (initialContent && initialContent.trim()) {
+                console.log('Loading initial content...');
+                quill.root.innerHTML = initialContent;
+            }
+        {% endif %}
+        
+    } catch (error) {
+        console.error('Error initializing Quill editor:', error);
+    }
+
+    // Add undo/redo buttons functionality
+    const undoButton = document.querySelector('.ql-undo');
+    const redoButton = document.querySelector('.ql-redo');
+    
+    if (undoButton) {
+        undoButton.addEventListener('click', function() {
+            quill.history.undo();
+        });
+    }
+    
+    if (redoButton) {
+        redoButton.addEventListener('click', function() {
+            quill.history.redo();
+        });
+    }
+
+    // Listen for content changes
+    quill.on('text-change', function(delta, oldDelta, source) {
+        if (source === 'user') {
+            updateWordCount();
+            showSavingStatus();
+            scheduleAutoSave();
+            if (chapterDetectionEnabled) {
+                detectChapters();
+            }
+        }
+    });
+    
+    // Listen for paste events for auto-chapter detection
+    quill.root.addEventListener('paste', function(e) {
+        setTimeout(() => {
+            if (chapterDetectionEnabled) {
+                detectChapters();
+            }
+        }, 100);
+    });
+
+    // Initial content is now loaded in initializeEditor()
+}
+
+function setupAutoSave() {
+    // Auto-save every 30 seconds
+    setInterval(function() {
+        const currentContent = quill.root.innerHTML;
+        if (currentContent !== lastSavedContent) {
+            saveDocument(false);
+        }
+    }, 30000);
+}
+
+function setupEventListeners() {
+    // Document title change
+    document.getElementById('document-title').addEventListener('input', function() {
+        scheduleAutoSave();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 's':
+                    e.preventDefault();
+                    saveDocument();
+                    break;
+                case 'z':
+                    if (e.shiftKey) {
+                        e.preventDefault();
+                        quill.history.redo();
+                    } else {
+                        e.preventDefault();
+                        quill.history.undo();
+                    }
+                    break;
+            }
+        }
+        
+        if (e.key === 'F11') {
+            e.preventDefault();
+            toggleFullscreen();
+        }
+    });
+}
+
+function scheduleAutoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(function() {
+        saveDocument(false);
+    }, 2000);
+}
+
+function updateWordCount() {
+    if (!quill) {
+        console.warn('Quill not initialized, cannot update word count');
+        return;
+    }
+    
+    try {
+        const text = quill.getText();
+        const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+        const chars = text.length;
+        
+        const wordCountElement = document.getElementById('word-count');
+        const charCountElement = document.getElementById('char-count');
+        const pageCountElement = document.getElementById('page-count');
+        
+        if (wordCountElement) {
+            wordCountElement.textContent = `${words} words`;
+        }
+        
+        if (charCountElement) {
+            charCountElement.textContent = `${chars} characters`;
+        }
+        
+        if (pageCountElement) {
+            // Estimate page count (roughly 250 words per page)
+            const pages = Math.max(1, Math.ceil(words / 250));
+            pageCountElement.textContent = `Page ${pages}`;
+        }
+    } catch (error) {
+        console.error('Error updating word count:', error);
+    }
+}
+
+function showSavingStatus() {
+    const statusElement = document.getElementById('save-status');
+    statusElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Saving...</span>';
+    statusElement.className = 'docs-save-status saving saving-animation';
+}
+
+function showSavedStatus() {
+    const statusElement = document.getElementById('save-status');
+    statusElement.innerHTML = '<i class="fas fa-check-circle"></i><span>All changes saved</span>';
+    statusElement.className = 'docs-save-status';
+}
+
+function showErrorStatus() {
+    const statusElement = document.getElementById('save-status');
+    statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Error saving</span>';
+    statusElement.className = 'docs-save-status error';
+}
+
+function saveDocument(showNotification = true) {
+    if (!quill) {
+        console.error('Quill not initialized, cannot save document');
+        return;
+    }
+    
+    try {
+        const title = document.getElementById('document-title').value;
+        const content = quill.root.innerHTML;
+    
+    if (showNotification) {
+        showSavingStatus();
+    }
+    
+    const formData = new FormData();
+    formData.append('action', 'save_chapter');
+    formData.append('title', title);
+    formData.append('content', content);
+    if (currentChapterId) {
+        formData.append('chapter_id', currentChapterId);
+    }
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success' || data.success) {
+            lastSavedContent = content;
+            showSavedStatus();
+            if (showNotification) {
+                showNotification(data.message || 'Chapter saved successfully!', 'success');
+            }
+            // Update chapter ID if a new chapter was created
+            if (data.chapter_id && !currentChapterId) {
+                currentChapterId = data.chapter_id;
+            }
+        } else {
+            showErrorStatus();
+            if (showNotification) {
+                showNotification('Error saving chapter: ' + (data.error || data.message || 'Unknown error'), 'error');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Save error:', error);
+        showErrorStatus();
+        if (showNotification) {
+            showNotification('Error saving document. Please try again.', 'error');
+        }
+    });
+    
+    } catch (error) {
+        console.error('Error in saveDocument:', error);
+        showErrorStatus();
+        if (showNotification) {
+            showNotification('Error preparing document save. Please try again.', 'error');
+        }
+    }
+}
+
+function shareDocument() {
+    document.getElementById('share-modal').style.display = 'block';
+    loadCollaborators();
+}
+
+function closeShareModal() {
+    document.getElementById('share-modal').style.display = 'none';
+}
+
+function addCollaborator() {
+    const email = document.getElementById('share-email').value;
+    if (!email) return;
+    
+    // API call to add collaborator
+    fetch(`/writer/documents/${currentDocumentId}/share/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('share-email').value = '';
+            loadCollaborators();
+            showNotification('Collaborator added successfully!', 'success');
+        } else {
+            showNotification(data.error || 'Error adding collaborator', 'error');
+        }
+    });
+}
+
+function loadCollaborators() {
+    if (!currentDocumentId) return;
+    
+    fetch(`/writer/documents/${currentDocumentId}/collaborators/`)
+    .then(response => response.json())
+    .then(data => {
+        const collaboratorsList = document.getElementById('collaborators-list');
+        collaboratorsList.innerHTML = '';
+        
+        if (data.collaborators && data.collaborators.length > 0) {
+            const header = document.createElement('h4');
+            header.textContent = 'People with access';
+            header.style.marginTop = '24px';
+            header.style.marginBottom = '12px';
+            collaboratorsList.appendChild(header);
+            
+            data.collaborators.forEach(collaborator => {
+                const item = document.createElement('div');
+                item.className = 'collaborator-item';
+                item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e0e0e0;';
+                item.innerHTML = `
+                    <span>${collaborator.email}</span>
+                    <button class="docs-btn docs-btn-link" onclick="removeCollaborator('${collaborator.id}')">Remove</button>
+                `;
+                collaboratorsList.appendChild(item);
+            });
+        }
+    });
+}
+
+function copyShareLink() {
+    const shareLink = document.getElementById('share-link');
+    shareLink.select();
+    document.execCommand('copy');
+    showNotification('Link copied to clipboard!', 'success');
+}
+
+function toggleFullscreen() {
+    const container = document.querySelector('.docs-editor-container');
+    
+    if (container.classList.contains('fullscreen-mode')) {
+        container.classList.remove('fullscreen-mode');
+        document.querySelector('[onclick="toggleFullscreen()"] i').className = 'fas fa-expand';
+    } else {
+        container.classList.add('fullscreen-mode');
+        document.querySelector('[onclick="toggleFullscreen()"] i').className = 'fas fa-compress';
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 4px;
+        color: white;
+        font-size: 14px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    switch(type) {
+        case 'success':
+            notification.style.background = '#4caf50';
+            break;
+        case 'error':
+            notification.style.background = '#f44336';
+            break;
+        default:
+            notification.style.background = '#2196f3';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Add CSS for animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// Chapter Management Functions
+function loadChapters() {
+    if (!projectId) return;
+    
+    fetch(`/writer/projects/${projectId}/chapters/`)
+        .then(response => response.json())
+        .then(data => {
+            chapters = data.chapters || [];
+            renderChapterList();
+        })
+        .catch(error => {
+            console.error('Error loading chapters:', error);
+        });
+}
+
+function renderChapterList() {
+    const chapterList = document.getElementById('chapter-list');
+    chapterList.innerHTML = '';
+    
+    chapters.forEach((chapter, index) => {
+        const chapterItem = document.createElement('div');
+        chapterItem.className = `chapter-item ${currentChapterId === chapter.id ? 'active' : ''}`;
+        chapterItem.setAttribute('data-chapter-id', chapter.id);
+        chapterItem.setAttribute('draggable', 'true');
+        
+        chapterItem.innerHTML = `
+            <div class="chapter-header">
+                <div class="chapter-number" onclick="editChapterNumber(${chapter.id}, ${index + 1})">
+                    <span class="chapter-num-display">${index + 1}</span>
+                    <input type="number" class="chapter-num-input" value="${index + 1}" min="1" style="display: none;">
+                </div>
+                <div class="chapter-info">
+                    <div class="chapter-title">${chapter.title || 'Untitled Chapter'}</div>
+                    <div class="chapter-meta">
+                        <span>${chapter.word_count || 0} words</span>
+                        <span>${formatDate(chapter.updated_at)}</span>
+                    </div>
+                </div>
+                <div class="chapter-actions">
+                    <button class="btn-chapter-small" onclick="editChapter(${chapter.id})" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-chapter-small danger" onclick="deleteChapter(${chapter.id})" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="chapter-drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+            </div>
+        `;
+        
+        // Add drag and drop event listeners
+        chapterItem.addEventListener('dragstart', handleDragStart);
+        chapterItem.addEventListener('dragover', handleDragOver);
+        chapterItem.addEventListener('drop', handleDrop);
+        chapterItem.addEventListener('dragend', handleDragEnd);
+        
+        // Add click to open chapter
+        chapterItem.addEventListener('click', (e) => {
+            if (!e.target.closest('.chapter-actions') && !e.target.closest('.chapter-number')) {
+                openChapter(chapter.id);
+            }
+        });
+        
+        chapterList.appendChild(chapterItem);
+    });
+}
+
+function detectChapters() {
+    if (!quill) return;
+    
+    const content = quill.root.innerHTML;
+    const chapterRegex = /(Chapter\s+\d+[:\s]|Chapter\s+[A-Za-z]+[:\s]|CHAPTER\s+\d+[:\s]|CHAPTER\s+[A-Za-z]+[:\s])/gi;
+    
+    // Remove existing highlights
+    const existingHighlights = quill.root.querySelectorAll('.chapter-highlight');
+    existingHighlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        while (highlight.firstChild) {
+            parent.insertBefore(highlight.firstChild, highlight);
+        }
+        parent.removeChild(highlight);
+    });
+    
+    // Find potential chapter headings
+    const textNodes = getTextNodes(quill.root);
+    textNodes.forEach(node => {
+        const text = node.textContent;
+        const matches = text.match(chapterRegex);
+        
+        if (matches) {
+            matches.forEach(match => {
+                const index = text.indexOf(match);
+                if (index !== -1) {
+                    // Create highlight wrapper
+                    const range = document.createRange();
+                    range.setStart(node, index);
+                    range.setEnd(node, index + match.length);
+                    
+                    try {
+                        const highlight = document.createElement('span');
+                        highlight.className = 'chapter-highlight';
+                        highlight.addEventListener('click', function() {
+                            createChapterFromHighlight(this.textContent.trim());
+                        });
+                        
+                        range.surroundContents(highlight);
+                    } catch (e) {
+                        // Range might span multiple elements, skip for now
+                        console.log('Could not highlight chapter heading:', match);
+                    }
+                }
+            });
+        }
+    });
+}
+
+function getTextNodes(node) {
+    let textNodes = [];
+    
+    if (node.nodeType === Node.TEXT_NODE) {
+        textNodes.push(node);
+    } else {
+        for (let child of node.childNodes) {
+            textNodes = textNodes.concat(getTextNodes(child));
+        }
+    }
+    
+    return textNodes;
+}
+
+function createChapterFromHighlight(chapterTitle) {
+    if (!projectId) {
+        showNotification('Project ID not found', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('title', chapterTitle);
+    formData.append('content', '');
+    formData.append('project', projectId);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('/writer/chapters/create/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Chapter created successfully!', 'success');
+            loadChapters();
+        } else {
+            showNotification('Error creating chapter: ' + (data.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating chapter:', error);
+        showNotification('Error creating chapter', 'error');
+    });
+}
+
+function toggleChapterSidebar() {
+    const sidebar = document.getElementById('chapter-sidebar');
+    const icon = document.getElementById('sidebar-toggle-icon');
+    
+    sidebarCollapsed = !sidebarCollapsed;
+    
+    if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        icon.className = 'fas fa-chevron-right';
+    } else {
+        sidebar.classList.remove('collapsed');
+        icon.className = 'fas fa-chevron-left';
+    }
+}
+
+function addNewChapter() {
+    const title = prompt('Enter chapter title:');
+    if (!title || !projectId) return;
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', '');
+    formData.append('project', projectId);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('/writer/chapters/create/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Chapter created successfully!', 'success');
+            loadChapters();
+        } else {
+            showNotification('Error creating chapter', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating chapter:', error);
+        showNotification('Error creating chapter', 'error');
+    });
+}
+
+function editChapterNumber(chapterId, currentNumber) {
+    const chapterItem = document.querySelector(`[data-chapter-id="${chapterId}"]`);
+    const numberDisplay = chapterItem.querySelector('.chapter-num-display');
+    const numberInput = chapterItem.querySelector('.chapter-num-input');
+    
+    numberDisplay.style.display = 'none';
+    numberInput.style.display = 'block';
+    numberInput.focus();
+    numberInput.select();
+    
+    const saveNumber = () => {
+        const newNumber = parseInt(numberInput.value);
+        if (newNumber > 0 && newNumber <= chapters.length && newNumber !== currentNumber) {
+            reorderChapter(chapterId, newNumber - 1);
+        }
+        numberDisplay.style.display = 'block';
+        numberInput.style.display = 'none';
+    };
+    
+    numberInput.addEventListener('blur', saveNumber);
+    numberInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            saveNumber();
+        } else if (e.key === 'Escape') {
+            numberInput.value = currentNumber;
+            numberDisplay.style.display = 'block';
+            numberInput.style.display = 'none';
+        }
+    });
+}
+
+function reorderChapter(chapterId, newIndex) {
+    const currentIndex = chapters.findIndex(c => c.id === chapterId);
+    if (currentIndex === -1 || currentIndex === newIndex) return;
+    
+    // Move chapter in local array
+    const [movedChapter] = chapters.splice(currentIndex, 1);
+    chapters.splice(newIndex, 0, movedChapter);
+    
+    // Update order on server
+    const orderData = chapters.map((chapter, index) => ({ id: chapter.id, order: index + 1 }));
+    
+    fetch('/writer/chapters/reorder/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ chapters: orderData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            renderChapterList();
+            showNotification('Chapter order updated!', 'success');
+        } else {
+            // Revert local changes
+            loadChapters();
+            showNotification('Error updating chapter order', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error reordering chapters:', error);
+        loadChapters(); // Reload from server
+        showNotification('Error updating chapter order', 'error');
+    });
+}
+
+function openChapter(chapterId) {
+    if (projectId) {
+        window.location.href = `/writer/projects/${projectId}/chapters/${chapterId}/edit/`;
+    }
+}
+
+function editChapter(chapterId) {
+    openChapter(chapterId);
+}
+
+function deleteChapter(chapterId) {
+    if (!confirm('Are you sure you want to delete this chapter?')) return;
+    
+    fetch(`/writer/chapters/${chapterId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Chapter deleted successfully!', 'success');
+            loadChapters();
+        } else {
+            showNotification('Error deleting chapter', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting chapter:', error);
+        showNotification('Error deleting chapter', 'error');
+    });
+}
+
+function saveChapterOrder() {
+    const orderData = chapters.map((chapter, index) => ({ id: chapter.id, order: index + 1 }));
+    
+    fetch('/writer/chapters/reorder/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ chapters: orderData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Chapter order saved!', 'success');
+        } else {
+            showNotification('Error saving chapter order', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving chapter order:', error);
+        showNotification('Error saving chapter order', 'error');
+    });
+}
+
+function setupChapterDetection() {
+    // Add toggle button for chapter detection
+    const chapterControls = document.querySelector('.chapter-controls');
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'btn-chapter-control';
+    toggleButton.title = 'Toggle Auto Chapter Detection';
+    toggleButton.innerHTML = '<i class="fas fa-magic"></i>';
+    toggleButton.onclick = () => {
+        chapterDetectionEnabled = !chapterDetectionEnabled;
+        toggleButton.style.opacity = chapterDetectionEnabled ? '1' : '0.5';
+        showNotification(chapterDetectionEnabled ? 'Auto chapter detection enabled' : 'Auto chapter detection disabled', 'info');
+    };
+    chapterControls.insertBefore(toggleButton, chapterControls.firstChild);
+}
+
+// Drag and Drop Functions
+let draggedElement = null;
+
+function handleDragStart(e) {
+    draggedElement = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.outerHTML);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (draggedElement !== this) {
+        const draggedId = parseInt(draggedElement.getAttribute('data-chapter-id'));
+        const targetId = parseInt(this.getAttribute('data-chapter-id'));
+        
+        const draggedIndex = chapters.findIndex(c => c.id === draggedId);
+        const targetIndex = chapters.findIndex(c => c.id === targetId);
+        
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+            reorderChapter(draggedId, targetIndex);
+        }
+    }
+    
+    return false;
+}
+
+function handleDragEnd() {
+    this.classList.remove('dragging');
+    draggedElement = null;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Add CSRF token to page if not already present
+if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';
+    document.body.appendChild(csrfInput);
+}
+</script>
+{% endblock %}

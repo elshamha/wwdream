@@ -132,13 +132,14 @@ from django.db import models, transaction
 import re
 from .models import (Document, Project, Chapter, AIAssistanceRequest, Character, 
                     ImportedDocument, ProjectCollaborator, WritingTheme, 
-                    PersonalLibrary, WritingSession)
+                    PersonalLibrary, WritingSession, CreativeNotebook, CreativeNode, NodeConnection, UserProfile)
 from .forms import (DocumentForm, ProjectForm, ChapterForm, AIAssistanceForm, 
                    CharacterForm, ImportDocumentForm, CollaboratorForm)
 import json
 import random
 import os
 import mimetypes
+import logging
 from django.conf import settings
 from .document_parser import extract_text_from_file  # , is_google_docs_url
 import tempfile
@@ -442,6 +443,10 @@ class CharacterCreateView(LoginRequiredMixin, CreateView):
         project_id = self.kwargs.get('project_id')
         form.instance.project = get_object_or_404(Project, id=project_id, author=self.request.user)
         return super().form_valid(form)
+    
+    def get_success_url(self):
+        project_id = self.kwargs.get('project_id')
+        return reverse_lazy('writer:character_list', kwargs={'project_id': project_id})
 
 
 class CharacterUpdateView(LoginRequiredMixin, UpdateView):
@@ -451,6 +456,9 @@ class CharacterUpdateView(LoginRequiredMixin, UpdateView):
     
     def get_queryset(self):
         return Character.objects.filter(project__author=self.request.user)
+    
+    def get_success_url(self):
+        return reverse_lazy('writer:character_list', kwargs={'project_id': self.object.project.pk})
 
 
 class CharacterDeleteView(LoginRequiredMixin, DeleteView):
@@ -549,6 +557,7 @@ def chapter_editor(request, project_id):
             title="Untitled Chapter",
             content="",
             project=project,
+            author=request.user,
             order=0
         )
         all_chapters = Chapter.objects.filter(project=project).order_by('order')
@@ -893,8 +902,10 @@ def chapter_editor(request, project_id):
         'project': project,
         'all_chapters': all_chapters,
         'current_chapter': current_chapter,
+        'user': request.user,
+        'document': current_chapter,  # Pass chapter as document for compatibility
     }
-    return render(request, 'writer/chapter_editor_clean.html', context)
+    return render(request, 'writer/google_docs_editor.html', context)
 
 @login_required
 def upload_test(request):
@@ -1192,17 +1203,132 @@ def add_import_to_project(request, pk, project_id):
 @login_required
 def projects_api_list(request):
     """API endpoint to list user's projects"""
-    projects = Project.objects.filter(author=request.user).order_by('-updated_at')
+    # Check if we should only return bookshelf projects
+    bookshelf_only = request.GET.get('bookshelf_only', 'false').lower() == 'true'
+    
+    if bookshelf_only:
+        projects = Project.objects.filter(author=request.user, show_on_dashboard=True).order_by('-updated_at')
+    else:
+        projects = Project.objects.filter(author=request.user).order_by('-updated_at')
+    
     projects_data = [
         {
             'id': project.id,
             'title': project.title,
             'description': project.description or '',
-            'updated_at': project.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+            'updated_at': project.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'created_at': project.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'chapter_count': project.chapters.count(),
+            'word_count': project.total_word_count,
+            'genre': project.genre or '',
+            'target_word_count': project.target_word_count,
+            'show_on_dashboard': project.show_on_dashboard,
+            'progress_percentage': round(project.progress_percentage, 1),
         }
         for project in projects
     ]
     return JsonResponse({'projects': projects_data})
+
+
+@login_required
+@csrf_exempt
+def chapters_api(request, project_id):
+    """API endpoint for chapter operations"""
+    try:
+        project = Project.objects.get(id=project_id)
+        # Check if user has access to this project
+        if not (project.author == request.user or project.collaborators.filter(id=request.user.id).exists()):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+    except Project.DoesNotExist:
+        return JsonResponse({'error': 'Project not found'}, status=404)
+    
+    if request.method == 'GET':
+        chapters = Chapter.objects.filter(project=project).order_by('order', 'id')
+        chapters_data = [
+            {
+                'id': chapter.id,
+                'title': chapter.title,
+                'content': chapter.content or '',
+                'word_count': chapter.word_count,
+                'order': chapter.order,
+                'created_at': chapter.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_at': chapter.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            for chapter in chapters
+        ]
+        return JsonResponse({'chapters': chapters_data})
+    
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            chapter = Chapter.objects.create(
+                title=data.get('title', 'New Chapter'),
+                content=data.get('content', ''),
+                project=project,
+                order=data.get('order', 0)
+            )
+            return JsonResponse({
+                'success': True,
+                'chapter': {
+                    'id': chapter.id,
+                    'title': chapter.title,
+                    'content': chapter.content,
+                    'word_count': chapter.word_count,
+                    'order': chapter.order,
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required 
+@csrf_exempt
+def chapter_api(request, chapter_id):
+    """API endpoint for individual chapter operations"""
+    try:
+        chapter = Chapter.objects.get(id=chapter_id)
+        # Check if user has access to this chapter's project
+        if not (chapter.project.author == request.user or chapter.project.collaborators.filter(id=request.user.id).exists()):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+    except Chapter.DoesNotExist:
+        return JsonResponse({'error': 'Chapter not found'}, status=404)
+    
+    if request.method == 'GET':
+        return JsonResponse({
+            'id': chapter.id,
+            'title': chapter.title,
+            'content': chapter.content or '',
+            'word_count': chapter.word_count,
+            'order': chapter.order,
+            'project_id': chapter.project.id,
+            'project_title': chapter.project.title,
+            'created_at': chapter.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': chapter.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    
+    elif request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            if 'title' in data:
+                chapter.title = data['title']
+            if 'content' in data:
+                chapter.content = data['content']
+            if 'order' in data:
+                chapter.order = data['order']
+            
+            chapter.save()
+            
+            return JsonResponse({
+                'success': True,
+                'chapter': {
+                    'id': chapter.id,
+                    'title': chapter.title,
+                    'content': chapter.content,
+                    'word_count': chapter.word_count,
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
 
 class ImportedDocumentDeleteView(LoginRequiredMixin, DeleteView):
@@ -1236,16 +1362,18 @@ def ajax_create_chapter(request):
         
         # Get the project and verify ownership
         try:
-            project = Project.objects.get(id=project_id, author=request.user)
+            project = Project.objects.get(id=project_id)
+            # Check if user has access to this project
+            if not (project.author == request.user or project.collaborators.filter(id=request.user.id).exists()):
+                return JsonResponse({'success': False, 'error': 'Permission denied'})
         except Project.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Project not found or access denied'})
+            return JsonResponse({'success': False, 'error': 'Project not found'})
         
         # Create the chapter
         chapter = Chapter.objects.create(
             project=project,
             title=title,
             content=content,
-            author=request.user,
             order=project.chapters.count() + 1
         )
         
@@ -1271,7 +1399,13 @@ def dashboard(request):
         Q(author=request.user) | Q(collaborators=request.user)
     ).distinct().count()
     
-    total_words = sum(doc.word_count for doc in Document.objects.filter(author=request.user))
+    # Calculate comprehensive writing statistics
+    user_projects = Project.objects.filter(author=request.user).select_related('author')
+    
+    # Total words from both documents and projects
+    doc_words = sum(doc.word_count for doc in Document.objects.filter(author=request.user))
+    project_words = sum(project.total_word_count for project in user_projects)
+    total_words = doc_words + project_words
     
     # Get user's characters
     user_characters = Character.objects.filter(
@@ -1280,15 +1414,15 @@ def dashboard(request):
         ).distinct()
     ).count()
     
-    # Get user projects for library bookshelf
-    user_projects = Project.objects.filter(author=request.user).select_related('author')
-    
     # Create shelves with max 7 books each
     shelves = []
     projects_list = list(user_projects)
     for i in range(0, len(projects_list), 7):
         shelf = projects_list[i:i+7]
         shelves.append(shelf)
+    
+    # Get user profile for theme preferences
+    profile = UserProfile.get_or_create_for_user(request.user)
     
     context = {
         'recent_documents': recent_documents,
@@ -1298,6 +1432,8 @@ def dashboard(request):
         'total_characters': user_characters,
         'user_projects': user_projects,
         'shelves': shelves,
+        'show_bookshelf': True,
+        'profile': profile,
     }
     return render(request, 'writer/dashboard.html', context)
 
@@ -1851,6 +1987,124 @@ def delete_chapter(request, project_id, chapter_id):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 
+# Chapter Management API Endpoints
+
+@login_required
+@csrf_exempt 
+def create_chapter_api(request):
+    """Create a new chapter via API"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Handle both JSON and form data
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            data = request.POST
+            
+        project_id = data.get('project')
+        title = data.get('title', '').strip()
+        content = data.get('content', '')
+        
+        if not project_id or not title:
+            return JsonResponse({'success': False, 'error': 'Project ID and title are required'})
+        
+        # Get the project and verify access
+        try:
+            project = Project.objects.get(id=project_id)
+            if not (project.author == request.user or project.collaborators.filter(id=request.user.id).exists()):
+                return JsonResponse({'success': False, 'error': 'Permission denied'})
+        except Project.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Project not found'})
+        
+        # Create the chapter
+        chapter = Chapter.objects.create(
+            project=project,
+            title=title,
+            content=content,
+            order=Chapter.objects.filter(project=project).count() + 1
+        )
+        
+        # Update project word count
+        project.update_word_count()
+        
+        return JsonResponse({
+            'success': True, 
+            'chapter_id': chapter.id,
+            'message': f'Chapter "{title}" created successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@csrf_exempt
+def delete_chapter_api(request, chapter_id):
+    """Delete a chapter via API"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        chapter = get_object_or_404(Chapter, id=chapter_id)
+        # Check if user has access to this chapter's project
+        if not (chapter.project.author == request.user or chapter.project.collaborators.filter(id=request.user.id).exists()):
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        chapter_title = chapter.title
+        deleted_order = chapter.order
+        project = chapter.project
+        
+        chapter.delete()
+        
+        # Reorder remaining chapters
+        Chapter.objects.filter(
+            project=project,
+            order__gt=deleted_order
+        ).update(order=F('order') - 1)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Chapter "{chapter_title}" has been deleted.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error deleting chapter: {str(e)}'
+        }, status=400)
+
+
+@login_required
+@csrf_exempt
+def reorder_chapters_api(request):
+    """Reorder chapters via API"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        chapters_data = data.get('chapters', [])
+        
+        # Update chapter orders
+        for item in chapters_data:
+            chapter_id = item.get('id')
+            new_order = item.get('order')
+            if chapter_id and new_order is not None:
+                try:
+                    chapter = Chapter.objects.get(id=chapter_id)
+                    # Check if user has access to this chapter's project
+                    if chapter.project.author == request.user or chapter.project.collaborators.filter(id=request.user.id).exists():
+                        chapter.order = new_order
+                        chapter.save()
+                except Chapter.DoesNotExist:
+                    pass
+        
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -1894,4 +2148,618 @@ def users_api(request):
     return JsonResponse(data, safe=False)
 
 
+# New Modern Editor Views
+@login_required
+def modern_editor(request):
+    """Modern Google Docs-like editor"""
+    context = {
+        'user': request.user,
+    }
+    
+    # Get current chapter or document if specified
+    chapter_id = request.GET.get('chapter')
+    project_id = request.GET.get('project')
+    
+    if chapter_id:
+        try:
+            chapter = Chapter.objects.get(id=chapter_id, project__author=request.user)
+            context['chapter'] = chapter
+            context['project'] = chapter.project
+        except Chapter.DoesNotExist:
+            messages.error(request, 'Chapter not found.')
+    elif project_id:
+        try:
+            project = Project.objects.get(id=project_id, author=request.user)
+            context['project'] = project
+            # Get the latest chapter or create a new one
+            latest_chapter = project.chapters.order_by('-created_at').first()
+            if latest_chapter:
+                context['chapter'] = latest_chapter
+        except Project.DoesNotExist:
+            messages.error(request, 'Project not found.')
+    
+    return render(request, 'writer/modern_editor.html', context)
 
+
+@login_required  
+def integrated_editor(request):
+    """Integrated editor with all features"""
+    context = {
+        'user': request.user,
+    }
+    
+    # Get current chapter or document if specified
+    chapter_id = request.GET.get('chapter')
+    project_id = request.GET.get('project')
+    
+    if chapter_id:
+        try:
+            chapter = Chapter.objects.get(id=chapter_id, project__author=request.user)
+            context['chapter'] = chapter
+            context['project'] = chapter.project
+        except Chapter.DoesNotExist:
+            messages.error(request, 'Chapter not found.')
+    elif project_id:
+        try:
+            project = Project.objects.get(id=project_id, author=request.user)
+            context['project'] = project
+            # Get the latest chapter or create a new one
+            latest_chapter = project.chapters.order_by('-created_at').first()
+            if latest_chapter:
+                context['chapter'] = latest_chapter
+        except Project.DoesNotExist:
+            messages.error(request, 'Project not found.')
+    
+    return render(request, 'writer/integrated_editor.html', context)
+
+
+@login_required
+def creativity_workshop(request):
+    """AI-powered creativity workshop for writers"""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'writer/creativity_workshop.html', context)
+
+
+@login_required
+def clean_dashboard(request):
+    """Clean, writer-focused dashboard"""
+    context = {
+        'user': request.user,
+    }
+    
+    try:
+        # Get user's projects
+        user_projects = Project.objects.filter(
+            Q(author=request.user) | Q(collaborators=request.user)
+        ).distinct().order_by('-updated_at')[:6]
+        
+        # Get recent chapters
+        recent_chapters = Chapter.objects.filter(
+            project__author=request.user
+        ).order_by('-updated_at')[:5]
+        
+        # Calculate stats
+        total_words = sum(
+            chapter.word_count or 0 
+            for project in user_projects 
+            for chapter in project.chapters.all()
+        )
+        
+        projects_count = user_projects.count()
+        chapters_count = Chapter.objects.filter(project__author=request.user).count()
+        
+        # Get personal library counts (if models exist)
+        try:
+            library = PersonalLibrary.objects.get(user=request.user)
+            research_notes_count = library.imported_documents.count()
+            characters_count = sum(project.characters.count() for project in user_projects)
+        except:
+            research_notes_count = 0
+            characters_count = 0
+        
+        context.update({
+            'recent_projects': user_projects,
+            'recent_chapters': recent_chapters,
+            'total_words': total_words,
+            'projects_count': projects_count,
+            'chapters_count': chapters_count,
+            'research_notes_count': research_notes_count,
+            'characters_count': characters_count,
+            'worldbuilding_notes_count': 0,  # Placeholder
+            'resources_count': research_notes_count,
+        })
+        
+    except Exception as e:
+        logging.error(f"Error loading clean dashboard for user {request.user}: {e}")
+        context['error_message'] = 'There was an issue loading your dashboard.'
+    
+    return render(request, 'writer/clean_dashboard.html', context)
+
+
+# API Endpoints for Modern Editor
+@csrf_exempt
+@login_required
+def api_save_document(request):
+    """API endpoint to save document content from modern editor"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            title = data.get('title', '')
+            content = data.get('content', '')
+            chapters_data = data.get('chapters', [])
+            
+            # For now, save to the user's first project or create a new one
+            project = Project.objects.filter(author=request.user).first()
+            if not project:
+                project = Project.objects.create(
+                    title="My Writing Project",
+                    description="Created from editor",
+                    author=request.user
+                )
+            
+            # Save or update the chapter
+            if title and content:
+                chapter, created = Chapter.objects.get_or_create(
+                    project=project,
+                    title=title,
+                    defaults={'content': content, 'author': request.user}
+                )
+                if not created:
+                    chapter.content = content
+                    chapter.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'chapter_id': chapter.id,
+                    'message': 'Document saved successfully'
+                })
+            
+            return JsonResponse({'success': False, 'error': 'Title and content required'})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'})
+
+
+@csrf_exempt
+@login_required  
+def api_ai_assistance(request):
+    """API endpoint for AI writing assistance"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action', '')
+            text = data.get('text', '')
+            
+            # Simple mock responses for now (you can integrate real AI later)
+            mock_responses = {
+                'continue': f"Continuing from your text: '{text[:50]}...', here's a possible continuation: The story unfolds with unexpected twists as the protagonist discovers hidden truths about their world.",
+                'improve': f"Here's an improved version: {text.replace('good', 'excellent').replace('bad', 'terrible').replace('nice', 'wonderful')}" if text else "Please select some text to improve.",
+                'grammar': f"Grammar-corrected version: {text.replace(' i ', ' I ').replace("dont", "don't").replace("cant", "can't")}" if text else "No grammar issues found.",
+                'character': "Character development suggestion: Consider adding internal conflict to make your character more relatable and three-dimensional.",
+                'plot': "Plot suggestion: What if the protagonist's greatest strength becomes their weakness at the climax?"
+            }
+            
+            suggestion = mock_responses.get(action, "AI assistance is not available for this action.")
+            
+            return JsonResponse({
+                'success': True,
+                'suggestion': suggestion,
+                'action': action
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'})
+
+
+@login_required
+def compact_library(request):
+    """Compact, readable version of the personal library"""
+    context = {
+        'user': request.user,
+    }
+    
+    try:
+        # Get user's projects
+        user_projects = Project.objects.filter(
+            Q(author=request.user) | Q(collaborators=request.user)
+        ).distinct().order_by('-updated_at')
+        
+        # Get latest project for continue writing
+        latest_project = user_projects.first()
+        
+        # Get imported documents if available
+        try:
+            library = PersonalLibrary.objects.get(user=request.user)
+            imported_documents = library.imported_documents.all().order_by('-created_at')[:10]
+        except PersonalLibrary.DoesNotExist:
+            imported_documents = []
+        
+        context.update({
+            'projects': user_projects,
+            'latest_project': latest_project,
+            'imported_documents': imported_documents,
+        })
+        
+    except Exception as e:
+        logging.error(f"Error loading compact library for user {request.user}: {e}")
+        context['error_message'] = 'There was an issue loading your library.'
+    
+    return render(request, 'writer/compact_library.html', context)
+
+
+# Ultimate Templates - The Most Beautiful Writing Platform
+@login_required
+def ultimate_editor(request):
+    """The ultimate AI-integrated writing editor with MLA formatting by default"""
+    context = {
+        'user': request.user,
+    }
+    
+    # Get project if specified
+    project_id = request.GET.get('project')
+    if project_id:
+        try:
+            project = get_object_or_404(Project, 
+                Q(author=request.user) | Q(collaborators=request.user), 
+                id=project_id
+            )
+            context['project'] = project
+            
+            # Get chapters for this project
+            chapters = project.chapters.all().order_by('order')
+            context['chapters'] = chapters
+            
+            # Get current chapter (first chapter or latest edited)
+            current_chapter = chapters.first()
+            if current_chapter:
+                context['current_chapter'] = current_chapter
+                
+        except (Project.DoesNotExist, ValueError):
+            pass
+    
+    # Get user's latest project if none specified
+    if 'project' not in context:
+        latest_project = Project.objects.filter(author=request.user).order_by('-updated_at').first()
+        if latest_project:
+            context['project'] = latest_project
+            chapters = latest_project.chapters.all().order_by('order')
+            context['chapters'] = chapters
+            context['current_chapter'] = chapters.first()
+    
+    return render(request, 'writer/ultimate_editor.html', context)
+
+
+@login_required 
+def ultimate_dashboard(request):
+    """The most beautiful, organized, and mobile-friendly dashboard"""
+    context = {
+        'user': request.user,
+    }
+    
+    try:
+        # Get user's projects (with visibility control)
+        user_projects = Project.objects.filter(
+            Q(author=request.user) | Q(collaborators=request.user)
+        ).distinct().order_by('-updated_at')
+        
+        # Calculate statistics
+        total_words = sum(project.total_word_count for project in user_projects)
+        active_projects = user_projects.filter(is_public=True, author=request.user).count()
+        
+        context.update({
+            'user_projects': user_projects,
+            'total_words': total_words,
+            'active_projects': active_projects,
+        })
+        
+    except Exception as e:
+        logging.error(f"Error loading ultimate dashboard for user {request.user}: {e}")
+        context['error_message'] = 'There was an issue loading your dashboard.'
+    
+    return render(request, 'writer/ultimate_dashboard.html', context)
+
+
+@login_required
+def ultimate_library(request):
+    """The most beautifully organized library with perfect text visibility"""
+    context = {
+        'user': request.user,
+    }
+    
+    try:
+        # Get user's projects with detailed information
+        user_projects = Project.objects.filter(
+            Q(author=request.user) | Q(collaborators=request.user)
+        ).distinct().order_by('-updated_at')
+        
+        # Add computed fields for library display
+        projects_data = []
+        for project in user_projects:
+            project_data = {
+                'id': project.id,
+                'title': project.title,
+                'description': project.description or 'No description available.',
+                'genre': project.genre or 'Unspecified',
+                'word_count': project.total_word_count,
+                'target_words': project.target_word_count,
+                'chapter_count': project.chapter_count,
+                'progress': project.progress_percentage,
+                'updated_at': project.updated_at,
+                'created_at': project.created_at,
+                'show_on_dashboard': getattr(project, 'show_on_dashboard', True),
+            }
+            projects_data.append(project_data)
+        
+        context.update({
+            'projects': projects_data,
+            'total_projects': len(projects_data),
+            'total_words': sum(p['word_count'] for p in projects_data),
+        })
+        
+    except Exception as e:
+        logging.error(f"Error loading ultimate library for user {request.user}: {e}")
+        context['error_message'] = 'There was an issue loading your library.'
+    
+    return render(request, 'writer/ultimate_library.html', context)
+
+
+@login_required
+def ultimate_workshop(request):
+    """The ultimate AI-powered creativity workshop for writers"""
+    context = {
+        'user': request.user,
+    }
+    
+    # In a real implementation, this would load writing exercises from the database
+    # For now, we'll use the JavaScript-based exercises in the template
+    
+    return render(request, 'writer/ultimate_workshop.html', context)
+
+
+@login_required
+def ai_playground(request):
+    """AI Creative Playground - Where writers play with AI tools"""
+    context = {
+        'user': request.user,
+    }
+    
+    return render(request, 'writer/ai_playground.html', context)
+
+
+@login_required
+def creativity_workshop(request):
+    """Creativity workshop for brainstorming and connecting ideas"""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'writer/creativity_workshop.html', context)
+
+
+@login_required
+def creative_notebook(request):
+    """Creative notebook for mind mapping and connecting ideas"""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'writer/creative_notebook.html', context)
+
+
+@login_required
+def bookshelf_dashboard(request):
+    """Bookshelf dashboard with visual book display"""
+    user_projects = Project.objects.filter(author=request.user).order_by('-updated_at')
+    user_documents = Document.objects.filter(author=request.user).order_by('-updated_at')
+    
+    # Calculate writing statistics
+    total_words = sum(project.total_word_count for project in user_projects)
+    total_projects = user_projects.count()
+    total_documents = user_documents.count()
+    
+    context = {
+        'user': request.user,
+        'user_projects': user_projects,
+        'user_documents': user_documents,
+        'total_words': total_words,
+        'total_projects': total_projects,
+        'total_documents': total_documents,
+        'show_bookshelf': True,
+    }
+    return render(request, 'writer/dashboard_with_bookshelf.html', context)
+
+
+# Legacy Creative Notebook models remain for data migration if needed
+
+
+# Google Docs-like Editor View
+@login_required
+def google_docs_editor(request, document_id=None):
+    """Google Docs-like editor for documents"""
+    document = None
+    
+    if document_id:
+        document = get_object_or_404(Document, id=document_id, author=request.user)
+    
+    context = {
+        'user': request.user,
+        'document': document,
+    }
+    return render(request, 'writer/google_docs_editor.html', context)
+
+
+@login_required
+def academic_editor(request):
+    """Academic writing editor"""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'writer/academic_editor.html', context)
+
+
+@login_required
+def book_reader(request, project_id):
+    """Book reader view - displays project content as a formatted ebook"""
+    project = get_object_or_404(Project, pk=project_id)
+    
+    # Check if user can access this project
+    if project.author != request.user and not project.collaborators.filter(id=request.user.id).exists():
+        return render(request, '403.html')
+    
+    chapters = project.chapters.all().order_by('order')
+    
+    context = {
+        'user': request.user,
+        'project': project,
+        'chapters': chapters,
+    }
+    return render(request, 'writer/book_reader.html', context)
+
+
+@login_required
+def user_preferences(request):
+    """User preferences page"""
+    profile = UserProfile.get_or_create_for_user(request.user)
+    context = {
+        'user': request.user,
+        'profile': profile,
+    }
+    return render(request, 'writer/user_preferences.html', context)
+
+
+@csrf_exempt
+@login_required
+def api_update_theme(request):
+    """Update user theme preference"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            theme = data.get('theme', 'ethereal')
+            
+            # Get or create user profile
+            profile = UserProfile.get_or_create_for_user(request.user)
+            profile.theme = theme
+            profile.save()
+            
+            return JsonResponse({'success': True, 'theme': theme})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required
+def my_library(request):
+    """My Library - Personal collection of saved books"""
+    user_projects = Project.objects.filter(author=request.user).order_by('-created_at')
+    user_documents = Document.objects.filter(author=request.user).order_by('-created_at')
+    
+    # Separate projects by bookshelf visibility
+    bookshelf_projects = user_projects.filter(show_on_dashboard=True)
+    library_projects = user_projects.filter(show_on_dashboard=False)
+    
+    # Calculate statistics
+    total_books = user_projects.count() + user_documents.count()
+    total_words = sum(p.total_word_count or 0 for p in user_projects) + sum(d.word_count or 0 for d in user_documents)
+    
+    context = {
+        'user': request.user,
+        'user_projects': user_projects,
+        'bookshelf_projects': bookshelf_projects,
+        'library_projects': library_projects,
+        'user_documents': user_documents,
+        'total_books': total_books,
+        'total_words': total_words,
+    }
+    
+    return render(request, 'writer/my_library.html', context)
+
+
+@csrf_exempt
+@login_required
+def toggle_bookshelf_visibility(request):
+    """Toggle project visibility on dashboard bookshelf"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            project_id = data.get('project_id')
+            
+            project = Project.objects.get(id=project_id, author=request.user)
+            project.show_on_dashboard = not project.show_on_dashboard
+            project.save()
+            
+            return JsonResponse({
+                'success': True,
+                'show_on_dashboard': project.show_on_dashboard,
+                'message': f"Project {'added to' if project.show_on_dashboard else 'removed from'} bookshelf"
+            })
+            
+        except Project.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Project not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'})
+
+@csrf_exempt
+def api_register(request):
+    """API endpoint for user registration"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+            
+            if not username or not email or not password:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Username, email, and password are required'
+                }, status=400)
+            
+            # Check if username already exists
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Username already exists'
+                }, status=400)
+                
+            # Check if email already exists
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Email already exists'
+                }, status=400)
+            
+            # Create user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            
+            # Create auth token
+            from rest_framework.authtoken.models import Token
+            token, created = Token.objects.get_or_create(user=user)
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Account created successfully',
+                'token': token.key,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False, 
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

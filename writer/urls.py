@@ -16,13 +16,38 @@ urlpatterns = [
     path('stats/', views.stats_api, name='stats_api'),
     path('tinymce-editor/', views.tinymce_editor, name='tinymce_editor'),
     path('simple-editor/', views.simple_editor, name='simple_editor'),
+    path('docs-editor/', views.google_docs_editor, name='google_docs_editor'),
+    path('docs-editor/<int:document_id>/', views.google_docs_editor, name='google_docs_editor_document'),
+    path('academic-editor/', views.academic_editor, name='academic_editor'),
     # Editor shortcut
     path('editor/', views.latest_editor_shortcut, name='editor_shortcut'),
     # Dashboard
     path('', views.dashboard, name='dashboard'),
+    path('clean-dashboard/', views.clean_dashboard, name='clean_dashboard'),
+    
+    
+    # Ultimate Templates - The Most Beautiful Writing Platform
+    path('ultimate-editor/', views.ultimate_editor, name='ultimate_editor'),
+    path('ultimate-dashboard/', views.ultimate_dashboard, name='ultimate_dashboard'), 
+    path('ultimate-library/', views.ultimate_library, name='ultimate_library'),
+    path('ultimate-workshop/', views.ai_playground, name='ultimate_workshop'),
+    
+    # AI Creative Playground
+    path('ai-playground/', views.ai_playground, name='ai_playground'),
+    
+    # Creativity Workshop
+    path('creativity-workshop/', views.creativity_workshop, name='creativity_workshop'),
+    
+    # Creative Notebook
+    path('creative-notebook/', views.creative_notebook, name='creative_notebook'),
+    
+    # Bookshelf Dashboard
+    path('bookshelf/', views.bookshelf_dashboard, name='bookshelf_dashboard'),
     
     # Personal Library
     path('library/', views.personal_library, name='personal_library'),
+    path('compact-library/', views.compact_library, name='compact_library'),
+    path('my-library/', views.my_library, name='my_library'),
     
     # Projects
     path('projects/', views.ProjectListView.as_view(), name='project_list'),
@@ -39,6 +64,7 @@ urlpatterns = [
     # Chapters
     path('projects/<int:project_id>/chapters/new/', views.ChapterCreateView.as_view(), name='chapter_create'),
     path('projects/<int:project_id>/editor/', views.chapter_editor, name='chapter_editor'),
+    path('projects/<int:project_id>/reader/', views.book_reader, name='book_reader'),
     path('chapters/<int:pk>/', views.ChapterDetailView.as_view(), name='chapter_detail'),
     path('chapters/<int:pk>/edit/', views.ChapterUpdateView.as_view(), name='chapter_update'),
     path('chapters/<int:pk>/delete/', views.ChapterDeleteView.as_view(), name='chapter_delete'),
@@ -72,13 +98,21 @@ urlpatterns = [
     
     # API URLs
     path('projects/api/list/', views.projects_api_list, name='projects_api_list'),
+    path('api/save-document/', views.api_save_document, name='api_save_document'),
+    path('api/ai-assistance/', views.api_ai_assistance, name='api_ai_assistance'),
     path('api/ai/quotes/', views.ai_quote_extraction, name='ai_quote_extraction'),
     path('upload-test/', views.upload_test, name='upload_test'),
         path('endpoint/', views.api_endpoint, name='api-endpoint'),
     path('register/', api.register, name='api_register'),
+    path('api/register/', views.api_register, name='api_register_mobile'),
     
     # AI Assistant
     path('ai-assistant/', views.ai_assistant, name='ai_assistant'),
+    
+    # User Preferences
+    path('preferences/', views.user_preferences, name='user_preferences'),
+    path('api/update-theme/', views.api_update_theme, name='api_update_theme'),
+    path('api/toggle-bookshelf/', views.toggle_bookshelf_visibility, name='toggle_bookshelf_visibility'),
     
     # Format & Export
     path('format/', views.format_page, name='format_page'),
@@ -98,13 +132,16 @@ urlpatterns = [
     
     # Users API
     path('api/users/', api.user_profile, name='users_api'),
+    
+    # Mobile API endpoints
+    path('api/projects/<int:project_id>/chapters/', views.chapters_api, name='chapters_api'),
+    path('api/chapters/<int:chapter_id>/', views.chapter_api, name='chapter_api'),
+    
+    # New Chapter Management API endpoints
+    path('chapters/create/', views.create_chapter_api, name='create_chapter_api'),
+    path('chapters/<int:chapter_id>/delete/', views.delete_chapter_api, name='delete_chapter_api'),
+    path('chapters/reorder/', views.reorder_chapters_api, name='reorder_chapters_api'),
+    
     # API endpoints for documents and projects
     path('', include(router.urls)),
 ]
-    
-
-
-# DRF router for API endpoints
-router = routers.DefaultRouter()
-router.register(r'api/documents', DocumentViewSet, basename='document')
-router.register(r'api/projects', ProjectViewSet, basename='project')

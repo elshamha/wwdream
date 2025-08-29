@@ -235,11 +235,6 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    /* Hide desktop-only elements on mobile */
-    .desktop-only {
-        display: none !important;
-    }
-    
     .hero-title {
         font-size: 2.5rem;
     }
@@ -314,7 +309,7 @@ body {
 .admin-tool-button i {
     font-size: 20px;
     margin-bottom: 8px;
-    color: #ffffff !important;
+    color: #4fd1c7 !important;
     transition: all 0.3s ease;
 }
 
@@ -699,10 +694,6 @@ body {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.writer-title i {
-    color: #ffffff !important;
-}
-
 .writer-subtitle {
     color: rgba(255, 255, 255, 0.8) !important;
     font-size: 1.1rem;
@@ -757,8 +748,7 @@ body {
 }
 
 .view-all-link {
-    /* color: #4fd1c7 !important; */
-    color: #ffffff !important;
+    color: #4fd1c7 !important;
     text-decoration: none;
     font-weight: 500;
     padding: 8px 16px;
@@ -1141,9 +1131,8 @@ body {
 }
 
 .docs-modal-content {
-    /* background: rgba(255, 255, 255, 0.95); */
-    /* backdrop-filter: blur(25px); */
-    background: transparent;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(25px);
     margin: 15% auto;
     padding: 0;
     border-radius: 20px;
@@ -1167,7 +1156,7 @@ body {
     margin: 0;
     font-size: 1.3rem;
     font-weight: 600;
-    color: #ffffff !important;
+    color: #333 !important;
 }
 
 .docs-modal-close {
@@ -1351,7 +1340,7 @@ body {
                     </div>
                     
                     <div class="quick-links-grid">
-                        <a href="{% url 'writer:google_docs_editor' %}" class="quick-link-card new-document desktop-only">
+                        <a href="{% url 'writer:google_docs_editor' %}" class="quick-link-card new-document">
                             <div class="quick-link-icon">
                                 <i class="fas fa-plus"></i>
                             </div>
@@ -1388,26 +1377,6 @@ body {
                             <div class="quick-link-content">
                                 <h4>Import Document</h4>
                                 <p>Upload and import existing files</p>
-                            </div>
-                        </a>
-                        
-                        <a href="{% url 'writer:document_list' %}" class="quick-link-card documents">
-                            <div class="quick-link-icon">
-                                <i class="fas fa-archive"></i>
-                            </div>
-                            <div class="quick-link-content">
-                                <h4>Imported Documents</h4>
-                                <p>View your uploaded documents</p>
-                            </div>
-                        </a>
-                        
-                        <a href="{% url 'writer:my_library' %}" class="quick-link-card library">
-                            <div class="quick-link-icon">
-                                <i class="fas fa-book-open"></i>
-                            </div>
-                            <div class="quick-link-content">
-                                <h4>My Ethereal Library</h4>
-                                <p>Browse your writing collection</p>
                             </div>
                         </a>
                     </div>
@@ -1488,8 +1457,8 @@ body {
                 </button>
                 <button class="btn btn-outline-primary" onclick="openProjectInChapterEditor()">
                     <i class="fas fa-edit me-2"></i>
-                    Write
-                    <small class="d-block text-light">Continue writing your story</small>
+                    Edit Project
+                    <small class="d-block text-light">Continue writing and editing</small>
                 </button>
                 <button class="btn btn-outline-secondary" onclick="viewProjectDetails()">
                     <i class="fas fa-eye me-2"></i>

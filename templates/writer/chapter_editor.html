@@ -7,14 +7,14 @@
         <div class="row">
             <!-- Editor Main -->
             <div class="col-md-9">
-                <div class="card ethereal-glass shadow-sm animate__animated animate__fadeInLeft" style="border-radius:20px; box-shadow:0 8px 32px rgba(102,126,234,0.18);">
+                <div class="card shadow-sm animate__animated animate__fadeInLeft" style="border-radius:20px; box-shadow:0 8px 32px rgba(102,126,234,0.18); background: rgba(0, 0, 0, 0.85); border: 2px solid rgba(255, 255, 255, 0.2);">
             <div class="card-header editor-header d-flex justify-content-between align-items-center animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius:20px 20px 0 0; box-shadow:0 2px 12px rgba(240,147,251,0.12);">
                       <h4 class="mb-0 animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size:2rem;">A Writer's Web Dream</h4>
                       <button id="toggle-theme" class="btn btn-outline-primary btn-sm animate__animated animate__pulse animate__infinite"><i class="fas fa-moon"></i> Theme</button>
                 </div>
                 <div class="card-body editor-container" style="border-radius:0 0 20px 20px;">
                     <!-- Word Editing Toolbar -->
-                                <div id="word-toolbar" class="editor-toolbar mb-4 animate__animated animate__fadeInUp" style="box-shadow:0 2px 12px rgba(102,126,234,0.10);">
+                                <div id="word-toolbar" class="editor-toolbar mb-4 animate__animated animate__fadeInUp" style="box-shadow:0 2px 12px rgba(102,126,234,0.10); background: rgba(0, 0, 0, 0.8); border-radius: 12px; padding: 15px;">
                                     <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="replaceWord()"><i class="fas fa-exchange-alt me-1"></i> <span>Replace Word</span></button>
                                     <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="countWords()"><i class="fas fa-sort-numeric-up me-1"></i> <span>Word Count</span></button>
                                     <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="highlightWord()"><i class="fas fa-highlighter me-1"></i> <span>Highlight Word</span></button>
@@ -26,7 +26,7 @@
                                 </div>
                     <form method="post">
                         {% csrf_token %}
-                        <input type="text" id="ckeditor-title" name="title" class="form-control mb-3 ethereal-glass animate__animated animate__fadeIn" placeholder="Chapter Title (Ethereal)" value="{{ chapter.title|default:'' }}" required style="border-radius:12px; font-size:1.3rem; background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:#fff;">
+                        <input type="text" id="ckeditor-title" name="title" class="form-control mb-3 animate__animated animate__fadeIn" placeholder="Chapter Title" value="{{ chapter.title|default:'' }}" required style="border-radius:12px; font-size:1.3rem; background:#ffffff; color:#333333; border: 2px solid #667eea; font-weight: 600;">
                         <div id="ckeditor-pagination-container" style="width:100%;">
                             <textarea id="ckeditor-content" name="content" style="min-height:600px;height:600px;width:100%;resize:vertical;">{{ chapter.content|default:'' }}</textarea>
                                             <div class="d-flex align-items-center mt-2 page-navigation-bar animate__animated animate__fadeInUp" style="box-shadow:0 2px 12px rgba(102,126,234,0.08); border-radius:10px;">
@@ -40,14 +40,14 @@
             </div>
             </div>
             <!-- Chapter Sidebar (moved to right) -->
-            <div class="col-md-3 chapter-sidebar ethereal-glass open animate__animated animate__fadeInRight" style="min-height:700px; border-radius:20px; box-shadow: var(--ethereal-shadow);">
+            <div class="col-md-3 chapter-sidebar open animate__animated animate__fadeInRight" style="min-height:700px; border-radius:20px; box-shadow: var(--ethereal-shadow); background: rgba(0, 0, 0, 0.85); border: 2px solid rgba(255, 255, 255, 0.2);">
                 <div class="chapter-sidebar-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:20px 20px 0 0; padding: 1.5rem; box-shadow: 0 4px 24px rgba(102,126,234,0.15);">
                     <h5 class="chapter-sidebar-title animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #a5f3fc 0%, #f0f9ff 50%, #cffafe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size:1.6rem;">Chapters</h5>
                     <button class="btn btn-success-ethereal btn-sm animate__animated animate__pulse animate__infinite" onclick="addChapter()"><i class="fas fa-plus"></i> Add</button>
                 </div>
                 <ul id="chapter-list" class="chapter-list chapter-list-container py-2 animate__animated animate__fadeIn" style="min-height:500px;">
                     {% for ch in chapters %}
-                    <li class="chapter-item d-flex justify-content-between align-items-center ethereal-glass animate__animated animate__fadeInUp" draggable="true" data-id="{{ ch.id }}" style="box-shadow:0 2px 12px rgba(102,126,234,0.08);">
+                    <li class="chapter-item d-flex justify-content-between align-items-center animate__animated animate__fadeInUp" draggable="true" data-id="{{ ch.id }}" style="box-shadow:0 2px 12px rgba(102,126,234,0.08); background: rgba(255, 255, 255, 0.1); margin: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);">
                         <span class="chapter-title" style="font-size:1.1rem;">{{ ch.title }}</span>
                         <button class="chapter-action-btn delete animate__animated animate__pulse animate__infinite" onclick="deleteChapter({{ ch.id }})"><i class="fas fa-trash"></i></button>
                     </li>
@@ -384,7 +384,21 @@ ClassicEditor.create(document.querySelector('#ckeditor-content'), {
                 document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Enabled';
             }, 2000);
         }, 2000);
+        
+        // Check for new H2 headings and create chapters
+        checkForNewChapters();
     });
+    
+    // Track previous headings to detect new ones
+    let previousH2Count = 0;
+    
+    // Initialize the H2 count
+    setTimeout(() => {
+        const content = editor.getData();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        previousH2Count = tempDiv.querySelectorAll('h2').length;
+    }, 500);
 }).catch(error => { console.error(error); });
 
 function saveCKEditor(showMessage=true) {
@@ -2487,6 +2501,9 @@ function createNewChapterWithContent(title, content) {
         if (data.success) {
             showMessage('Chapter created successfully!', 'success');
             
+            // Refresh chapter navigation
+            loadChapterList();
+            
             // Optionally redirect to the new chapter
             if (data.chapter_id) {
                 setTimeout(() => {
@@ -3398,6 +3415,67 @@ function reorderChapterHeadings(fromIndex, toIndex) {
         handleContentChange(); // Save changes
         showMessage('Chapter order updated', 'success');
     }
+}
+
+// Check for new H2 headings and automatically create chapters
+function checkForNewChapters() {
+    if (!ckeditorInstance) return;
+    
+    setTimeout(() => {
+        const content = ckeditorInstance.getData();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        const h2Elements = tempDiv.querySelectorAll('h2');
+        
+        if (h2Elements.length > previousH2Count) {
+            // New H2 was added, check if we should create a chapter
+            const newH2 = h2Elements[h2Elements.length - 1]; // Get the last H2
+            const h2Text = newH2.textContent.trim();
+            
+            if (h2Text && h2Text.length > 0) {
+                createChapterFromHeading(h2Text, content, newH2);
+            }
+        }
+        
+        previousH2Count = h2Elements.length;
+    }, 100); // Small delay to ensure content is fully updated
+}
+
+// Create a new chapter when H2 is detected
+function createChapterFromHeading(headingText, fullContent, h2Element) {
+    // Ask user if they want to create a chapter
+    const createChapter = confirm(`Create a new chapter titled "${headingText}"?\n\nThis will split your content and create a new chapter starting from this heading.`);
+    
+    if (!createChapter) return;
+    
+    // Get content before and after the H2
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = fullContent;
+    
+    const allNodes = Array.from(tempDiv.childNodes);
+    const h2Index = allNodes.findIndex(node => 
+        node.nodeType === 1 && 
+        node.tagName === 'H2' && 
+        node.textContent.trim() === headingText
+    );
+    
+    if (h2Index === -1) return;
+    
+    // Content before H2 stays in current chapter
+    const beforeContent = allNodes.slice(0, h2Index);
+    const beforeDiv = document.createElement('div');
+    beforeContent.forEach(node => beforeDiv.appendChild(node.cloneNode(true)));
+    
+    // Content from H2 onwards goes to new chapter  
+    const afterContent = allNodes.slice(h2Index);
+    const afterDiv = document.createElement('div');
+    afterContent.forEach(node => afterDiv.appendChild(node.cloneNode(true)));
+    
+    // Update current chapter with content before H2
+    ckeditorInstance.setData(beforeDiv.innerHTML);
+    
+    // Create new chapter with content from H2 onwards
+    createNewChapterWithContent(headingText, afterDiv.innerHTML);
 }
 
 // Auto-detect new headings and update sidebar

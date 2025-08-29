@@ -1,0 +1,1230 @@
+{% extends 'base.html' %}
+{% block title %}Creativity Workshop - Writer's Web Dream{% endblock %}
+
+{% block content %}
+<style>
+/* Creativity Workshop Styling */
+body {
+    background: var(--ethereal-primary) !important;
+    min-height: 100vh;
+}
+
+.workshop-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.workshop-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.workshop-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="sparkles" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.3)"/><circle cx="5" cy="5" r="0.5" fill="rgba(255,255,255,0.2)"/><circle cx="15" cy="15" r="0.5" fill="rgba(255,255,255,0.2)"/></pattern></defs><rect width="100" height="100" fill="url(%23sparkles)"/></svg>');
+}
+
+.workshop-header h1 {
+    color: #ffffff;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.workshop-header p {
+    color: #ffffff !important;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.workshop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.workshop-section {
+    background: transparent;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.workshop-section *, 
+.quick-notes *, 
+.connection-canvas * {
+    color: #ffffff !important;
+}
+
+.workshop-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-icon {
+    font-size: 2rem;
+    margin-right: 1rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    margin: 0;
+}
+
+.idea-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.idea-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.idea-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+.idea-item h4 {
+    color: #ffffff !important;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.idea-item p {
+    color: #ffffff !important;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.quick-notes {
+    grid-column: 1 / -1;
+    background: transparent;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.notes-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.note-pad {
+    background: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    min-height: 300px;
+    resize: none;
+    font-family: 'Georgia', serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #000000 !important;
+    transition: border-color 0.3s ease;
+}
+
+.note-pad:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.ai-suggestions {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+}
+
+.ai-suggestions h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+}
+
+.ai-suggestions h3::before {
+    content: "🤖";
+    margin-right: 0.5rem;
+}
+
+.suggestion-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.suggestion-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.connection-canvas {
+    grid-column: 1 / -1;
+    background: transparent;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.connection-board {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    min-height: 400px;
+    position: relative;
+    padding: 2rem;
+    margin-top: 1rem;
+}
+
+.connection-node {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    padding: 1rem;
+    position: absolute;
+    cursor: move;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    max-width: 200px;
+    font-size: 0.9rem;
+    color: #ffffff !important;
+}
+
+.connection-node:hover {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+    transform: scale(1.05);
+}
+
+.add-node-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-right: 1rem;
+}
+
+.add-node-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+@media (max-width: 768px) {
+    .workshop-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .notes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .workshop-container {
+        padding: 1rem;
+    }
+}
+
+/* Workshop Control Buttons */
+.btn-workshop-control {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff !important;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-workshop-control:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+}
+
+.btn-workshop-control.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-workshop-control.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Workshop Session Modal */
+.workshop-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.workshop-modal-content {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+}
+
+.workshop-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.workshop-modal-header h3 {
+    color: #ffffff !important;
+    margin: 0;
+}
+
+.workshop-modal-close {
+    background: none;
+    border: none;
+    color: #ffffff !important;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.workshop-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    color: #ffffff !important;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff !important;
+    font-size: 1rem;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-modal {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+}
+
+.btn-modal-primary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333 !important;
+}
+
+.btn-modal-primary:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-modal-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff !important;
+}
+
+.btn-modal-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+</style>
+
+<div class="workshop-container">
+    <div class="workshop-header">
+        <h1>✨ Creativity Workshop</h1>
+        <p>Your personal space for brainstorming, connecting ideas, and unleashing your creative potential</p>
+        
+        <!-- Workshop Session Controls -->
+        <div class="workshop-controls" style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button onclick="saveWorkshopSession()" class="btn-workshop-control">
+                <i class="fas fa-save"></i> Save Session
+            </button>
+            <button onclick="loadWorkshopSession()" class="btn-workshop-control">
+                <i class="fas fa-folder-open"></i> Load Session
+            </button>
+            <button onclick="exportToProject()" class="btn-workshop-control">
+                <i class="fas fa-export"></i> Export to Project
+            </button>
+            <button onclick="viewWorkshopHistory()" class="btn-workshop-control btn-secondary">
+                <i class="fas fa-history"></i> Session History
+            </button>
+        </div>
+    </div>
+
+    <div class="workshop-grid">
+        <!-- Character Ideas Section -->
+        <div class="workshop-section">
+            <div class="section-header">
+                <div class="section-icon">👥</div>
+                <h2 class="section-title">Character Sparks</h2>
+            </div>
+            <ul class="idea-list" id="character-ideas">
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Reluctant Hero</h4>
+                    <p>Someone who discovers they have a special ability but wants nothing to do with the responsibility that comes with it.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Memory Keeper</h4>
+                    <p>A character who can absorb and experience other people's memories, but struggles with what's real and what's borrowed.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Time Librarian</h4>
+                    <p>Someone who works in a library where books contain actual moments from history that readers can experience.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Shadow Photographer</h4>
+                    <p>A photographer whose camera captures not just images, but the emotions and secrets of their subjects.</p>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Plot Ideas Section -->
+        <div class="workshop-section">
+            <div class="section-header">
+                <div class="section-icon">📖</div>
+                <h2 class="section-title">Plot Twists</h2>
+            </div>
+            <ul class="idea-list" id="plot-ideas">
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The False Memory</h4>
+                    <p>The protagonist's entire quest is based on a memory that was artificially implanted. The real story begins when they discover the truth.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Reverse Timeline</h4>
+                    <p>Each chapter moves backward in time, slowly revealing how the "ending" became inevitable from the very beginning.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Parallel Lives</h4>
+                    <p>Two characters living separate lives slowly realize they're actually the same person experiencing different dimensions.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Unreliable Narrator's Truth</h4>
+                    <p>The story everyone thinks is a delusion turns out to be the only accurate account of what really happened.</p>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Clues & Mysteries Section -->
+        <div class="workshop-section">
+            <div class="section-header">
+                <div class="section-icon">🔍</div>
+                <h2 class="section-title">Mystery Elements</h2>
+            </div>
+            <ul class="idea-list" id="mystery-ideas">
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Locked Room</h4>
+                    <p>A room that can only be opened from the inside, but no one is there when it's finally accessed.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Shifting Message</h4>
+                    <p>A note that says different things each time someone reads it, but only the protagonist notices the changes.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Echo Pattern</h4>
+                    <p>Events that happened 100 years ago are repeating exactly, down to the smallest details.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>The Missing Day</h4>
+                    <p>Everyone in town has lost the same 24-hour period from their memory, except for one person who wasn't there.</p>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Writing Prompts Section -->
+        <div class="workshop-section">
+            <div class="section-header">
+                <div class="section-icon">💡</div>
+                <h2 class="section-title">Writing Prompts</h2>
+            </div>
+            <ul class="idea-list" id="prompt-ideas">
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>"What if gravity worked backwards for one person?"</h4>
+                    <p>Explore the practical and emotional challenges of being the only one affected by reverse gravity.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>"The last bookstore on Earth..."</h4>
+                    <p>In a world where all text has gone digital, one bookstore holds secrets that can't be digitized.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>"Every door leads to a different decade"</h4>
+                    <p>A house where each room exists in a different time period, and someone is trapped inside.</p>
+                </li>
+                <li class="idea-item" onclick="addToNotes(this)">
+                    <h4>"Colors start disappearing one by one"</h4>
+                    <p>A world where colors are vanishing from reality, and a painter might be the only one who can save them.</p>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Quick Notes Section -->
+    <div class="quick-notes">
+        <div class="section-header">
+            <div class="section-icon">📝</div>
+            <h2 class="section-title">Your Creative Notebook</h2>
+        </div>
+        <div class="notes-grid">
+            <textarea class="note-pad" id="creative-notes" placeholder="Jot down your ideas, connections, and random thoughts here... Let your creativity flow!
+
+Click on any idea above to add it to your notes. You can then expand, combine, or modify them as inspiration strikes.
+
+This is your space to:
+• Brainstorm character backstories
+• Develop plot connections
+• Note interesting dialogue snippets  
+• Capture fleeting creative thoughts
+• Plan story arcs and themes
+
+Remember: There are no bad ideas in brainstorming!"></textarea>
+            
+            <div class="ai-suggestions">
+                <h3>AI Writing Assistant</h3>
+                <button class="suggestion-btn" onclick="generatePlotIdea()">Generate Plot Idea</button>
+                <button class="suggestion-btn" onclick="createCharacterProfile()">Create Character Profile</button>
+                <button class="suggestion-btn" onclick="suggestConflict()">Suggest Conflict</button>
+                <button class="suggestion-btn" onclick="analyzeNotes()">Analyze My Notes</button>
+                <button class="suggestion-btn" onclick="findConnections()">Find Connections</button>
+                <button class="suggestion-btn" onclick="summarizeIdeas()">Summarize Ideas</button>
+                
+                <div id="ai-response" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px; display: none;">
+                    <p id="ai-text"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Canvas -->
+    <div class="connection-canvas">
+        <div class="section-header">
+            <div class="section-icon">🔗</div>
+            <h2 class="section-title">Idea Connection Board</h2>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <button class="add-node-btn" onclick="addConnectionNode()">Add Idea Node</button>
+            <button class="add-node-btn" onclick="clearBoard()">Clear Board</button>
+            <span style="color: #ffffff; margin-left: 1rem; font-style: italic;">Drag nodes to connect your ideas visually!</span>
+        </div>
+        <div class="connection-board" id="connection-board">
+            <!-- Connection nodes will be added here dynamically -->
+        </div>
+    </div>
+</div>
+
+<script>
+let nodeCounter = 0;
+let connections = [];
+
+function addToNotes(element) {
+    const notepad = document.getElementById('creative-notes');
+    const title = element.querySelector('h4').textContent;
+    const description = element.querySelector('p').textContent;
+    
+    const addition = `\n\n💡 ${title}\n${description}\n`;
+    notepad.value += addition;
+    notepad.scrollTop = notepad.scrollHeight;
+    
+    // Visual feedback
+    element.style.background = 'linear-gradient(135deg, #d6e8ff 0%, #b8d6ff 100%)';
+    setTimeout(() => {
+        element.style.background = 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)';
+    }, 500);
+}
+
+function generatePlotIdea() {
+    const ideas = [
+        "A character discovers that their dreams are actually memories from their future self.",
+        "Two rival writers unknowingly collaborate on the same story through a mysterious typewriter.",
+        "A librarian finds that books in their library start rewriting themselves to reflect current events.",
+        "Someone inherits a house where each room represents a different emotion, and they must navigate through all of them.",
+        "A time traveler gets stuck in a day that keeps repeating, but each loop reveals new layers of a conspiracy."
+    ];
+    
+    const randomIdea = ideas[Math.floor(Math.random() * ideas.length)];
+    showAIResponse("Plot Idea: " + randomIdea);
+    
+    // Add to notes
+    const notepad = document.getElementById('creative-notes');
+    notepad.value += `\n\n🎭 AI Plot Suggestion:\n${randomIdea}\n`;
+}
+
+function createCharacterProfile() {
+    const traits = [
+        "Mysterious past", "Unusual hobby", "Hidden talent", "Secret fear", "Unique physical trait",
+        "Compelling motivation", "Interesting flaw", "Special skill", "Surprising background", "Distinctive quirk"
+    ];
+    
+    const occupations = [
+        "Antique restoration expert", "Urban beekeeper", "Professional whistler", "Map collector", 
+        "Storm chaser", "Food critic", "Night shift nurse", "Street performer", "Museum guard", "Train conductor"
+    ];
+    
+    const trait = traits[Math.floor(Math.random() * traits.length)];
+    const job = occupations[Math.floor(Math.random() * occupations.length)];
+    
+    const profile = `Character Idea: A ${job} with a ${trait.toLowerCase()}. Consider how their profession shapes their worldview and how their unique trait creates both opportunities and obstacles in their story.`;
+    
+    showAIResponse(profile);
+    
+    const notepad = document.getElementById('creative-notes');
+    notepad.value += `\n\n👤 AI Character Profile:\n${profile}\n`;
+}
+
+function suggestConflict() {
+    const conflicts = [
+        "Internal: Character must choose between what they want and what they need",
+        "Interpersonal: Two characters both want the same thing but for different reasons",
+        "External: A natural disaster forces characters to work together despite their differences",
+        "Societal: Character's beliefs clash with the world around them",
+        "Temporal: Actions in the past threaten to undo everything in the present"
+    ];
+    
+    const conflict = conflicts[Math.floor(Math.random() * conflicts.length)];
+    showAIResponse("Conflict Suggestion: " + conflict);
+    
+    const notepad = document.getElementById('creative-notes');
+    notepad.value += `\n\n⚡ AI Conflict Idea:\n${conflict}\n`;
+}
+
+function analyzeNotes() {
+    const notes = document.getElementById('creative-notes').value;
+    if (notes.trim().length < 50) {
+        showAIResponse("Write more in your notes first, then I can analyze patterns and themes in your ideas!");
+        return;
+    }
+    
+    // Simple analysis based on keywords
+    const themes = [];
+    if (notes.toLowerCase().includes('time') || notes.toLowerCase().includes('past') || notes.toLowerCase().includes('future')) {
+        themes.push("temporal elements");
+    }
+    if (notes.toLowerCase().includes('memory') || notes.toLowerCase().includes('remember') || notes.toLowerCase().includes('forget')) {
+        themes.push("memory and identity");
+    }
+    if (notes.toLowerCase().includes('secret') || notes.toLowerCase().includes('hidden') || notes.toLowerCase().includes('mystery')) {
+        themes.push("mystery and secrets");
+    }
+    if (notes.toLowerCase().includes('character') || notes.toLowerCase().includes('person') || notes.toLowerCase().includes('people')) {
+        themes.push("character development");
+    }
+    
+    let analysis = "Based on your notes, I notice themes around: " + themes.join(", ");
+    if (themes.length === 0) {
+        analysis = "Your ideas are beautifully unique! Consider exploring how your different concepts might connect or contrast with each other.";
+    }
+    
+    showAIResponse(analysis);
+}
+
+function findConnections() {
+    const notes = document.getElementById('creative-notes').value;
+    if (notes.trim().length < 100) {
+        showAIResponse("Add more ideas to your notes, and I'll help you find unexpected connections between them!");
+        return;
+    }
+    
+    const suggestions = [
+        "Try combining your character ideas with your plot concepts - how would they react?",
+        "Look for opposing forces in your ideas - tension creates great stories.",
+        "Consider the 'what if' questions hiding in your notes - they often lead to breakthroughs.",
+        "Think about cause and effect chains between your different ideas.",
+        "Your mystery elements could be the key to unlocking your character motivations."
+    ];
+    
+    const suggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    showAIResponse("Connection Insight: " + suggestion);
+}
+
+function summarizeIdeas() {
+    const notes = document.getElementById('creative-notes').value;
+    if (notes.trim().length < 50) {
+        showAIResponse("Add some ideas to your notes first, then I'll help you create a summary!");
+        return;
+    }
+    
+    const summary = "Summary: You're developing a rich collection of ideas. Consider organizing them into themes, then look for the strongest connections between characters, conflicts, and settings. Your most unique combinations often make the best stories.";
+    showAIResponse(summary);
+    
+    const notepad = document.getElementById('creative-notes');
+    notepad.value += `\n\n📋 AI Summary:\n${summary}\n`;
+}
+
+function showAIResponse(text) {
+    const responseDiv = document.getElementById('ai-response');
+    const textElement = document.getElementById('ai-text');
+    textElement.textContent = text;
+    responseDiv.style.display = 'block';
+    
+    // Fade out after 8 seconds
+    setTimeout(() => {
+        responseDiv.style.display = 'none';
+    }, 8000);
+}
+
+function addConnectionNode() {
+    nodeCounter++;
+    const board = document.getElementById('connection-board');
+    const node = document.createElement('div');
+    node.className = 'connection-node';
+    node.id = `node-${nodeCounter}`;
+    node.innerHTML = `
+        <div contenteditable="true" style="outline: none; min-height: 20px;" onblur="saveNodeContent(this)">
+            Click to edit idea #${nodeCounter}
+        </div>
+        <button onclick="removeNode('node-${nodeCounter}')" style="position: absolute; top: -8px; right: -8px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px;">×</button>
+    `;
+    
+    // Random position
+    node.style.left = Math.random() * (board.offsetWidth - 200) + 'px';
+    node.style.top = Math.random() * (board.offsetHeight - 100) + 'px';
+    
+    board.appendChild(node);
+    makeDraggable(node);
+}
+
+function makeDraggable(node) {
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+    
+    node.addEventListener('mousedown', (e) => {
+        if (e.target.contentEditable === 'true') return;
+        
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = node.getBoundingClientRect();
+        const boardRect = node.parentElement.getBoundingClientRect();
+        initialLeft = rect.left - boardRect.left;
+        initialTop = rect.top - boardRect.top;
+        
+        node.style.zIndex = '1000';
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDrag);
+    });
+    
+    function drag(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        node.style.left = (initialLeft + deltaX) + 'px';
+        node.style.top = (initialTop + deltaY) + 'px';
+    }
+    
+    function stopDrag() {
+        isDragging = false;
+        node.style.zIndex = 'auto';
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', stopDrag);
+    }
+}
+
+function removeNode(nodeId) {
+    const node = document.getElementById(nodeId);
+    if (node) {
+        node.remove();
+    }
+}
+
+function clearBoard() {
+    const board = document.getElementById('connection-board');
+    board.innerHTML = '';
+    nodeCounter = 0;
+}
+
+function saveNodeContent(element) {
+    // Content is automatically saved as the user types
+    // This function can be extended to save to local storage or database
+}
+
+// Initialize with a sample node
+document.addEventListener('DOMContentLoaded', function() {
+    addConnectionNode();
+    const firstNode = document.querySelector('.connection-node div[contenteditable]');
+    if (firstNode) {
+        firstNode.textContent = "Start connecting your ideas here!";
+    }
+});
+
+// Workshop Session Management Functions
+let currentSessionData = {
+    title: '',
+    description: '',
+    character_ideas: [],
+    plot_ideas: [],
+    world_building_notes: [],
+    general_notes: '',
+    ai_suggestions_used: [],
+    connections_made: []
+};
+
+function collectWorkshopData() {
+    // Collect character ideas
+    const characterIdeas = [];
+    document.querySelectorAll('#character-ideas .idea-item').forEach(item => {
+        characterIdeas.push({
+            title: item.querySelector('h4').textContent,
+            description: item.querySelector('p').textContent,
+            timestamp: new Date().toISOString()
+        });
+    });
+    
+    // Collect plot ideas
+    const plotIdeas = [];
+    document.querySelectorAll('#plot-ideas .idea-item').forEach(item => {
+        plotIdeas.push({
+            title: item.querySelector('h4').textContent,
+            description: item.querySelector('p').textContent,
+            timestamp: new Date().toISOString()
+        });
+    });
+    
+    // Collect general notes
+    const generalNotes = document.getElementById('quick-notes')?.value || '';
+    
+    // Collect connection nodes
+    const connections = [];
+    document.querySelectorAll('.connection-node').forEach(node => {
+        connections.push({
+            content: node.querySelector('[contenteditable]').textContent,
+            position: {
+                x: parseInt(node.style.left) || 0,
+                y: parseInt(node.style.top) || 0
+            },
+            timestamp: new Date().toISOString()
+        });
+    });
+    
+    return {
+        character_ideas: characterIdeas,
+        plot_ideas: plotIdeas,
+        world_building_notes: [], // Can be extended
+        general_notes: generalNotes,
+        ai_suggestions_used: [], // Can be extended  
+        connections_made: connections
+    };
+}
+
+function saveWorkshopSession() {
+    const sessionData = collectWorkshopData();
+    
+    // Show save modal
+    document.getElementById('saveSessionModal').style.display = 'flex';
+}
+
+function loadWorkshopSession() {
+    // Show load modal with user's saved sessions
+    fetchUserSessions();
+    document.getElementById('loadSessionModal').style.display = 'flex';
+}
+
+function exportToProject() {
+    const sessionData = collectWorkshopData();
+    
+    // Show export modal
+    document.getElementById('exportProjectModal').style.display = 'flex';
+}
+
+function viewWorkshopHistory() {
+    window.location.href = '/writer/workshop-history/';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function saveSessionSubmit() {
+    const title = document.getElementById('sessionTitle').value;
+    const description = document.getElementById('sessionDescription').value;
+    const sessionType = document.getElementById('sessionType').value;
+    
+    if (!title.trim()) {
+        showNotification('Please enter a session title', 'error');
+        return;
+    }
+    
+    const sessionData = collectWorkshopData();
+    sessionData.title = title;
+    sessionData.description = description;
+    sessionData.session_type = sessionType;
+    
+    // Send to backend
+    fetch('/writer/api/workshop-sessions/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(sessionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('Workshop session saved successfully!', 'success');
+            closeModal('saveSessionModal');
+        } else {
+            showNotification('Error saving session: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error saving session', 'error');
+    });
+}
+
+function fetchUserSessions() {
+    fetch('/writer/api/workshop-sessions/')
+    .then(response => response.json())
+    .then(data => {
+        const sessionsList = document.getElementById('sessionsList');
+        sessionsList.innerHTML = '';
+        
+        if (data.sessions && data.sessions.length > 0) {
+            data.sessions.forEach(session => {
+                const sessionDiv = document.createElement('div');
+                sessionDiv.className = 'session-item';
+                sessionDiv.innerHTML = `
+                    <div class="session-info">
+                        <h4>${session.title}</h4>
+                        <p>${session.description || 'No description'}</p>
+                        <small>Created: ${new Date(session.created_at).toLocaleDateString()}</small>
+                    </div>
+                    <button class="btn-modal-primary" onclick="loadSession(${session.id})">Load</button>
+                `;
+                sessionsList.appendChild(sessionDiv);
+            });
+        } else {
+            sessionsList.innerHTML = '<p style="color: #ffffff; text-align: center;">No saved sessions found.</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching sessions:', error);
+        showNotification('Error loading sessions', 'error');
+    });
+}
+
+function loadSession(sessionId) {
+    fetch(`/writer/api/workshop-sessions/${sessionId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const session = data.session;
+            
+            // Clear current content
+            clearWorkshop();
+            
+            // Load character ideas
+            if (session.character_ideas) {
+                loadIdeasToSection('character-ideas', session.character_ideas);
+            }
+            
+            // Load plot ideas
+            if (session.plot_ideas) {
+                loadIdeasToSection('plot-ideas', session.plot_ideas);
+            }
+            
+            // Load general notes
+            if (session.general_notes) {
+                const notesArea = document.getElementById('quick-notes');
+                if (notesArea) notesArea.value = session.general_notes;
+            }
+            
+            // Load connections
+            if (session.connections_made) {
+                loadConnections(session.connections_made);
+            }
+            
+            showNotification('Session loaded successfully!', 'success');
+            closeModal('loadSessionModal');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error loading session', 'error');
+    });
+}
+
+function clearWorkshop() {
+    // Clear idea sections
+    document.querySelectorAll('.idea-list').forEach(list => {
+        list.innerHTML = '';
+    });
+    
+    // Clear notes
+    const notesArea = document.getElementById('quick-notes');
+    if (notesArea) notesArea.value = '';
+    
+    // Clear connections
+    clearBoard();
+}
+
+function loadIdeasToSection(sectionId, ideas) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    
+    ideas.forEach(idea => {
+        const ideaElement = document.createElement('li');
+        ideaElement.className = 'idea-item';
+        ideaElement.innerHTML = `
+            <h4>${idea.title}</h4>
+            <p>${idea.description}</p>
+        `;
+        section.appendChild(ideaElement);
+    });
+}
+
+function loadConnections(connections) {
+    clearBoard();
+    
+    connections.forEach((connection, index) => {
+        const nodeId = addConnectionNode();
+        const node = document.getElementById(nodeId);
+        if (node) {
+            const editableDiv = node.querySelector('[contenteditable]');
+            if (editableDiv) {
+                editableDiv.textContent = connection.content;
+            }
+            node.style.left = connection.position.x + 'px';
+            node.style.top = connection.position.y + 'px';
+        }
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#28a745' : '#dc3545'};
+        color: white;
+        border-radius: 8px;
+        z-index: 10001;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<!-- Save Session Modal -->
+<div id="saveSessionModal" class="workshop-modal">
+    <div class="workshop-modal-content">
+        <div class="workshop-modal-header">
+            <h3>Save Workshop Session</h3>
+            <button class="workshop-modal-close" onclick="closeModal('saveSessionModal')">&times;</button>
+        </div>
+        
+        <form onsubmit="saveSessionSubmit(); return false;">
+            <div class="form-group">
+                <label for="sessionTitle">Session Title *</label>
+                <input type="text" id="sessionTitle" placeholder="Enter a title for this session" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="sessionDescription">Description</label>
+                <textarea id="sessionDescription" placeholder="Optional description" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="sessionType">Session Type</label>
+                <select id="sessionType">
+                    <option value="general_creative">General Creative Session</option>
+                    <option value="character_development">Character Development</option>
+                    <option value="plot_brainstorming">Plot Brainstorming</option>
+                    <option value="world_building">World Building</option>
+                    <option value="problem_solving">Problem Solving</option>
+                </select>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <button type="submit" class="btn-modal btn-modal-primary">Save Session</button>
+                <button type="button" class="btn-modal btn-modal-secondary" onclick="closeModal('saveSessionModal')">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Load Session Modal -->
+<div id="loadSessionModal" class="workshop-modal">
+    <div class="workshop-modal-content">
+        <div class="workshop-modal-header">
+            <h3>Load Workshop Session</h3>
+            <button class="workshop-modal-close" onclick="closeModal('loadSessionModal')">&times;</button>
+        </div>
+        
+        <div id="sessionsList" style="max-height: 300px; overflow-y: auto;">
+            <!-- Sessions will be loaded here -->
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('loadSessionModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export to Project Modal -->
+<div id="exportProjectModal" class="workshop-modal">
+    <div class="workshop-modal-content">
+        <div class="workshop-modal-header">
+            <h3>Export to Project</h3>
+            <button class="workshop-modal-close" onclick="closeModal('exportProjectModal')">&times;</button>
+        </div>
+        
+        <p style="color: #ffffff; margin-bottom: 1rem;">Convert your workshop ideas into a new writing project:</p>
+        
+        <div class="form-group">
+            <label for="projectTitle">Project Title</label>
+            <input type="text" id="projectTitle" placeholder="Enter project title">
+        </div>
+        
+        <div class="form-group">
+            <label for="projectDescription">Project Description</label>
+            <textarea id="projectDescription" placeholder="Describe your project" rows="3"></textarea>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <button class="btn-modal btn-modal-primary" onclick="exportSessionToProject()">Create Project</button>
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('exportProjectModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

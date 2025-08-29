@@ -41,6 +41,18 @@ class Project(models.Model):
     theme = models.ForeignKey(WritingTheme, on_delete=models.SET_NULL, null=True, blank=True)
     is_collaborative = models.BooleanField(default=False)
     is_public = models.BooleanField(default=False, help_text="Allow public viewing")
+    show_on_dashboard = models.BooleanField(default=True, help_text="Show this project on the dashboard bookshelf")
+    ai_assistance_level = models.CharField(max_length=20, default='medium', choices=[
+        ('minimal', 'Minimal AI Help'),
+        ('medium', 'Standard AI Assistance'),
+        ('maximum', 'Maximum AI Integration')
+    ])
+    writing_style_guide = models.CharField(max_length=20, default='mla', choices=[
+        ('mla', 'MLA Format'),
+        ('apa', 'APA Format'),
+        ('chicago', 'Chicago Style'),
+        ('custom', 'Custom Style')
+    ])
     
     class Meta:
         ordering = ['-updated_at']
@@ -316,3 +328,175 @@ class WritingSession(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.project.title} ({self.start_time})"
+
+
+class UserProfile(models.Model):
+    """Extended user profile with preferences and settings"""
+    THEME_CHOICES = [
+        ('ethereal', 'Ethereal (Default)'),
+        ('forest', 'Forest Green'),
+        ('ocean', 'Ocean Blue'),
+        ('sunset', 'Sunset Orange'),
+        ('midnight', 'Midnight Dark'),
+        ('lavender', 'Lavender Purple'),
+        ('autumn', 'Autumn Warm'),
+        ('monochrome', 'Monochrome'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='writer_profile')
+    theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='ethereal')
+    font_size = models.CharField(max_length=10, default='medium', choices=[
+        ('small', 'Small'),
+        ('medium', 'Medium'),
+        ('large', 'Large'),
+        ('x-large', 'Extra Large'),
+    ])
+    writing_goal_daily = models.IntegerField(default=500, help_text="Daily word count goal")
+    preferred_editor = models.CharField(max_length=20, default='ultimate', choices=[
+        ('ultimate', 'Ultimate Editor'),
+        ('simple', 'Simple Editor'),
+        ('academic', 'Academic Editor'),
+        ('google_docs', 'Google Docs Style'),
+    ])
+    show_statistics = models.BooleanField(default=True)
+    show_bookshelf = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+    
+    @classmethod
+    def get_or_create_for_user(cls, user):
+        """Get or create a profile for the given user"""
+        profile, created = cls.objects.get_or_create(user=user)
+        return profile
+
+
+class CreativeNotebook(models.Model):
+    """Creative Notebook for brainstorming and idea development"""
+    title = models.CharField(max_length=200, default="My Creative Notebook")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creative_notebooks')
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='creative_notebooks')
+    description = models.TextField(blank=True, null=True)
+    board_data = models.JSONField(default=dict, help_text="Stores the visual board layout and connections")
+    notes = models.TextField(blank=True, null=True)
+    ai_suggestions = models.JSONField(default=list, help_text="Stores AI-generated suggestions")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_shared = models.BooleanField(default=False)
+    shared_with = models.ManyToManyField(User, blank=True, related_name='shared_creative_notebooks')
+    
+    class Meta:
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"
+
+
+class CreativeNode(models.Model):
+    """Individual nodes in the creative notebook board"""
+    NODE_TYPES = [
+        ('idea', 'Idea'),
+        ('character', 'Character'),
+        ('plot', 'Plot Point'),
+        ('conflict', 'Conflict'),
+        ('theme', 'Theme'),
+        ('setting', 'Setting'),
+        ('note', 'Note'),
+        ('question', 'Question'),
+    ]
+    
+    notebook = models.ForeignKey(CreativeNotebook, on_delete=models.CASCADE, related_name='nodes')
+    title = models.CharField(max_length=200)
+    content = models.TextField(blank=True, null=True)
+    node_type = models.CharField(max_length=20, choices=NODE_TYPES, default='idea')
+    position_x = models.FloatField(default=0)
+    position_y = models.FloatField(default=0)
+    color = models.CharField(max_length=7, default='#4CAF50', help_text="Hex color code")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_node_type_display()})"
+
+
+class NodeConnection(models.Model):
+    """Connections between creative nodes"""
+    CONNECTION_TYPES = [
+        ('leads_to', 'Leads To'),
+        ('relates_to', 'Relates To'),
+        ('conflicts_with', 'Conflicts With'),
+        ('supports', 'Supports'),
+        ('explains', 'Explains'),
+        ('causes', 'Causes'),
+        ('prevents', 'Prevents'),
+    ]
+    
+    from_node = models.ForeignKey(CreativeNode, on_delete=models.CASCADE, related_name='outgoing_connections')
+    to_node = models.ForeignKey(CreativeNode, on_delete=models.CASCADE, related_name='incoming_connections')
+    connection_type = models.CharField(max_length=20, choices=CONNECTION_TYPES, default='relates_to')
+    label = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['from_node', 'to_node']
+    
+    def __str__(self):
+        return f"{self.from_node.title} {self.get_connection_type_display()} {self.to_node.title}"
+
+
+class WorkshopSession(models.Model):
+    """Saved creativity workshop sessions"""
+    SESSION_TYPES = [
+        ('character_development', 'Character Development'),
+        ('plot_brainstorming', 'Plot Brainstorming'),
+        ('world_building', 'World Building'),
+        ('general_creative', 'General Creative Session'),
+        ('problem_solving', 'Problem Solving'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workshop_sessions')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True, related_name='workshop_sessions')
+    session_type = models.CharField(max_length=30, choices=SESSION_TYPES, default='general_creative')
+    
+    # JSON fields to store workshop data
+    character_ideas = models.JSONField(default=list, blank=True, help_text="Character ideas generated in this session")
+    plot_ideas = models.JSONField(default=list, blank=True, help_text="Plot ideas generated in this session")
+    world_building_notes = models.JSONField(default=list, blank=True, help_text="World building concepts")
+    general_notes = models.TextField(blank=True, null=True, help_text="General notes from the session")
+    ai_suggestions_used = models.JSONField(default=list, blank=True, help_text="AI suggestions that were accepted/used")
+    connections_made = models.JSONField(default=list, blank=True, help_text="Idea connections made during session")
+    
+    # Session metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    session_duration_minutes = models.IntegerField(default=0, help_text="How long the session lasted")
+    is_completed = models.BooleanField(default=False, help_text="Whether the user marked the session as complete")
+    is_archived = models.BooleanField(default=False, help_text="Archived sessions are hidden from main view")
+    
+    class Meta:
+        ordering = ['-updated_at']
+        
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"
+    
+    def get_absolute_url(self):
+        return reverse('writer:workshop_session_detail', kwargs={'pk': self.pk})
+    
+    @property
+    def total_ideas_count(self):
+        """Count total ideas across all categories"""
+        return (len(self.character_ideas) + 
+                len(self.plot_ideas) + 
+                len(self.world_building_notes) + 
+                len(self.ai_suggestions_used))
+    
+    @property
+    def is_recent(self):
+        """Check if session was created in the last 7 days"""
+        from django.utils import timezone
+        from datetime import timedelta
+        return self.created_at >= timezone.now() - timedelta(days=7)

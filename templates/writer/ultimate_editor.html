@@ -1,0 +1,845 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atticus Ultimate Writing Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Times:wght@400;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1976d2;
+            --primary-dark: #1565c0;
+            --accent-color: #ff5722;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-dark: #1a1a1a;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --text-muted: #9aa0a6;
+            --border-color: #dadce0;
+            --border-hover: #1976d2;
+            --shadow-light: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-medium: 0 4px 16px rgba(0,0,0,0.12);
+            --shadow-heavy: 0 8px 32px rgba(0,0,0,0.16);
+            --border-radius: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lora', Georgia, serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .writing-studio {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            min-height: 100vh;
+            padding: 20px;
+            background: #f5f5f5;
+            gap: 20px;
+        }
+
+        .chapter-manager {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            height: fit-content;
+        }
+
+        .chapter-manager h3 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .chapter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            background: #f9f9f9;
+        }
+
+        .chapter-number {
+            width: 30px;
+            padding: 2px 4px;
+            font-size: 11px;
+            border: none;
+            background: transparent;
+            text-align: center;
+        }
+
+        .chapter-title {
+            flex: 1;
+            font-size: 11px;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .chapter-item.active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        /* Glass Chapter Manager */
+        .chapter-sidebar {
+            background: rgba(248, 250, 252, 0.1);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 16px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .project-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .project-stats {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .chapter-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .chapter-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+        }
+
+        .chapter-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(37, 99, 235, 0.3);
+            transform: translateX(4px);
+        }
+
+        .chapter-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .chapter-number {
+            width: 20px;
+            height: 20px;
+            background: var(--text-muted);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .chapter-item.active .chapter-number {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chapter-title {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chapter-words {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-left: 4px;
+        }
+
+        .add-chapter-btn {
+            margin: 8px 12px;
+            padding: 8px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .add-chapter-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Main Editor Area */
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            background: #f5f5f5;
+            width: 100%;
+            max-width: 8.5in;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-right: 12px;
+        }
+
+        .toolbar-btn {
+            padding: 6px 8px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .format-select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.01);
+            position: relative;
+        }
+
+        .mla-document {
+            max-width: 8.5in;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            padding: 1in;
+            min-height: calc(100vh - 200px);
+            font-family: 'Lora', Georgia, serif;
+            font-size: 12pt;
+            line-height: 2;
+            color: var(--text-primary);
+        }
+
+        .mla-header {
+            text-align: left;
+            margin-bottom: 1in;
+            color: #000000;
+        }
+
+        .mla-header div {
+            margin-bottom: 0;
+            line-height: 2;
+            color: #000000;
+        }
+
+        .mla-title {
+            text-align: center;
+            font-weight: normal;
+            margin: 1in 0;
+            color: #000000;
+        }
+
+        .mla-title:empty::before {
+            content: attr(data-placeholder);
+            color: #666;
+            font-style: italic;
+        }
+
+        .writing-area {
+            min-height: 500px;
+            outline: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            cursor: text;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            color: #000000;
+            /* Fix contenteditable issues */
+            -webkit-user-modify: read-write;
+            -moz-user-modify: read-write;
+            overflow-wrap: break-word;
+        }
+
+        .writing-area:focus {
+            outline: none;
+        }
+
+        .writing-area:empty::before {
+            content: attr(data-placeholder);
+            color: #666;
+            font-style: italic;
+        }
+
+        .page-break {
+            page-break-before: always;
+            border-top: 2px dashed #ccc;
+            margin: 20px 0;
+            padding: 10px 0;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            font-size: 11pt;
+        }
+        
+        .page-break::after {
+            content: "— Page Break —";
+        }
+        
+        @media print {
+            .page-break {
+                border: none;
+                color: transparent;
+            }
+            
+            .page-break::after {
+                content: "";
+            }
+        }
+
+
+
+
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 28px;
+            background: var(--bg-dark);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 11px;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+
+        .status-left, .status-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .writing-studio {
+                grid-template-columns: 240px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .writing-studio {
+                grid-template-columns: 1fr;
+                margin: 10px;
+            }
+            
+            .chapter-sidebar {
+                display: none;
+            }
+            
+            .editor-content {
+                padding: 20px;
+            }
+            
+            .mla-document {
+                padding: 20px;
+            }
+        }
+
+        /* Writing Focus Mode */
+        .focus-mode .chapter-sidebar {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+
+        .focus-mode .editor-container {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="writing-studio" id="writingStudio">
+        <div class="chapter-manager">
+            <h3>Chapters</h3>
+            <div id="chapterList">
+                <div class="chapter-item active">
+                    <input type="number" class="chapter-number" value="1" min="1">
+                    <div class="chapter-title">Chapter 1</div>
+                </div>
+                <div class="chapter-item">
+                    <input type="number" class="chapter-number" value="2" min="1">
+                    <div class="chapter-title">Chapter 2</div>
+                </div>
+                <div class="chapter-item">
+                    <input type="number" class="chapter-number" value="3" min="1">
+                    <div class="chapter-title">Chapter 3</div>
+                </div>
+            </div>
+            <button onclick="addChapter()" style="width: 100%; padding: 6px; margin-top: 10px; background: #2196f3; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">+ Add Chapter</button>
+        </div>
+        
+        <div class="editor-container">
+            <div class="editor-content">
+                <div class="mla-document" id="document">
+                    <div class="writing-area" contenteditable="true" id="writingArea" data-placeholder="Start typing...">
+                        {{ current_chapter.content|default:"" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Initialize the editor
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEditor();
+            updateWordCount();
+            setupChapterManager();
+        });
+
+        function setupChapterManager() {
+            // Handle chapter number changes for reordering
+            document.querySelectorAll('.chapter-number').forEach(input => {
+                input.addEventListener('change', function() {
+                    reorderChapters();
+                });
+            });
+            
+            // Handle chapter selection
+            document.querySelectorAll('.chapter-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.chapter-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        function addChapter() {
+            const chapterList = document.getElementById('chapterList');
+            const chapterCount = chapterList.children.length + 1;
+            
+            const newChapter = document.createElement('div');
+            newChapter.className = 'chapter-item';
+            newChapter.innerHTML = `
+                <input type="number" class="chapter-number" value="${chapterCount}" min="1">
+                <div class="chapter-title">Chapter ${chapterCount}</div>
+            `;
+            
+            chapterList.appendChild(newChapter);
+            setupChapterManager();
+        }
+
+        function reorderChapters() {
+            const chapterItems = Array.from(document.querySelectorAll('.chapter-item'));
+            const chapterList = document.getElementById('chapterList');
+            
+            // Sort chapters based on their number input values
+            chapterItems.sort((a, b) => {
+                const numA = parseInt(a.querySelector('.chapter-number').value);
+                const numB = parseInt(b.querySelector('.chapter-number').value);
+                return numA - numB;
+            });
+            
+            // Clear and re-append in new order
+            chapterList.innerHTML = '';
+            chapterItems.forEach(item => chapterList.appendChild(item));
+        }
+
+        let currentChapter = null;
+        let writingStartTime = Date.now();
+        let wordCount = 0;
+
+        function initializeEditor() {
+            const writingArea = document.getElementById('writingArea');
+            
+            // Ensure the contenteditable is properly set
+            writingArea.setAttribute('contenteditable', 'true');
+            
+            // Enhanced content editing
+            writingArea.addEventListener('input', function(e) {
+                updateWordCount();
+                scheduleAutoSave();
+            });
+
+            // Smart shortcuts and fix keyboard handling
+            writingArea.addEventListener('keydown', function(e) {
+                // Allow default behavior for Backspace and Delete
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    // Don't prevent default - let browser handle deletion
+                    return true;
+                }
+                
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    insertSmartIndent();
+                }
+                
+                // Ctrl+Enter for page break
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    insertPageBreak();
+                }
+            });
+            
+            // Fix for contenteditable issues
+            writingArea.addEventListener('beforeinput', function(e) {
+                // Allow all input events to proceed normally
+                if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+                    // Ensure deletion works properly
+                    return true;
+                }
+            });
+
+            // Automatic chapter creation from H2 headers
+            writingArea.addEventListener('input', function(e) {
+                detectChapterHeaders();
+            });
+            
+            // Ensure focus works properly
+            writingArea.focus();
+        }
+
+        function loadChapters() {
+            const chapterList = document.getElementById('chapterList');
+            // Simulate loading chapters (in real app, this would be an AJAX call)
+            const chapters = [
+                { id: 1, title: 'The Beginning', wordCount: 1250, active: true },
+                { id: 2, title: 'Rising Action', wordCount: 2340, active: false },
+                { id: 3, title: 'Climax', wordCount: 890, active: false }
+            ];
+
+            chapterList.innerHTML = '';
+            chapters.forEach((chapter, index) => {
+                const chapterElement = createChapterElement(chapter, index + 1);
+                chapterList.appendChild(chapterElement);
+            });
+        }
+
+        function createChapterElement(chapter, number) {
+            const div = document.createElement('div');
+            div.className = `chapter-item ${chapter.active ? 'active' : ''}`;
+            div.innerHTML = `
+                <div class="chapter-number">${number}</div>
+                <div class="chapter-title">${chapter.title}</div>
+                <div class="chapter-words">${chapter.wordCount}w</div>
+            `;
+            div.onclick = () => switchToChapter(chapter.id);
+            return div;
+        }
+
+        function createChapter() {
+            const title = prompt('Chapter title:') || `Chapter ${document.querySelectorAll('.chapter-item').length + 1}`;
+            // In real app, this would create a new chapter via AJAX
+            console.log('Creating chapter:', title);
+            loadChapters(); // Refresh the list
+        }
+
+        function switchToChapter(chapterId) {
+            currentChapter = chapterId;
+            // Load chapter content
+            document.querySelectorAll('.chapter-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function updateWordCount() {
+            const writingArea = document.getElementById('writingArea');
+            const text = writingArea.textContent || writingArea.innerText;
+            wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+            
+            document.getElementById('wordCount').textContent = `${wordCount} words`;
+            
+            // Update progress
+            const targetWords = {{ project.target_word_count|default:50000 }};
+            const progress = Math.min(100, (wordCount / targetWords) * 100);
+            document.getElementById('progressPercent').textContent = `${progress.toFixed(1)}%`;
+        }
+
+        function startWritingTimer() {
+            setInterval(function() {
+                const elapsed = Math.floor((Date.now() - writingStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('writingTime').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupAutoSave() {
+            let saveTimeout;
+            window.scheduleAutoSave = function() {
+                clearTimeout(saveTimeout);
+                document.getElementById('saveStatus').textContent = 'Saving...';
+                
+                saveTimeout = setTimeout(function() {
+                    // Simulate auto-save
+                    document.getElementById('saveStatus').textContent = 'Auto-saved';
+                    console.log('Auto-saved document');
+                }, 2000);
+            };
+        }
+
+        function setCurrentDate() {
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('writingArea').focus();
+        }
+
+        function insertHeading(level) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const heading = document.createElement(`h${level}`);
+                heading.style.fontWeight = level <= 2 ? 'bold' : 'normal';
+                heading.style.fontSize = level === 1 ? '14pt' : level === 2 ? '13pt' : '12pt';
+                heading.style.marginTop = '12pt';
+                heading.style.marginBottom = '6pt';
+                
+                try {
+                    range.surroundContents(heading);
+                } catch (e) {
+                    heading.appendChild(range.extractContents());
+                    range.insertNode(heading);
+                }
+            }
+        }
+
+        function changeFormat(format) {
+            const document = document.getElementById('document');
+            // Apply different formatting styles based on selection
+            switch(format) {
+                case 'mla':
+                    document.style.fontFamily = "'Lora', Georgia, serif";
+                    document.style.fontSize = '12pt';
+                    document.style.lineHeight = '2';
+                    break;
+                case 'apa':
+                    document.style.fontFamily = "'Lora', Georgia, serif";
+                    document.style.fontSize = '12pt';
+                    document.style.lineHeight = '2';
+                    break;
+                case 'chicago':
+                    document.style.fontFamily = "'Lora', Georgia, serif";
+                    document.style.fontSize = '12pt';
+                    document.style.lineHeight = '1.5';
+                    break;
+                case 'manuscript':
+                    document.style.fontFamily = "'Courier New', monospace";
+                    document.style.fontSize = '12pt';
+                    document.style.lineHeight = '2';
+                    break;
+            }
+        }
+
+        function detectChapterHeaders() {
+            const writingArea = document.getElementById('writingArea');
+            const content = writingArea.innerHTML;
+            
+            // Detect H2 headers and automatically create chapters
+            const h2Regex = /<h2[^>]*>(.*?)<\/h2>/gi;
+            let match;
+            while ((match = h2Regex.exec(content)) !== null) {
+                const chapterTitle = match[1].trim();
+                if (chapterTitle && !chapterExists(chapterTitle)) {
+                    createChapterFromHeader(chapterTitle);
+                }
+            }
+        }
+
+        function chapterExists(title) {
+            const chapterTitles = Array.from(document.querySelectorAll('.chapter-title')).map(el => el.textContent);
+            return chapterTitles.includes(title);
+        }
+
+        function createChapterFromHeader(title) {
+            console.log('Auto-creating chapter:', title);
+            
+            // Add the new chapter to the chapter list
+            const chapterList = document.getElementById('chapterList');
+            const chapterCount = chapterList.children.length + 1;
+            
+            const newChapter = {
+                id: chapterCount,
+                title: title,
+                wordCount: 0,
+                active: false
+            };
+            
+            const chapterElement = createChapterElement(newChapter, chapterCount);
+            chapterList.appendChild(chapterElement);
+            
+            // In real app, this would create via AJAX
+        }
+
+        function insertPageBreak() {
+            const writingArea = document.getElementById('writingArea');
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const pageBreak = document.createElement('div');
+                pageBreak.className = 'page-break';
+                
+                range.insertNode(pageBreak);
+                
+                // Move cursor after the page break
+                const newRange = document.createRange();
+                newRange.setStartAfter(pageBreak);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+                
+                writingArea.focus();
+            }
+        }
+
+        function insertSmartIndent() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const tabSpaces = document.createTextNode('\u00A0\u00A0\u00A0\u00A0'); // 4 non-breaking spaces
+                range.insertNode(tabSpaces);
+                
+                // Move cursor after the indent
+                const newRange = document.createRange();
+                newRange.setStartAfter(tabSpaces);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+            loadChapters(); // Refresh
+        }
+
+
+
+        function toggleFocusMode() {
+            document.getElementById('writingStudio').classList.toggle('focus-mode');
+        }
+
+        function insertSmartIndent() {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const textNode = document.createTextNode('\t');
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'b':
+                        e.preventDefault();
+                        formatText('bold');
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        formatText('italic');
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        formatText('underline');
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        scheduleAutoSave();
+                        break;
+                }
+            }
+            
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFocusMode();
+            }
+        });
+    </script>
+</body>
+</html>

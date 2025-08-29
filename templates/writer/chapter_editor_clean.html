@@ -1,6 +1,572 @@
 {% extends 'base.html' %}
-{% block title %}Editor - Writer's Web Dream{% endblock %}
+{% block title %}{{ project.title }} - Editor - Writer's Web Dream{% endblock %}
 
 {% block content %}
-<!-- Blank editor page -->
+<style>
+/* Quill Editor Styling */
+.editor-container {
+    min-height: 100vh;
+    padding: 20px;
+    background: transparent;
+}
+
+.editor-header {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.project-info h1 {
+    color: #ffffff !important;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.chapter-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.chapter-selector select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.chapter-selector option {
+    background: #333;
+    color: #fff;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-editor {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-editor:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-editor-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-editor-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Main Editor Area */
+.editor-main {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 2rem;
+    min-height: 600px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.chapter-title-input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 1.5rem;
+    background: rgba(0, 0, 0, 0.05);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.chapter-title-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+}
+
+/* Quill Editor Specific */
+#editor {
+    background: white;
+    min-height: 500px;
+    font-family: 'Lora', Georgia, serif;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+}
+
+.ql-toolbar.ql-snow {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px 8px 0 0;
+    padding: 12px;
+}
+
+.ql-container.ql-snow {
+    border: 1px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+}
+
+.ql-editor {
+    padding: 2rem;
+    min-height: 500px;
+}
+
+.ql-editor p {
+    margin-bottom: 1em;
+}
+
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3 {
+    margin: 1.5em 0 0.5em 0;
+    color: #2c3e50;
+}
+
+/* Status Bar */
+.editor-status {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-item {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.9rem;
+}
+
+.status-item strong {
+    color: #ffffff !important;
+}
+
+.save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.save-indicator.saving {
+    color: #ffc107 !important;
+}
+
+.save-indicator.saved {
+    color: #28a745 !important;
+}
+
+/* Chapter Navigation */
+.chapter-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+}
+
+.nav-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff !important;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .editor-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .chapter-selector {
+        width: 100%;
+    }
+    
+    .chapter-selector select {
+        width: 100%;
+    }
+    
+    .editor-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .editor-status {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+</style>
+
+<div class="editor-container">
+    <!-- Editor Header -->
+    <div class="editor-header">
+        <div class="project-info">
+            <h1><i class="fas fa-book me-2"></i>{{ project.title }}</h1>
+            <div class="chapter-selector">
+                <label style="color: rgba(255, 255, 255, 0.8);">Chapter:</label>
+                <select id="chapter-select" onchange="switchChapter()">
+                    {% for chapter in all_chapters %}
+                    <option value="{{ chapter.id }}" {% if chapter.id == current_chapter.id %}selected{% endif %}>
+                        Chapter {{ chapter.order }}: {{ chapter.title|default:"Untitled" }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button class="btn-editor btn-editor-secondary" onclick="addNewChapter()">
+                    <i class="fas fa-plus"></i> New Chapter
+                </button>
+            </div>
+        </div>
+        
+        <div class="editor-actions">
+            <button class="btn-editor" onclick="saveChapter()">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <a href="{% url 'writer:project_detail' project.pk %}" class="btn-editor btn-editor-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Project
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Editor -->
+    <div class="editor-main">
+        <input type="text" 
+               id="chapter-title" 
+               class="chapter-title-input" 
+               value="{{ current_chapter.title|default:'' }}" 
+               placeholder="Enter chapter title...">
+        
+        <!-- Quill Editor Container -->
+        <div id="editor-wrapper">
+            <div id="toolbar">
+                <select class="ql-header">
+                    <option selected>Normal</option>
+                    <option value="1">Heading 1</option>
+                    <option value="2">Heading 2</option>
+                    <option value="3">Heading 3</option>
+                </select>
+                
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+                <button class="ql-strike"></button>
+                
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+                
+                <button class="ql-blockquote"></button>
+                <button class="ql-code-block"></button>
+                
+                <select class="ql-align">
+                    <option selected></option>
+                    <option value="center"></option>
+                    <option value="right"></option>
+                    <option value="justify"></option>
+                </select>
+                
+                <button class="ql-link"></button>
+                <button class="ql-image"></button>
+                
+                <button class="ql-clean"></button>
+            </div>
+            
+            <div id="editor">{{ current_chapter.content|safe }}</div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="editor-status">
+        <div class="status-item">
+            <strong>Word Count:</strong> <span id="word-count">0</span>
+        </div>
+        <div class="status-item">
+            <strong>Character Count:</strong> <span id="char-count">0</span>
+        </div>
+        <div class="save-indicator" id="save-indicator">
+            <i class="fas fa-check-circle"></i>
+            <span>All changes saved</span>
+        </div>
+    </div>
+
+    <!-- Chapter Navigation -->
+    <div class="chapter-nav">
+        <button class="nav-btn" onclick="previousChapter()" id="prev-btn">
+            <i class="fas fa-chevron-left"></i> Previous Chapter
+        </button>
+        <button class="nav-btn" onclick="nextChapter()" id="next-btn">
+            Next Chapter <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Include Quill library -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<script>
+// Initialize Quill editor
+var quill = new Quill('#editor', {
+    theme: 'snow',
+    modules: {
+        toolbar: '#toolbar'
+    },
+    placeholder: 'Start writing your story...',
+});
+
+// Current chapter data
+let currentChapterId = {{ current_chapter.id }};
+let projectId = {{ project.id }};
+let autoSaveTimer;
+let hasUnsavedChanges = false;
+
+// Initialize word count
+function updateWordCount() {
+    const text = quill.getText();
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+    const chars = text.length - 1; // Quill adds a trailing newline
+    
+    document.getElementById('word-count').textContent = words;
+    document.getElementById('char-count').textContent = chars;
+}
+
+// Update word count on content change
+quill.on('text-change', function() {
+    updateWordCount();
+    hasUnsavedChanges = true;
+    clearTimeout(autoSaveTimer);
+    
+    // Show saving indicator
+    const indicator = document.getElementById('save-indicator');
+    indicator.classList.remove('saved');
+    indicator.classList.add('saving');
+    indicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Saving...</span>';
+    
+    // Auto-save after 2 seconds of inactivity
+    autoSaveTimer = setTimeout(() => {
+        saveChapter(true);
+    }, 2000);
+});
+
+// Save chapter function
+function saveChapter(isAutoSave = false) {
+    const content = quill.root.innerHTML;
+    const title = document.getElementById('chapter-title').value;
+    
+    fetch(`/writer/api/chapters/${currentChapterId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            title: title,
+            content: content,
+            word_count: parseInt(document.getElementById('word-count').textContent)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            hasUnsavedChanges = false;
+            const indicator = document.getElementById('save-indicator');
+            indicator.classList.remove('saving');
+            indicator.classList.add('saved');
+            indicator.innerHTML = '<i class="fas fa-check-circle"></i> <span>All changes saved</span>';
+            
+            if (!isAutoSave) {
+                // Show success message for manual saves
+                showNotification('Chapter saved successfully!', 'success');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error saving chapter:', error);
+        showNotification('Error saving chapter. Please try again.', 'error');
+    });
+}
+
+// Switch chapter function
+function switchChapter() {
+    if (hasUnsavedChanges) {
+        if (!confirm('You have unsaved changes. Do you want to save before switching chapters?')) {
+            return;
+        }
+        saveChapter();
+    }
+    
+    const select = document.getElementById('chapter-select');
+    const chapterId = select.value;
+    window.location.href = `/writer/projects/${projectId}/editor/?chapter=${chapterId}`;
+}
+
+// Add new chapter
+function addNewChapter() {
+    const title = prompt('Enter the title for the new chapter:');
+    if (!title) return;
+    
+    fetch(`/writer/projects/${projectId}/chapters/create/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            title: title
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.href = `/writer/projects/${projectId}/editor/?chapter=${data.chapter_id}`;
+        }
+    })
+    .catch(error => {
+        console.error('Error creating chapter:', error);
+        showNotification('Error creating chapter. Please try again.', 'error');
+    });
+}
+
+// Navigation functions
+function previousChapter() {
+    const select = document.getElementById('chapter-select');
+    const currentIndex = select.selectedIndex;
+    if (currentIndex > 0) {
+        select.selectedIndex = currentIndex - 1;
+        switchChapter();
+    }
+}
+
+function nextChapter() {
+    const select = document.getElementById('chapter-select');
+    const currentIndex = select.selectedIndex;
+    if (currentIndex < select.options.length - 1) {
+        select.selectedIndex = currentIndex + 1;
+        switchChapter();
+    }
+}
+
+// Update navigation buttons
+function updateNavButtons() {
+    const select = document.getElementById('chapter-select');
+    const currentIndex = select.selectedIndex;
+    
+    document.getElementById('prev-btn').disabled = currentIndex === 0;
+    document.getElementById('next-btn').disabled = currentIndex === select.options.length - 1;
+}
+
+// Show notification
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#28a745' : '#dc3545'};
+        color: white;
+        border-radius: 8px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Warn before leaving with unsaved changes
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    updateWordCount();
+    updateNavButtons();
+});
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
 {% endblock %}
