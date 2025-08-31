@@ -947,7 +947,7 @@
                                 "Try adjusting your search or filter criteria"
                             }
                         </div>
-                        <a href="{% url 'writer:ultimate_editor' %}" class="empty-action">
+                        <a href="{% url 'writer:google_docs_editor' %}" class="empty-action">
                             <i class="fas fa-plus"></i>
                             Create New Project
                         </a>
@@ -1110,7 +1110,7 @@
         }
 
         function openProject(projectId) {
-            window.location.href = `{% url 'writer:ultimate_editor' %}?project=${projectId}`;
+            window.location.href = `{% url 'writer:google_docs_editor' %}?project=${projectId}`;
         }
 
         function editProject(projectId) {

@@ -1,114 +1,301 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}My Projects - A Writer's Web Dream{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 style="color: #ffffff !important;">My Writing Projects</h1>
-    <!-- New Project button removed -->
-</div>
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    --text-primary: #2d3748;
+    --text-secondary: #718096;
+    --border-radius: 20px;
+}
 
-{% if projects %}
-<div class="row">
-    {% for project in projects %}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <a href="{% url 'writer:chapter_editor' project.pk %}" style="text-decoration: none;">
-                    <h5 class="card-title" style="color: #ffffff !important; cursor: pointer;">{{ project.title }}</h5>
-                </a>
-                <a href="{% url 'writer:chapter_editor' project.pk %}" style="text-decoration: none;">
-                    <p class="card-text text-muted" style="cursor: pointer;">{{ project.description|truncatewords:15 }}</p>
-                </a>
-                
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between text-muted small mb-1">
-                        <span>Progress</span>
-                        <span>{{ project.progress_percentage|floatformat:1 }}%</span>
+.projects-container {
+    min-height: 100vh;
+    background: var(--primary-gradient);
+    padding: 2rem 0;
+}
+
+.projects-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    color: white;
+}
+
+.projects-title {
+    font-size: 3rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.projects-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.project-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.project-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.project-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.project-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: #10b981;
+    color: white;
+}
+
+.project-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.project-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 12px;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.project-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+    background: #cbd5e0;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.create-project-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.create-project-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-10px);
+    color: white;
+    text-decoration: none;
+}
+
+.create-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: white;
+    padding: 4rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+    opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+    .projects-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+    }
+    
+    .projects-title {
+        font-size: 2rem;
+    }
+    
+    .project-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<div class="projects-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="projects-header">
+            <h1 class="projects-title">📚 My Writing Projects</h1>
+            <p class="projects-subtitle">Manage and organize all your creative works</p>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="projects-grid">
+            <!-- Create New Project Card -->
+            <a href="{% url 'writer:project_create' %}" class="project-card create-project-card">
+                <div class="create-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h3>Create New Project</h3>
+                <p>Start a new writing adventure</p>
+            </a>
+
+            <!-- Project Cards -->
+            {% for project in projects %}
+            <div class="project-card">
+                <div class="project-header">
+                    <h2 class="project-title">{{ project.title }}</h2>
+                    <span class="project-status">
+                        {% if project.progress_percentage >= 100 %}
+                            Complete
+                        {% elif project.progress_percentage >= 50 %}
+                            In Progress
+                        {% else %}
+                            Starting
+                        {% endif %}
+                    </span>
+                </div>
+
+                <p class="project-description">
+                    {{ project.description|default:"No description provided" }}
+                </p>
+
+                <div class="project-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ project.chapters.count|default:0 }}</span>
+                        <span class="stat-label">Chapters</span>
                     </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar" role="progressbar" style="width: {{ project.progress_percentage }}%"></div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ project.word_count|default:0 }}</span>
+                        <span class="stat-label">Words</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ project.progress_percentage|default:0|floatformat:0 }}%</span>
+                        <span class="stat-label">Complete</span>
                     </div>
                 </div>
-                
-                <div class="row text-center mb-3">
-                    <div class="col-4">
-                        <small class="d-block" style="color: #ffffff !important;">Chapters</small>
-                        <strong>{{ project.chapter_count }}</strong>
-                    </div>
-                    <div class="col-4">
-                        <small class="d-block" style="color: #ffffff !important;">Words</small>
-                        <strong>{{ project.total_word_count|floatformat:0 }}</strong>
-                    </div>
-                    <div class="col-4">
-                        <small class="d-block" style="color: #ffffff !important;">Target</small>
-                        <strong>{{ project.target_word_count|floatformat:0 }}</strong>
-                    </div>
-                </div>
-                <div class="mb-2">
-                    <small class="text-muted d-block">Preview</small>
-                    <a href="{% url 'writer:chapter_editor' project.pk %}" style="text-decoration: none;">
-                        <div style="color: #fff; background: rgba(0,0,0,0.08); border-radius: 6px; padding: 8px 12px; min-height: 32px; cursor: pointer;">
-                            {{ project.content_preview }}
-                        </div>
+
+                <div class="project-actions">
+                    <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i>
+                        Continue Writing
+                    </a>
+                    <a href="{% url 'writer:project_detail' project.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-eye"></i>
+                        View Details
                     </a>
                 </div>
-                
-                {% if project.genre %}
-                <span class="badge bg-secondary mb-2">{{ project.genre }}</span>
-                {% endif %}
-                
-                <div class="btn-group w-100" role="group">
-                    <a href="{% url 'writer:project_delete' project.pk %}" class="btn btn-outline-danger btn-sm" title="Delete Project">
-                        <i class="fas fa-trash"></i>
-                    </a>
-                </div>
-                
-                <small class="text-muted d-block mt-2">
-                    <i class="fas fa-clock me-1"></i>Updated {{ project.updated_at|timesince }} ago
-                </small>
             </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-book-open"></i>
+                <h3>No Projects Yet</h3>
+                <p>Create your first writing project to get started!</p>
+            </div>
+            {% endfor %}
         </div>
     </div>
-    {% endfor %}
 </div>
 
-<!-- Pagination -->
-{% if is_paginated %}
-<nav aria-label="Project pagination">
-    <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page=1">First</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-        </li>
-        {% endif %}
-        
-        <li class="page-item active">
-            <span class="page-link">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-        </li>
-        
-        {% if page_obj.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-        </li>
-        {% endif %}
-    </ul>
-</nav>
-{% endif %}
-
-{% else %}
-<div class="text-center py-5">
-    <i class="fas fa-book fa-4x text-muted mb-4"></i>
-    <h3 class="text-muted">No projects yet</h3>
-    <p class="text-muted mb-4">Organize your writing by creating your first project!</p>
-    <!-- Create Your First Project button removed -->
-</div>
-{% endif %}
 {% endblock %}

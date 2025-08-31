@@ -107,13 +107,39 @@
 
 <style>
 .character-card {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid #dee2e6;
 }
 
 .character-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.character-card .card-body {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+.character-card .card-title a {
+    color: #ffffff !important;
+}
+
+.character-card .card-text {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.character-card .text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.character-card .card-footer {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .character-avatar {
@@ -121,7 +147,7 @@
 }
 
 .character-details {
-    border-top: 1px solid #eee;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
     padding-top: 10px;
 }
 
@@ -133,6 +159,43 @@
 
 .badge {
     font-size: 0.7rem;
+}
+
+/* Update button styles for transparency */
+.character-card .btn-outline-primary {
+    border-color: rgba(102, 126, 234, 0.8);
+    color: rgba(102, 126, 234, 1);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.character-card .btn-outline-primary:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 1);
+    color: #ffffff;
+}
+
+.character-card .btn-outline-secondary {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.character-card .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+    color: #ffffff;
+}
+
+.character-card .btn-outline-danger {
+    border-color: rgba(239, 68, 68, 0.8);
+    color: rgba(239, 68, 68, 1);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.character-card .btn-outline-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 1);
+    color: #ffffff;
 }
 </style>
 {% endblock %}

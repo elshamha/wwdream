@@ -39,16 +39,25 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
+      console.log('AuthContext: Starting login process');
       const response = await ApiService.login(username, password);
+      console.log('AuthContext: Login successful, fetching user profile');
+      
       const userProfile = await ApiService.getUserProfile();
+      console.log('AuthContext: User profile fetched:', userProfile);
+      
       setUser(userProfile);
       setIsAuthenticated(true);
       return { success: true };
     } catch (error) {
-      console.log('Login failed:', error);
+      console.error('AuthContext: Login failed with error:', error);
+      const errorMessage = error.response?.data?.detail || 
+                          error.response?.data?.non_field_errors?.[0] || 
+                          error.message || 
+                          'Login failed. Please check your credentials.';
       return { 
         success: false, 
-        error: error.response?.data?.detail || 'Login failed' 
+        error: errorMessage
       };
     }
   };

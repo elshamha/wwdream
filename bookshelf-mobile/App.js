@@ -4,35 +4,37 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { AuthProvider } from './src/context/AuthContext';
-import { theme } from './src/theme/theme';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import BookshelfScreen from './src/screens/BookshelfScreen';
+import NewProjectScreen from './src/screens/NewProjectScreen';
 import EditorScreen from './src/screens/EditorScreen';
 import ChapterListScreen from './src/screens/ChapterListScreen';
 
 const Stack = createStackNavigator();
 
-export default function App() {
+function NavigationStack() {
+  const { theme, isDarkMode } = useTheme();
+  
   return (
     <PaperProvider theme={theme}>
-      <AuthProvider>
-        <NavigationContainer>
-          <StatusBar style="auto" backgroundColor="#667eea" />
-          <Stack.Navigator 
-            initialRouteName="Login"
-            screenOptions={{
-              headerStyle: {
-                backgroundColor: '#667eea',
-              },
-              headerTintColor: '#fff',
-              headerTitleStyle: {
-                fontWeight: 'bold',
-              },
-            }}
-          >
+      <NavigationContainer theme={theme}>
+        <StatusBar style={isDarkMode ? 'light' : 'dark'} backgroundColor={theme.colors.primary} />
+        <Stack.Navigator 
+          initialRouteName="Login"
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: theme.colors.primary,
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        >
             <Stack.Screen 
               name="Login" 
               component={LoginScreen} 
@@ -53,6 +55,11 @@ export default function App() {
               }}
             />
             <Stack.Screen 
+              name="NewProject" 
+              component={NewProjectScreen}
+              options={{ title: 'New Book' }}
+            />
+            <Stack.Screen 
               name="ChapterList" 
               component={ChapterListScreen}
               options={{ title: 'Chapters' }}
@@ -64,7 +71,16 @@ export default function App() {
             />
           </Stack.Navigator>
         </NavigationContainer>
-      </AuthProvider>
     </PaperProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <NavigationStack />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

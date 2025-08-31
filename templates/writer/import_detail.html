@@ -33,9 +33,6 @@
                             <button class="btn btn-primary btn-lg me-2" onclick="showAddToProjectModal()">
                                 <i class="fas fa-folder-plus me-2"></i>Add to Project
                             </button>
-                            <button class="btn btn-outline-light btn-lg" onclick="convertToDocument()">
-                                <i class="fas fa-file-alt me-2"></i>Convert to Document
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -119,10 +116,25 @@
                     <div class="card-body p-4">
                         {% if imported_doc.extracted_content %}
                             <div id="contentPreview" class="content-preview">
-                                {{ imported_doc.extracted_content|striptags|truncatewords:100|linebreaks|safe }}
+                                <div class="clean-content">
+                                    {{ imported_doc.extracted_content|striptags|truncatewords:100|linebreaksbr|safe }}
+                                </div>
                             </div>
                             <div id="fullContent" class="content-full d-none">
-                                {{ imported_doc.extracted_content|striptags|linebreaks|safe }}
+                                <div class="clean-content" id="editableContent" contenteditable="false">
+                                    {{ imported_doc.extracted_content|striptags|linebreaksbr|safe }}
+                                </div>
+                                <div class="edit-controls mt-3" style="display: none;" id="editControls">
+                                    <button class="btn btn-success me-2" onclick="saveContent()">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                    <button class="btn btn-secondary me-2" onclick="cancelEdit()">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                    <button class="btn btn-primary" onclick="openInEditor()">
+                                        <i class="fas fa-external-link-alt"></i> Open in Full Editor
+                                    </button>
+                                </div>
                             </div>
                             
                             <!-- Content Statistics -->
@@ -176,9 +188,6 @@
                         <div class="d-grid gap-2">
                             <button class="btn btn-primary" onclick="convertToProject()">
                                 <i class="fas fa-project-diagram me-2"></i>Convert to Project
-                            </button>
-                            <button class="btn btn-outline-primary" onclick="convertToDocument()">
-                                <i class="fas fa-file-alt me-2"></i>Convert to Document
                             </button>
                             <button class="btn btn-outline-info" onclick="analyzeContent()">
                                 <i class="fas fa-search me-2"></i>Analyze Content
@@ -627,22 +636,6 @@ function convertToProject() {
     }
 }
 
-// Convert imported document to standalone document  
-function convertToDocument() {
-    if (confirm('Are you sure you want to convert this imported document to a standalone document?')) {
-        // Show loading state
-        const btn = event.target.closest('button');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Converting...';
-        btn.disabled = true;
-        
-        // For now, show a success message and redirect to documents
-        setTimeout(() => {
-            alert('Document conversion feature will be implemented soon! Redirecting to documents...');
-            window.location.href = '/writer/documents/';
-        }, 1500);
-    }
-}
 
 // Analyze content for chapters and structure
 function analyzeContent() {
@@ -894,5 +887,203 @@ function addToSelectedProject() {
         btn.disabled = false;
     });
 }
+
+// Enhanced editing functionality for imported documents
+let originalContent = '';
+let isEditing = false;
+
+function enableEdit() {
+    const editableContent = document.getElementById('editableContent');
+    const editControls = document.getElementById('editControls');
+    const toggleButton = document.querySelector('[onclick="toggleContent()"]');
+    
+    if (!editableContent || !editControls) return;
+    
+    // Store original content
+    originalContent = editableContent.innerHTML;
+    
+    // Enable editing
+    editableContent.contentEditable = 'true';
+    editableContent.style.border = '2px solid rgba(102, 126, 234, 0.5)';
+    editableContent.style.borderRadius = '8px';
+    editableContent.style.padding = '15px';
+    editableContent.style.outline = 'none';
+    editableContent.style.minHeight = '200px';
+    editableContent.focus();
+    
+    // Show edit controls
+    editControls.style.display = 'block';
+    
+    // Update toggle button
+    if (toggleButton) {
+        toggleButton.innerHTML = '<i class="fas fa-edit"></i> Editing Mode';
+        toggleButton.disabled = true;
+        toggleButton.style.opacity = '0.6';
+    }
+    
+    isEditing = true;
+    
+    // Add editing styles
+    const editStyle = document.createElement('style');
+    editStyle.id = 'editing-styles';
+    editStyle.textContent = `
+        #editableContent:focus {
+            border-color: rgba(102, 126, 234, 0.8) !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        #editableContent p {
+            margin-bottom: 1rem;
+        }
+        #editableContent br {
+            margin-bottom: 0.5rem;
+        }
+    `;
+    document.head.appendChild(editStyle);
+}
+
+function saveContent() {
+    const editableContent = document.getElementById('editableContent');
+    const editControls = document.getElementById('editControls');
+    const toggleButton = document.querySelector('[onclick="toggleContent()"]');
+    
+    if (!editableContent || !editControls) return;
+    
+    const newContent = editableContent.innerHTML.trim();
+    
+    // Show loading state
+    const saveBtn = editControls.querySelector('.btn-success');
+    const originalSaveText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveBtn.disabled = true;
+    
+    // Save to server
+    fetch(`/writer/import/{{ imported_doc.pk }}/update-content/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: newContent
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update original content
+            originalContent = newContent;
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success mt-3';
+            successMsg.style.animation = 'fadeIn 0.3s ease';
+            successMsg.innerHTML = '<i class="fas fa-check-circle"></i> Content saved successfully!';
+            editControls.parentNode.insertBefore(successMsg, editControls);
+            
+            // Remove success message after 3 seconds
+            setTimeout(() => {
+                successMsg.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => successMsg.remove(), 300);
+            }, 3000);
+            
+            // Exit edit mode
+            cancelEdit();
+        } else {
+            alert('Error saving content: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving content. Please try again.');
+    })
+    .finally(() => {
+        saveBtn.innerHTML = originalSaveText;
+        saveBtn.disabled = false;
+    });
+}
+
+function cancelEdit() {
+    const editableContent = document.getElementById('editableContent');
+    const editControls = document.getElementById('editControls');
+    const toggleButton = document.querySelector('[onclick="toggleContent()"]');
+    
+    if (!editableContent || !editControls) return;
+    
+    // Restore original content
+    editableContent.innerHTML = originalContent;
+    
+    // Disable editing
+    editableContent.contentEditable = 'false';
+    editableContent.style.border = 'none';
+    editableContent.style.padding = '0';
+    
+    // Hide edit controls
+    editControls.style.display = 'none';
+    
+    // Restore toggle button
+    if (toggleButton) {
+        toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i> Show Preview';
+        toggleButton.disabled = false;
+        toggleButton.style.opacity = '1';
+    }
+    
+    // Remove editing styles
+    const editingStyles = document.getElementById('editing-styles');
+    if (editingStyles) {
+        editingStyles.remove();
+    }
+    
+    isEditing = false;
+}
+
+function openInEditor() {
+    const editableContent = document.getElementById('editableContent');
+    if (!editableContent) return;
+    
+    const content = editableContent.innerHTML.trim();
+    
+    // Create a temporary form to pass content to the editor
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "writer:google_docs_editor" %}';
+    form.style.display = 'none';
+    
+    // Add CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    form.appendChild(csrfInput);
+    
+    // Add content
+    const contentInput = document.createElement('input');
+    contentInput.type = 'hidden';
+    contentInput.name = 'initial_content';
+    contentInput.value = content;
+    form.appendChild(contentInput);
+    
+    // Add title
+    const titleInput = document.createElement('input');
+    titleInput.type = 'hidden';
+    titleInput.name = 'document_title';
+    titleInput.value = '{{ imported_doc.title }}';
+    form.appendChild(titleInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Add edit button to the toggle controls
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleContainer = document.querySelector('.btn-group');
+    if (toggleContainer) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm btn-warning';
+        editBtn.onclick = enableEdit;
+        editBtn.innerHTML = '<i class="fas fa-edit"></i> Quick Edit';
+        editBtn.title = 'Edit content directly on this page';
+        toggleContainer.appendChild(editBtn);
+    }
+});
 </script>
 {% endblock %}

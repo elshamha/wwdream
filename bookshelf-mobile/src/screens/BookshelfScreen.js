@@ -7,7 +7,9 @@ import {
   Dimensions,
   TouchableOpacity,
   Alert,
+  Share,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   Text,
   Card,
@@ -20,8 +22,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import ApiService from '../services/api';
-import { theme, gradients } from '../theme/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -29,20 +31,42 @@ const BookshelfScreen = ({ navigation }) => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [focusRefreshing, setFocusRefreshing] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const { user, logout } = useAuth();
+  const { theme, gradients, isDarkMode, toggleTheme } = useTheme();
+  
+  const styles = createStyles(theme);
 
   useEffect(() => {
     loadBookshelfProjects();
   }, []);
 
+  // Refresh projects when screen comes into focus (after editing chapters or creating projects)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('BookshelfScreen focused - reloading projects to show latest changes');
+      // Only show focus refresh indicator if not in initial loading state
+      if (!loading) {
+        setFocusRefreshing(true);
+      }
+      loadBookshelfProjects().finally(() => {
+        setFocusRefreshing(false);
+      });
+    }, [loading])
+  );
+
   const loadBookshelfProjects = async () => {
     try {
+      console.log('Loading bookshelf projects...');
       const response = await ApiService.getBookshelfProjects();
+      console.log('API Response:', response);
+      console.log('Projects count:', response.projects ? response.projects.length : 'No projects array');
       setProjects(response.projects || []);
     } catch (error) {
       console.log('Error loading bookshelf projects:', error);
-      Alert.alert('Error', 'Failed to load your bookshelf projects');
+      console.log('Error details:', error.response?.data || error.message);
+      Alert.alert('Error', 'Failed to load your bookshelf projects. Check console for details.');
     } finally {
       setLoading(false);
     }
@@ -87,6 +111,38 @@ const BookshelfScreen = ({ navigation }) => {
     if (percentage < 50) return '#f39c12';
     if (percentage < 75) return '#f1c40f';
     return '#27ae60';
+  };
+
+  const handleShare = async (project) => {
+    try {
+      const message = `Check out my book "${project.title}"!\n\n` +
+        `Genre: ${project.genre || 'Unspecified'}\n` +
+        `Progress: ${Math.round(project.progress_percentage || 0)}% complete\n` +
+        `Chapters: ${project.chapter_count}\n` +
+        `Words: ${project.word_count?.toLocaleString() || '0'}\n\n` +
+        `${project.description || 'No description available'}`;
+      
+      const result = await Share.share({
+        message: message,
+        title: project.title,
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // shared with activity type of result.activityType
+          console.log('Shared via', result.activityType);
+        } else {
+          // shared
+          console.log('Shared successfully');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // dismissed
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share the book');
+      console.error('Share error:', error);
+    }
   };
 
   const renderProject = ({ item, index }) => {
@@ -137,6 +193,14 @@ const BookshelfScreen = ({ navigation }) => {
                   {item.word_count?.toLocaleString() || '0'} words
                 </Text>
               </View>
+              
+              <TouchableOpacity 
+                style={styles.shareButton}
+                onPress={() => handleShare(item)}
+              >
+                <Ionicons name="share-social-outline" size={18} color={theme.colors.primary} />
+                <Text style={styles.shareText}>Share</Text>
+              </TouchableOpacity>
             </View>
             
             <View style={styles.progressContainer}>
@@ -196,6 +260,12 @@ const BookshelfScreen = ({ navigation }) => {
             }
           >
             <Menu.Item 
+              onPress={toggleTheme} 
+              title={isDarkMode ? "Light Mode" : "Dark Mode"}
+              leadingIcon={isDarkMode ? "white-balance-sunny" : "moon-waning-crescent"}
+            />
+            <Divider />
+            <Menu.Item 
               onPress={handleLogout} 
               title="Sign Out" 
               leadingIcon="logout"
@@ -245,16 +315,23 @@ const BookshelfScreen = ({ navigation }) => {
         contentContainerStyle={styles.listContainer}
         columnWrapperStyle={styles.row}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing || focusRefreshing} onRefresh={onRefresh} />
         }
         ListEmptyComponent={!loading ? renderEmpty : null}
         showsVerticalScrollIndicator={false}
+      />
+      
+      <FAB
+        style={styles.fab}
+        icon="plus"
+        onPress={() => navigation.navigate('NewProject')}
+        label="New Book"
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -382,6 +459,22 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     opacity: 0.7,
   },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primaryContainer,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  shareText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    marginLeft: 6,
+    fontWeight: '600',
+  },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -432,6 +525,13 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.primary,
   },
 });
 

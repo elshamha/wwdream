@@ -76,8 +76,8 @@ const RegisterScreen = ({ navigation }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>Atticus</Text>
-            <Text style={styles.subtitleText}>Bookshelf</Text>
+            <Text style={styles.logoText}>A Writer's</Text>
+            <Text style={styles.subtitleText}>Web Dream</Text>
             <Text style={styles.descriptionText}>
               Create your account and start writing
             </Text>
@@ -151,7 +151,7 @@ const RegisterScreen = ({ navigation }) => {
               </Button>
 
               <Text style={styles.footerText}>
-                Join thousands of writers using Atticus Bookshelf
+                Join thousands of writers using A Writer's Web Dream
               </Text>
             </Card.Content>
           </Card>

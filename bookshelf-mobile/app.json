@@ -1,13 +1,11 @@
 {
   "expo": {
-    "name": "Atticus Bookshelf",
-    "slug": "atticus-bookshelf-mobile",
+    "name": "A Writer's Web Dream",
+    "slug": "writers-web-dream-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash.png",
       "backgroundColor": "#667eea"
     },
     "assetBundlePatterns": [
@@ -15,13 +13,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.atticuswriter.bookshelf"
+      "bundleIdentifier": "com.writerswebdream.mobile"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#667eea"
       },
-      "package": "com.atticuswriter.bookshelf"
+      "package": "com.writerswebdream.mobile"
     },
     "web": {},
     "extra": {

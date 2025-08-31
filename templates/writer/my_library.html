@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Library - Personal Collection{% endblock %}
+{% block title %}My Bookshelf - Personal Collection{% endblock %}
 
 {% block content %}
 <style>
@@ -241,7 +241,7 @@
 
 <div class="library-container">
     <div class="library-header">
-        <h1 class="library-title">My Library</h1>
+        <h1 class="library-title">My Bookshelf</h1>
         <p class="library-subtitle">Your personal collection of literary works</p>
     </div>
 
@@ -292,7 +292,7 @@
                         {{ project.description|default:"A work in progress"|truncatewords:15 }}
                     </div>
                     <div class="book-actions">
-                        <a href="{% url 'writer:ultimate_editor' %}?project={{ project.pk }}" class="btn btn-primary">Continue Writing</a>
+                        <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary">Continue Writing</a>
                         <a href="{% url 'writer:project_detail' project.pk %}" class="btn">View Details</a>
                         <button class="btn" onclick="shareBook({{ project.pk }}, '{{ project.title|escapejs }}')">
                             <i class="fas fa-share me-1"></i>Share
@@ -337,7 +337,7 @@
                         {{ project.description|default:"A work in progress"|truncatewords:15 }}
                     </div>
                     <div class="book-actions">
-                        <a href="{% url 'writer:ultimate_editor' %}?project={{ project.pk }}" class="btn btn-primary">Continue Writing</a>
+                        <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary">Continue Writing</a>
                         <a href="{% url 'writer:project_detail' project.pk %}" class="btn">View Details</a>
                         <button class="btn" onclick="shareBook({{ project.pk }}, '{{ project.title|escapejs }}')">
                             <i class="fas fa-share me-1"></i>Share
@@ -400,7 +400,7 @@
                 <i class="fas fa-file-plus"></i>
                 <h3>No Documents Yet</h3>
                 <p>Create standalone documents for quick writing sessions</p>
-                <a href="{% url 'writer:ultimate_editor' %}" class="btn btn-primary" style="margin-top: 15px;">Start Writing</a>
+                <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary" style="margin-top: 15px;">Start Writing</a>
             </div>
             {% endif %}
         </div>

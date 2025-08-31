@@ -27,7 +27,6 @@ urlpatterns = [
     
     
     # Ultimate Templates - The Most Beautiful Writing Platform
-    path('ultimate-editor/', views.ultimate_editor, name='ultimate_editor'),
     path('ultimate-dashboard/', views.ultimate_dashboard, name='ultimate_dashboard'), 
     path('ultimate-library/', views.ultimate_library, name='ultimate_library'),
     path('ultimate-workshop/', views.ai_playground, name='ultimate_workshop'),
@@ -40,6 +39,9 @@ urlpatterns = [
     
     # Creative Notebook
     path('creative-notebook/', views.creative_notebook, name='creative_notebook'),
+    
+    # Philosopher's Corner
+    path('philosophers-corner/', views.philosophers_corner, name='philosophers_corner'),
     
     # Bookshelf Dashboard
     path('bookshelf/', views.bookshelf_dashboard, name='bookshelf_dashboard'),
@@ -83,6 +85,7 @@ urlpatterns = [
     path('documents/<int:pk>/delete/', views.DocumentDeleteView.as_view(), name='document_delete'),
     
     # Character URLs
+    path('characters/', views.GlobalCharacterListView.as_view(), name='all_characters'),
     path('projects/<int:project_id>/characters/', views.CharacterListView.as_view(), name='character_list'),
     path('projects/<int:project_id>/characters/new/', views.CharacterCreateView.as_view(), name='character_create'),
     path('characters/<int:pk>/', views.CharacterDetailView.as_view(), name='character_detail'),
@@ -92,6 +95,7 @@ urlpatterns = [
     # Document Import URLs
     path('import/', views.import_document, name='import_document'),
     path('import/<int:pk>/', views.import_detail, name='import_detail'),
+    path('import/<int:pk>/update-content/', views.update_import_content, name='update_import_content'),
     path('import/<int:pk>/convert-to-project/', views.convert_import_to_project, name='convert_import_to_project'),
     path('import/<int:pk>/add-to-project/<int:project_id>/', views.add_import_to_project, name='add_import_to_project'),
     path('import/<int:pk>/delete/', views.ImportedDocumentDeleteView.as_view(), name='import_delete'),
@@ -125,6 +129,7 @@ urlpatterns = [
     # AJAX endpoints
     path('ajax/create-chapter/', views.ajax_create_chapter, name='ajax_create_chapter'),
     path('upload-file/', views.upload_file, name='upload_file'),
+    path('api/upload-document/', views.api_upload_document, name='api_upload_document'),
     
     # Document Collaboration API
     path('documents/<int:document_id>/share/', views.share_document_api, name='share_document_api'),

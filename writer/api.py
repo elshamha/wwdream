@@ -1,8 +1,10 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth.models import User
+from django.db.models import Q
 from .models import Document, Project, Chapter, Character, ImportedDocument, ProjectCollaborator, WritingTheme, PersonalLibrary, WritingSession, AIAssistanceRequest
 from .serializers import DocumentSerializer, ProjectSerializer, ChapterSerializer, CharacterSerializer, ImportedDocumentSerializer, ProjectCollaboratorSerializer, WritingThemeSerializer, PersonalLibrarySerializer, WritingSessionSerializer, AIAssistanceRequestSerializer
 # EPUB export endpoint
@@ -37,16 +39,11 @@ def export_document_epub(request, document_id):
         return response
     except Document.DoesNotExist:
         return Response({'error': 'Document not found.'}, status=status.HTTP_404_NOT_FOUND)
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status, viewsets, permissions
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.models import User
-from .models import Document, Project, Chapter, Character, ImportedDocument, ProjectCollaborator, WritingTheme, PersonalLibrary, WritingSession, AIAssistanceRequest
-from .serializers import DocumentSerializer, ProjectSerializer, ChapterSerializer, CharacterSerializer, ImportedDocumentSerializer, ProjectCollaboratorSerializer, WritingThemeSerializer, PersonalLibrarySerializer, WritingSessionSerializer, AIAssistanceRequestSerializer
 
 # User profile endpoint
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def user_profile(request):
     if not request.user.is_authenticated:
         return Response({'error': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -80,11 +77,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        # Only return projects owned by the current user
+        return Project.objects.filter(author=self.request.user)
+    
+    def perform_create(self, serializer):
+        # Automatically set the author to the current user
+        serializer.save(author=self.request.user)
 
 class ChapterViewSet(viewsets.ModelViewSet):
     queryset = Chapter.objects.all()
     serializer_class = ChapterSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        # Only return chapters from projects owned by or shared with the current user
+        return Chapter.objects.filter(
+            Q(project__author=self.request.user) | Q(project__collaborators=self.request.user)
+        ).distinct()
+    
+    def perform_update(self, serializer):
+        # Set the last_edited_by field when updating
+        serializer.save(last_edited_by=self.request.user)
 
 class CharacterViewSet(viewsets.ModelViewSet):
     queryset = Character.objects.all()

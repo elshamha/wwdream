@@ -4,6 +4,7 @@
 {% block title %}{{ project.title }} - A Writer's Web Dream{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <style>
 /* Project Detail Page Styling */
 .project-detail-container {
@@ -41,19 +42,19 @@
 }
 
 .btn-action {
-    padding: 12px 24px;
+    padding: 8px 16px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white !important;
     border: none;
-    border-radius: 10px;
-    font-size: 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .btn-action:hover {
@@ -332,15 +333,29 @@
         </h1>
         <p class="project-description">{{ project.description|default:"Begin your creative journey with this project" }}</p>
         
+        <!-- Online Collaborators Indicator -->
+        <div id="onlineCollaboratorsIndicator" class="online-indicator" style="display: none;">
+            <i class="fas fa-circle online-dot"></i>
+            <span class="online-count-text">Checking collaborators...</span>
+        </div>
+        
         <div class="action-buttons">
-            <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn-action">
+            <a href="{% url 'writer:google_docs_editor' %}" class="btn-action">
                 <i class="fas fa-feather-alt"></i>
                 Write Now
             </a>
-            <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn-action btn-action-secondary">
+            <a href="{% url 'writer:google_docs_editor' %}" class="btn-action btn-action-secondary">
                 <i class="fas fa-edit"></i>
                 Edit Chapters
             </a>
+            <button onclick="openCollaborationModal({{ project.pk }}); return false;" class="btn-action btn-action-secondary">
+                <i class="fas fa-users"></i>
+                Collaborate
+            </button>
+            <button onclick="openFileUpload({{ project.pk }}); return false;" class="btn-action btn-action-secondary">
+                <i class="fas fa-upload"></i>
+                Upload Document
+            </button>
             <button onclick="window.location.href='{% url 'writer:dashboard' %}'" class="btn-action btn-action-secondary">
                 <i class="fas fa-arrow-left"></i>
                 Back to Dashboard
@@ -349,24 +364,6 @@
     </div>
 
     <!-- Stats Grid -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-number">{{ project.total_word_count|default:0 }}</div>
-            <div class="stat-label">Total Words</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ project.chapter_set.count|default:0 }}</div>
-            <div class="stat-label">Chapters</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{% if project.target_word_count %}{{ project.target_word_count }}{% else %}∞{% endif %}</div>
-            <div class="stat-label">Target Words</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ collaborators.count|add:1 }}</div>
-            <div class="stat-label">{% if project.is_collaborative %}Collaborators{% else %}Author{% endif %}</div>
-        </div>
-    </div>
 
     <!-- Progress Section -->
     {% if project.target_word_count %}
@@ -387,11 +384,6 @@
     <div class="mb-4">
         <h2 class="progress-title mb-3">Writing Tools</h2>
         <div class="tools-grid">
-            <a href="{% url 'writer:chapter_editor' project.pk %}" class="tool-card">
-                <i class="fas fa-pen-fancy tool-icon"></i>
-                <div class="tool-title">Chapter Editor</div>
-                <div class="tool-description">Write and edit your chapters with our powerful editor</div>
-            </a>
             
             <a href="{% url 'writer:creativity_workshop' %}" class="tool-card">
                 <i class="fas fa-lightbulb tool-icon"></i>
@@ -405,10 +397,10 @@
                 <div class="tool-description">Connect ideas and create mind maps</div>
             </a>
             
-            <a href="{% url 'writer:character_list' project.pk %}" class="tool-card">
+            <a href="{% url 'writer:all_characters' %}" class="tool-card">
                 <i class="fas fa-users tool-icon"></i>
-                <div class="tool-title">Character Manager</div>
-                <div class="tool-description">Develop and track your characters</div>
+                <div class="tool-title">Character Universe</div>
+                <div class="tool-description">Manage all your characters across projects</div>
             </a>
             
             <a href="#" onclick="exportProject({{ project.pk }}); return false;" class="tool-card">
@@ -432,7 +424,7 @@
             <div class="chapter-list mb-4">
                 <h2 class="progress-title mb-3">Chapters</h2>
                 {% for chapter in project.chapter_set.all %}
-                <div class="chapter-item" onclick="window.location.href='{% url 'writer:chapter_editor' project.pk %}#chapter-{{ chapter.pk }}'">
+                <div class="chapter-item" onclick="window.location.href='{% url 'writer:google_docs_editor' %}';">
                     <div class="chapter-info">
                         <div class="chapter-title">
                             Chapter {{ chapter.order }}: {{ chapter.title|default:"Untitled Chapter" }}
@@ -442,7 +434,7 @@
                         </div>
                     </div>
                     <div class="chapter-actions">
-                        <button class="btn-chapter" onclick="event.stopPropagation(); window.location.href='{% url 'writer:chapter_editor' project.pk %}#chapter-{{ chapter.pk }}'">
+                        <button class="btn-chapter" onclick="event.stopPropagation(); window.location.href='{% url 'writer:google_docs_editor' %}'">
                             <i class="fas fa-edit"></i> Edit
                         </button>
                     </div>
@@ -451,7 +443,7 @@
                 <div style="text-align: center; padding: 3rem;">
                     <i class="fas fa-feather-alt" style="font-size: 3rem; color: rgba(255, 255, 255, 0.3); margin-bottom: 1rem; display: block;"></i>
                     <p style="color: rgba(255, 255, 255, 0.7);">No chapters yet. Start writing your first chapter!</p>
-                    <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn-action" style="margin-top: 1rem;">
+                    <a href="{% url 'writer:google_docs_editor' %}" class="btn-action" style="margin-top: 1rem;">
                         <i class="fas fa-plus"></i> Create First Chapter
                     </a>
                 </div>
@@ -509,16 +501,583 @@
     </div>
 </div>
 
+<!-- Hidden file input for document upload -->
+<input type="file" id="document-upload-input" style="display: none;" 
+       accept=".doc,.docx,.pdf,.epub,.txt,.rtf" 
+       onchange="handleFileUpload(event)">
+
 <script>
 function exportProject(projectId) {
     // Implement export functionality
     alert('Export feature coming soon!');
 }
 
+let currentProjectId = null;
+
+function openFileUpload(projectId) {
+    currentProjectId = projectId;
+    const fileInput = document.getElementById('document-upload-input');
+    fileInput.click();
+}
+
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/epub+zip',
+        'text/plain',
+        'application/rtf'
+    ];
+    
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(doc|docx|pdf|epub|txt|rtf)$/i)) {
+        alert('Please upload a valid document file (Word, PDF, EPUB, TXT, or RTF).');
+        return;
+    }
+    
+    // Show loading message
+    const uploadStatus = document.createElement('div');
+    uploadStatus.innerHTML = `
+        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                    background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 10px; z-index: 9999;">
+            <i class="fas fa-spinner fa-spin"></i> Uploading "${file.name}"...
+        </div>
+    `;
+    document.body.appendChild(uploadStatus);
+    
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('project_id', currentProjectId);
+    
+    // Upload file to server
+    fetch('/writer/api/upload-document/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.body.removeChild(uploadStatus);
+        
+        if (data.success) {
+            // Show success message briefly then redirect
+            const successMessage = data.warning ? 
+                `Document "${file.name}" uploaded with warnings. Redirecting to import page...` :
+                `Document "${file.name}" uploaded successfully! Redirecting to import page...`;
+            
+            alert(successMessage);
+            
+            // Redirect to the import detail page
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else if (data.import_id) {
+                window.location.href = `/writer/import/${data.import_id}/`;
+            } else {
+                // Fallback: go to import list
+                window.location.href = '/writer/import/';
+            }
+        } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        document.body.removeChild(uploadStatus);
+        console.error('Upload error:', error);
+        alert('Upload failed. Please try again.');
+    });
+    
+    // Clear the file input for next use
+    event.target.value = '';
+}
+
 function showAIAssistant() {
     // Implement AI assistant modal
     alert('AI Assistant coming soon!');
 }
+
+// Collaboration functionality
+let currentCollaborationProjectId = null;
+let collaborators = [];
+
+function openCollaborationModal(projectId) {
+    currentCollaborationProjectId = projectId;
+    loadCollaborators(projectId);
+    document.getElementById('collaborationModal').style.display = 'block';
+}
+
+function closeCollaborationModal() {
+    document.getElementById('collaborationModal').style.display = 'none';
+}
+
+async function loadCollaborators(projectId) {
+    try {
+        const response = await fetch(`/writer/projects/${projectId}/collaborators/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            collaborators = data.collaborators || [];
+            renderCollaborators();
+        }
+    } catch (error) {
+        console.error('Error loading collaborators:', error);
+    }
+}
+
+function renderCollaborators() {
+    const container = document.getElementById('collaboratorsList');
+    
+    if (collaborators.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.6);">
+                <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                <p>No collaborators yet. Invite someone to get started!</p>
+            </div>
+        `;
+    } else {
+        container.innerHTML = collaborators.map(collaborator => `
+            <div class="collaborator-item">
+                <div class="collaborator-info">
+                    <div class="collaborator-name">${collaborator.name || collaborator.email}</div>
+                    <div class="collaborator-role">${collaborator.role === 'owner' ? 'Owner' : 'Collaborator'}</div>
+                </div>
+                ${collaborator.role !== 'owner' ? 
+                    `<button onclick="removeCollaborator(${collaborator.id})" class="remove-collaborator-btn">
+                        <i class="fas fa-times"></i>
+                    </button>` : ''
+                }
+            </div>
+        `).join('');
+    }
+}
+
+async function inviteCollaborator() {
+    const emailInput = document.getElementById('collaboratorEmail');
+    const email = emailInput.value.trim();
+    
+    if (!email) {
+        alert('Please enter an email address');
+        return;
+    }
+    
+    if (!email.includes('@')) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/writer/projects/${currentCollaborationProjectId}/collaborators/invite/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`Invitation sent to ${email}`);
+            emailInput.value = '';
+            loadCollaborators(currentCollaborationProjectId);
+        } else {
+            alert('Failed to send invitation: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error inviting collaborator:', error);
+        alert('Failed to send invitation. Please try again.');
+    }
+}
+
+async function removeCollaborator(collaboratorId) {
+    if (!confirm('Are you sure you want to remove this collaborator?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/writer/projects/${currentCollaborationProjectId}/collaborators/${collaboratorId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (response.ok) {
+            loadCollaborators(currentCollaborationProjectId);
+        } else {
+            alert('Failed to remove collaborator');
+        }
+    } catch (error) {
+        console.error('Error removing collaborator:', error);
+        alert('Failed to remove collaborator. Please try again.');
+    }
+}
+
+async function shareProject() {
+    try {
+        const shareUrl = `${window.location.origin}/writer/projects/${currentCollaborationProjectId}/collaborate/`;
+        
+        if (navigator.share) {
+            // Use native sharing if available
+            navigator.share({
+                title: 'Collaborate on {{ project.title }}',
+                text: 'Join me in writing this project on Atticus Writer!',
+                url: shareUrl
+            });
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert('Share link copied to clipboard!\n\n' + shareUrl);
+            }).catch(() => {
+                // Fallback for clipboard
+                prompt('Copy this link to share:', shareUrl);
+            });
+        }
+    } catch (error) {
+        console.error('Error sharing:', error);
+        const shareUrl = `${window.location.origin}/writer/projects/${currentCollaborationProjectId}/collaborate/`;
+        prompt('Copy this link to share:', shareUrl);
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('collaborationModal');
+    if (event.target == modal) {
+        closeCollaborationModal();
+    }
+}
+
+// Real-time collaboration indicators
+let onlineCollaborators = [];
+
+async function checkOnlineCollaborators() {
+    if (!currentCollaborationProjectId) {
+        currentCollaborationProjectId = {{ project.pk }};
+    }
+    
+    try {
+        const response = await fetch(`/writer/projects/${currentCollaborationProjectId}/collaborators/online/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            onlineCollaborators = data.online_collaborators || [];
+            updateOnlineIndicator();
+        }
+    } catch (error) {
+        console.log('Error checking online collaborators:', error);
+        // Simulate some online collaborators for demo
+        if (collaborators.length > 0) {
+            onlineCollaborators = collaborators.filter(c => Math.random() > 0.7 && c.role !== 'owner');
+            updateOnlineIndicator();
+        }
+    }
+}
+
+function updateOnlineIndicator() {
+    const indicator = document.getElementById('onlineCollaboratorsIndicator');
+    
+    if (onlineCollaborators.length === 0) {
+        indicator.style.display = 'none';
+    } else {
+        indicator.style.display = 'flex';
+        const count = onlineCollaborators.length;
+        const text = count === 1 ? '1 collaborator online' : `${count} collaborators online`;
+        indicator.querySelector('.online-count-text').textContent = text;
+        
+        // Show avatars/names if space allows
+        const names = onlineCollaborators.slice(0, 3).map(c => c.name || c.email.split('@')[0]).join(', ');
+        const tooltip = count <= 3 ? names : `${names} and ${count - 3} more`;
+        indicator.title = tooltip;
+    }
+}
+
+// Check for online collaborators periodically
+setInterval(checkOnlineCollaborators, 30000); // Every 30 seconds
+
+// Initial check on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(checkOnlineCollaborators, 2000); // Check after 2 seconds
+});
 </script>
+
+<!-- Collaboration Modal -->
+<div id="collaborationModal" class="collaboration-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 style="color: #fff; margin: 0;">Project Collaboration</h2>
+            <span class="close-btn" onclick="closeCollaborationModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Share Project Section -->
+            <div class="share-section">
+                <h3 style="color: #fff; margin-bottom: 1rem;">Share Project</h3>
+                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
+                    Share "{{ project.title }}" with others for collaboration
+                </p>
+                <button onclick="shareProject()" class="share-btn">
+                    <i class="fas fa-share"></i> Share Project Link
+                </button>
+            </div>
+            
+            <!-- Invite Collaborators Section -->
+            <div class="invite-section">
+                <h3 style="color: #fff; margin-bottom: 1rem;">Invite Collaborators</h3>
+                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1rem;">
+                    Enter email addresses to invite others to collaborate
+                </p>
+                
+                <div class="invite-input-group">
+                    <input 
+                        type="email" 
+                        id="collaboratorEmail" 
+                        placeholder="Enter email address"
+                        class="collaborator-email-input"
+                    >
+                    <button onclick="inviteCollaborator()" class="invite-btn">
+                        Invite
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Current Collaborators Section -->
+            <div class="collaborators-section">
+                <h3 style="color: #fff; margin-bottom: 1rem;">Current Collaborators</h3>
+                <div id="collaboratorsList">
+                    <!-- Collaborators will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Collaboration Modal Styles */
+.collaboration-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.close-btn {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.share-section, .invite-section, .collaborators-section {
+    margin-bottom: 2rem;
+}
+
+.share-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.invite-input-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.collaborator-email-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1rem;
+}
+
+.collaborator-email-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.collaborator-email-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.invite-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.invite-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.collaborator-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.collaborator-info {
+    flex: 1;
+}
+
+.collaborator-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.collaborator-role {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+.remove-collaborator-btn {
+    background: transparent;
+    color: #e74c3c;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.remove-collaborator-btn:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* Online Collaborators Indicator */
+.online-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    padding: 8px 16px;
+    background: rgba(39, 174, 96, 0.2);
+    border-radius: 20px;
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    width: fit-content;
+}
+
+.online-dot {
+    color: #27ae60;
+    font-size: 0.7rem;
+    animation: pulse 2s infinite;
+}
+
+.online-count-text {
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+    
+    .invite-input-group {
+        flex-direction: column;
+    }
+    
+    .collaborator-email-input {
+        margin-bottom: 1rem;
+    }
+    
+    .online-indicator {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+}
+</style>
 
 {% endblock %}

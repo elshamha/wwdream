@@ -45,6 +45,7 @@
 </script>
 
 <!-- Desktop Editor Content (only shown on desktop) -->
+{% csrf_token %}
 <div class="docs-editor-container" id="desktop-editor">
     <!-- Chapter Sidebar -->
     <div class="chapter-sidebar" id="chapter-sidebar">
@@ -1374,6 +1375,9 @@ function saveDocument(showNotification = true) {
     if (currentChapterId) {
         formData.append('chapter_id', currentChapterId);
     }
+    if (currentDocumentId) {
+        formData.append('document_id', currentDocumentId);
+    }
     formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
     
     fetch(window.location.href, {
@@ -1384,6 +1388,17 @@ function saveDocument(showNotification = true) {
     .then(data => {
         if (data.status === 'success' || data.success) {
             lastSavedContent = content;
+            
+            // Update document ID if a new document was created
+            if (data.document_id && !currentDocumentId) {
+                currentDocumentId = data.document_id;
+                // Update the URL if needed
+                if (window.history && window.history.replaceState) {
+                    const newUrl = `/writer/docs-editor/${data.document_id}/`;
+                    window.history.replaceState({}, '', newUrl);
+                }
+            }
+            
             showSavedStatus();
             if (showNotification) {
                 showNotification(data.message || 'Chapter saved successfully!', 'success');

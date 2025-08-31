@@ -9,7 +9,12 @@ class DocumentSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = '__all__'
+        fields = [
+            'id', 'title', 'description', 'created_at', 'updated_at',
+            'target_word_count', 'genre', 'is_collaborative', 'is_public',
+            'show_on_dashboard', 'ai_assistance_level', 'writing_style_guide'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 class ChapterSerializer(serializers.ModelSerializer):
     class Meta:

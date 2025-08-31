@@ -16,13 +16,15 @@ import {
 } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
-import { theme, gradients } from '../theme/theme';
+import { useTheme } from '../context/ThemeContext';
+import ApiService from '../services/api';
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { theme, gradients } = useTheme();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -47,6 +49,21 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+  const testConnection = async () => {
+    setLoading(true);
+    const result = await ApiService.testConnection();
+    setLoading(false);
+    
+    if (result.success) {
+      Alert.alert('Connection Success', `Connected to server at ${result.url}`);
+    } else {
+      Alert.alert('Connection Failed', `Cannot connect to ${result.url}\n\nError: ${result.error}\n\nMake sure:\n1. Django server is running\n2. Your device can reach the server\n3. The URL is correct`);
+    }
+  };
+
+
+  const styles = createStyles(theme);
+
   if (authLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -63,8 +80,8 @@ const LoginScreen = ({ navigation }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>Atticus</Text>
-            <Text style={styles.subtitleText}>Bookshelf</Text>
+            <Text style={styles.logoText}>A Writer's</Text>
+            <Text style={styles.subtitleText}>Web Dream</Text>
             <Text style={styles.descriptionText}>
               Edit your writing projects on the go
             </Text>
@@ -115,6 +132,15 @@ const LoginScreen = ({ navigation }) => {
                 Don't have an account? Create one
               </Button>
 
+              <Button
+                mode="text"
+                onPress={testConnection}
+                style={styles.registerButton}
+                labelStyle={[styles.registerButtonText, { fontSize: 12, opacity: 0.7 }]}
+              >
+                Test Server Connection
+              </Button>
+
               <Text style={styles.footerText}>
                 Access your bookshelf projects and continue writing wherever you are
               </Text>
@@ -126,7 +152,7 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
   },

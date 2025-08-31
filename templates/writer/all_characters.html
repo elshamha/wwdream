@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Characters - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.8);
+    --border-radius: 20px;
+}
+
+.characters-container {
+    min-height: 100vh;
+    background: var(--primary-gradient);
+    padding: 2rem 0;
+}
+
+.characters-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    color: white;
+}
+
+.characters-title {
+    font-size: 3rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.characters-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.characters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.character-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.character-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.character-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.character-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.character-info {
+    flex: 1;
+}
+
+.character-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 0.5rem 0;
+}
+
+.character-role {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.character-project {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+.character-project i {
+    margin-right: 0.5rem;
+}
+
+.character-description {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.character-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-item {
+    text-align: center;
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: #ffffff;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.detail-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.character-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: flex-end;
+}
+
+.btn-character {
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.add-character-card {
+    background: transparent;
+    backdrop-filter: blur(10px);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    min-height: 300px;
+}
+
+.add-character-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-10px);
+    color: white;
+    text-decoration: none;
+}
+
+.add-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: white;
+    padding: 4rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+    opacity: 0.6;
+}
+
+.search-filter {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin: 0 auto 2rem auto;
+    max-width: 600px;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-filter input, .search-filter select {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 0.6rem;
+    color: white;
+    flex: 1;
+}
+
+.search-filter input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+    .characters-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+    }
+    
+    .characters-title {
+        font-size: 2rem;
+    }
+    
+    .character-actions {
+        flex-direction: column;
+    }
+    
+    .search-filter {
+        flex-direction: column;
+    }
+}
+</style>
+
+<div class="characters-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="characters-header">
+            <h1 class="characters-title">🎭 All Characters</h1>
+            <p class="characters-subtitle">Your complete character universe across all stories</p>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="search-filter">
+            <input type="text" id="character-search" placeholder="Search characters..." onkeyup="filterCharacters()">
+            <select id="project-filter" onchange="filterCharacters()">
+                <option value="">All Projects</option>
+                {% for project in user_projects %}
+                <option value="{{ project.title }}">{{ project.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Characters Grid -->
+        <div class="characters-grid" id="characters-grid">
+            <!-- Add New Character Dropdown Card -->
+            <div class="character-card add-character-card" onclick="showAddCharacterOptions()">
+                <div class="add-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h3>Create New Character</h3>
+                <p>Add a new character to your universe</p>
+            </div>
+
+            <!-- Character Cards -->
+            {% for character in characters %}
+            <div class="character-card" data-character-name="{{ character.name|lower }}" data-project-name="{{ character.project.title|lower }}">
+                <div class="character-header">
+                    <div class="character-avatar">
+                        {% if character.image %}
+                            <img src="{{ character.image.url }}" alt="{{ character.name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        {% else %}
+                            <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="character-info">
+                        <h3 class="character-name">{{ character.name }}</h3>
+                        {% if character.role %}
+                            <span class="character-role">{{ character.role }}</span>
+                        {% endif %}
+                        <div class="character-project">
+                            <i class="fas fa-book"></i>
+                            <span>{{ character.project.title }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if character.description %}
+                <p class="character-description">
+                    {{ character.description }}
+                </p>
+                {% endif %}
+
+                <div class="character-details">
+                    {% if character.age %}
+                    <div class="detail-item">
+                        <span class="detail-value">{{ character.age }}</span>
+                        <span class="detail-label">Age</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <span class="detail-value">{{ character.created_at|timesince }}</span>
+                        <span class="detail-label">Created</span>
+                    </div>
+                </div>
+
+                <div class="character-actions">
+                    <a href="{% url 'writer:character_detail' character.pk %}" class="btn-character btn-primary">
+                        <i class="fas fa-eye"></i>
+                        View
+                    </a>
+                    <a href="{% url 'writer:character_update' character.pk %}" class="btn-character btn-secondary">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </a>
+                    <a href="{% url 'writer:character_delete' character.pk %}" class="btn-character btn-danger">
+                        <i class="fas fa-trash"></i>
+                        Delete
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-theater-masks"></i>
+                <h3>No Characters Yet</h3>
+                <p>Create your first character to populate your character universe!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Character Modal -->
+<div id="add-character-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2); padding: 2rem; border-radius: 15px; max-width: 500px; width: 90%;">
+        <h3 style="color: #ffffff; margin-bottom: 1rem;">Add Character to Project</h3>
+        <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 1.5rem;">Select which project to add the new character to:</p>
+        
+        <div style="display: grid; gap: 0.8rem; margin-bottom: 1.5rem;">
+            {% for project in user_projects %}
+            <a href="{% url 'writer:character_create' project.pk %}" 
+               style="display: flex; align-items: center; padding: 1rem; background: rgba(255, 255, 255, 0.1); border-radius: 8px; text-decoration: none; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); transition: all 0.3s ease;"
+               onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'"
+               onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
+                <i class="fas fa-book" style="margin-right: 1rem; color: #667eea;"></i>
+                <div>
+                    <div style="font-weight: 600;">{{ project.title }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">{{ project.description|truncatewords:8|default:"No description" }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <button onclick="hideAddCharacterOptions()" style="width: 100%; padding: 0.8rem; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; color: rgba(255, 255, 255, 0.9); cursor: pointer;">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<script>
+function showAddCharacterOptions() {
+    const modal = document.getElementById('add-character-modal');
+    modal.style.display = 'flex';
+}
+
+function hideAddCharacterOptions() {
+    const modal = document.getElementById('add-character-modal');
+    modal.style.display = 'none';
+}
+
+function filterCharacters() {
+    const searchTerm = document.getElementById('character-search').value.toLowerCase();
+    const projectFilter = document.getElementById('project-filter').value.toLowerCase();
+    const characterCards = document.querySelectorAll('.character-card:not(.add-character-card)');
+    
+    characterCards.forEach(card => {
+        const characterName = card.getAttribute('data-character-name') || '';
+        const projectName = card.getAttribute('data-project-name') || '';
+        
+        const matchesSearch = characterName.includes(searchTerm);
+        const matchesProject = !projectFilter || projectName.includes(projectFilter);
+        
+        if (matchesSearch && matchesProject) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// Close modal when clicking outside
+document.getElementById('add-character-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideAddCharacterOptions();
+    }
+});
+</script>
+
+{% endblock %}

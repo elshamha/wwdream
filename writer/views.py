@@ -419,6 +419,24 @@ class CharacterListView(LoginRequiredMixin, ListView):
         return context
 
 
+class GlobalCharacterListView(LoginRequiredMixin, ListView):
+    """Global view showing all characters from all user's projects"""
+    model = Character
+    template_name = 'writer/all_characters.html'
+    context_object_name = 'characters'
+    
+    def get_queryset(self):
+        return Character.objects.filter(
+            project__author=self.request.user
+        ).select_related('project').order_by('name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get all user projects for the "Add Character" functionality
+        context['user_projects'] = Project.objects.filter(author=self.request.user)
+        return context
+
+
 class CharacterDetailView(LoginRequiredMixin, DetailView):
     model = Character
     template_name = 'writer/character_detail.html'
@@ -557,7 +575,7 @@ def chapter_editor(request, project_id):
             title="Untitled Chapter",
             content="",
             project=project,
-            author=request.user,
+            last_edited_by=request.user,
             order=0
         )
         all_chapters = Chapter.objects.filter(project=project).order_by('order')
@@ -1200,7 +1218,42 @@ def add_import_to_project(request, pk, project_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
 
+@csrf_exempt
 @login_required
+def update_import_content(request, pk):
+    """Update the content of an imported document"""
+    if request.method == 'POST':
+        try:
+            imported_doc = get_object_or_404(ImportedDocument, pk=pk, user=request.user)
+            data = json.loads(request.body)
+            new_content = data.get('content', '')
+            
+            # Update the extracted content
+            imported_doc.extracted_content = new_content
+            imported_doc.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Content updated successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error updating content: {str(e)}'
+            })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def projects_api_list(request):
     """API endpoint to list user's projects"""
     # Check if we should only return bookshelf projects
@@ -1227,7 +1280,7 @@ def projects_api_list(request):
         }
         for project in projects
     ]
-    return JsonResponse({'projects': projects_data})
+    return Response({'projects': projects_data})
 
 
 @login_required
@@ -1281,20 +1334,21 @@ def chapters_api(request, project_id):
             return JsonResponse({'error': str(e)}, status=400)
 
 
-@login_required 
-@csrf_exempt
+@api_view(['GET', 'PUT'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def chapter_api(request, chapter_id):
     """API endpoint for individual chapter operations"""
     try:
         chapter = Chapter.objects.get(id=chapter_id)
         # Check if user has access to this chapter's project
         if not (chapter.project.author == request.user or chapter.project.collaborators.filter(id=request.user.id).exists()):
-            return JsonResponse({'error': 'Permission denied'}, status=403)
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
     except Chapter.DoesNotExist:
-        return JsonResponse({'error': 'Chapter not found'}, status=404)
+        return Response({'error': 'Chapter not found'}, status=status.HTTP_404_NOT_FOUND)
     
     if request.method == 'GET':
-        return JsonResponse({
+        return Response({
             'id': chapter.id,
             'title': chapter.title,
             'content': chapter.content or '',
@@ -1302,13 +1356,14 @@ def chapter_api(request, chapter_id):
             'order': chapter.order,
             'project_id': chapter.project.id,
             'project_title': chapter.project.title,
-            'created_at': chapter.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'updated_at': chapter.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'created_at': chapter.created_at.isoformat(),
+            'updated_at': chapter.updated_at.isoformat(),
         })
     
     elif request.method == 'PUT':
         try:
-            data = json.loads(request.body)
+            # Handle both JSON data from DRF and direct request.data
+            data = request.data if hasattr(request, 'data') else json.loads(request.body)
             if 'title' in data:
                 chapter.title = data['title']
             if 'content' in data:
@@ -1318,7 +1373,7 @@ def chapter_api(request, chapter_id):
             
             chapter.save()
             
-            return JsonResponse({
+            return Response({
                 'success': True,
                 'chapter': {
                     'id': chapter.id,
@@ -1328,7 +1383,7 @@ def chapter_api(request, chapter_id):
                 }
             })
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ImportedDocumentDeleteView(LoginRequiredMixin, DeleteView):
@@ -1866,6 +1921,7 @@ def reorder_chapters(request, project_id):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 
+@csrf_exempt
 @login_required
 @require_http_methods(["POST"])
 def update_chapter_order(request, project_id, chapter_id):
@@ -1874,7 +1930,16 @@ def update_chapter_order(request, project_id, chapter_id):
     chapter = get_object_or_404(Chapter, id=chapter_id, project=project)
     
     try:
-        new_order = int(request.POST.get('order', 0))
+        # Handle both JSON and form data for mobile app compatibility
+        if request.content_type == 'application/json' or 'application/json' in request.META.get('CONTENT_TYPE', ''):
+            import json
+            data = json.loads(request.body)
+            new_order = int(data.get('order', 0))
+            print(f"Reordering chapter {chapter_id} via JSON: new_order={new_order}")
+        else:
+            new_order = int(request.POST.get('order', 0))
+            print(f"Reordering chapter {chapter_id} via form: new_order={new_order}")
+            
         old_order = chapter.order
         
         if new_order != old_order:
@@ -1903,7 +1968,9 @@ def update_chapter_order(request, project_id, chapter_id):
         return JsonResponse({'status': 'error', 'message': 'Invalid order number'})
 
 
-@login_required
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def get_chapter_list(request, project_id):
     """Get paginated list of chapters for the sidebar"""
     project = get_object_or_404(Project, id=project_id, author=request.user)
@@ -1916,25 +1983,33 @@ def get_chapter_list(request, project_id):
             'title': chapter.title,
             'order': chapter.order,
             'word_count': chapter.word_count,
-            'created_at': chapter.created_at.strftime('%b %d, %Y'),
-            'updated_at': chapter.updated_at.strftime('%b %d, %Y %H:%M')
+            'content': chapter.content[:200] if chapter.content else '',  # Add content preview for mobile
+            'created_at': chapter.created_at.isoformat(),  # Use ISO format for proper date parsing
+            'updated_at': chapter.updated_at.isoformat()  # Use ISO format for proper date parsing
         })
     
-    return JsonResponse({
+    return Response({
         'chapters': chapter_data,
         'total_chapters': len(chapter_data),
         'project_word_count': project.total_word_count
     })
 
 
-@login_required
-@require_http_methods(["POST"])
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def create_new_chapter(request, project_id):
     """Create a new chapter"""
     project = get_object_or_404(Project, id=project_id, author=request.user)
     
     try:
-        title = request.POST.get('title', 'Untitled Chapter')
+        # Handle both POST form data and JSON data
+        if request.content_type == 'application/json':
+            import json
+            data = json.loads(request.body)
+            title = data.get('title', 'Untitled Chapter')
+        else:
+            title = request.POST.get('title', 'Untitled Chapter')
         
         # Get the next order number safely
         with transaction.atomic():
@@ -1942,7 +2017,8 @@ def create_new_chapter(request, project_id):
                 max_order=models.Max('order')
             )['max_order']
             
-            next_order = (max_order or -1) + 1
+            # Fix: Handle when max_order is 0 (which is falsy in Python)
+            next_order = 0 if max_order is None else max_order + 1
             
             chapter = Chapter.objects.create(
                 title=title,
@@ -1952,17 +2028,20 @@ def create_new_chapter(request, project_id):
                 last_edited_by=request.user
             )
         
-        return JsonResponse({
-            'status': 'success',
+        return Response({
+            'success': True,
             'chapter': {
                 'id': chapter.id,
                 'title': chapter.title,
                 'order': chapter.order,
-                'word_count': chapter.word_count
+                'word_count': chapter.word_count,
+                'content': chapter.content,
+                'created_at': chapter.created_at.isoformat(),
+                'updated_at': chapter.updated_at.isoformat()
             }
         })
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)})
+        return Response({'success': False, 'error': str(e)})
 
 
 @login_required
@@ -2394,45 +2473,6 @@ def compact_library(request):
 
 
 # Ultimate Templates - The Most Beautiful Writing Platform
-@login_required
-def ultimate_editor(request):
-    """The ultimate AI-integrated writing editor with MLA formatting by default"""
-    context = {
-        'user': request.user,
-    }
-    
-    # Get project if specified
-    project_id = request.GET.get('project')
-    if project_id:
-        try:
-            project = get_object_or_404(Project, 
-                Q(author=request.user) | Q(collaborators=request.user), 
-                id=project_id
-            )
-            context['project'] = project
-            
-            # Get chapters for this project
-            chapters = project.chapters.all().order_by('order')
-            context['chapters'] = chapters
-            
-            # Get current chapter (first chapter or latest edited)
-            current_chapter = chapters.first()
-            if current_chapter:
-                context['current_chapter'] = current_chapter
-                
-        except (Project.DoesNotExist, ValueError):
-            pass
-    
-    # Get user's latest project if none specified
-    if 'project' not in context:
-        latest_project = Project.objects.filter(author=request.user).order_by('-updated_at').first()
-        if latest_project:
-            context['project'] = latest_project
-            chapters = latest_project.chapters.all().order_by('order')
-            context['chapters'] = chapters
-            context['current_chapter'] = chapters.first()
-    
-    return render(request, 'writer/ultimate_editor.html', context)
 
 
 @login_required 
@@ -2551,6 +2591,15 @@ def creative_notebook(request):
 
 
 @login_required
+def philosophers_corner(request):
+    """Philosopher's Corner - Wisdom and inspiration for writers"""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'writer/philosophers_corner.html', context)
+
+
+@login_required
 def bookshelf_dashboard(request):
     """Bookshelf dashboard with visual book display"""
     user_projects = Project.objects.filter(author=request.user).order_by('-updated_at')
@@ -2584,6 +2633,57 @@ def google_docs_editor(request, document_id=None):
     
     if document_id:
         document = get_object_or_404(Document, id=document_id, author=request.user)
+    
+    # Handle POST requests for saving
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'save_chapter' or action == 'save':
+            title = request.POST.get('title', 'Untitled Document')
+            content = request.POST.get('content', '')
+            chapter_id = request.POST.get('chapter_id')
+            
+            # If we have a document_id, update it
+            if document:
+                document.title = title
+                document.content = content
+                document.save()
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Document saved successfully',
+                    'document_id': document.id
+                })
+            else:
+                # Create a new document
+                document = Document.objects.create(
+                    title=title,
+                    content=content,
+                    author=request.user
+                )
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Document created successfully',
+                    'document_id': document.id
+                })
+        
+        elif action == 'get_document':
+            if document:
+                return JsonResponse({
+                    'status': 'success',
+                    'title': document.title,
+                    'content': document.content,
+                    'document_id': document.id
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No document found'
+                })
+        
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid action'
+        })
     
     context = {
         'user': request.user,
@@ -2703,6 +2803,83 @@ def toggle_bookshelf_visibility(request):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'POST method required'})
+
+@csrf_exempt
+@login_required
+def api_upload_document(request):
+    """API endpoint for uploading documents from project detail page"""
+    if request.method == 'POST':
+        try:
+            uploaded_file = request.FILES.get('document')
+            project_id = request.POST.get('project_id')
+            
+            if not uploaded_file:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'No document provided'
+                }, status=400)
+            
+            # Create ImportedDocument instance
+            from .models import ImportedDocument
+            imported_doc = ImportedDocument(
+                user=request.user,
+                original_file=uploaded_file,
+                file_size=uploaded_file.size,
+                title=uploaded_file.name.rsplit('.', 1)[0]  # Remove file extension
+            )
+            
+            # Determine file type
+            file_name = uploaded_file.name.lower()
+            if file_name.endswith('.pdf'):
+                imported_doc.import_type = 'pdf'
+            elif file_name.endswith(('.docx', '.doc')):
+                imported_doc.import_type = 'docx'
+            elif file_name.endswith('.txt'):
+                imported_doc.import_type = 'txt'
+            elif file_name.endswith('.epub'):
+                imported_doc.import_type = 'epub'
+            else:
+                imported_doc.import_type = 'other'
+            
+            # Save the document
+            imported_doc.save()
+            
+            # Extract content
+            try:
+                from .utils import extract_text_from_file
+                extracted_content = extract_text_from_file(imported_doc.original_file)
+                imported_doc.extracted_content = extracted_content
+                imported_doc.save()
+                
+                # If project_id provided, optionally associate with project
+                if project_id:
+                    imported_doc.notes = f"Uploaded from project {project_id}"
+                    imported_doc.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Document "{uploaded_file.name}" uploaded successfully!',
+                    'import_id': imported_doc.id,
+                    'redirect_url': f'/writer/import/{imported_doc.id}/'
+                })
+                
+            except Exception as e:
+                # Document saved but content extraction failed
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Document "{uploaded_file.name}" uploaded successfully, but content extraction failed.',
+                    'import_id': imported_doc.id,
+                    'redirect_url': f'/writer/import/{imported_doc.id}/',
+                    'warning': str(e)
+                })
+                
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Upload failed: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'}, status=405)
 
 @csrf_exempt
 def api_register(request):

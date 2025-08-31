@@ -1,0 +1,483 @@
+{% extends 'base.html' %}
+{% block title %}Philosopher's Corner - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<style>
+:root {
+    --sage-green: #87A96B;
+    --deep-purple: #5D4E75;
+    --warm-gold: #D4A574;
+    --mist-gray: #B8C5D1;
+    --parchment: #F4F1E8;
+}
+
+.philosophers-corner {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--deep-purple) 0%, var(--sage-green) 100%);
+    padding: 2rem;
+}
+
+.header-section {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.corner-title {
+    font-size: 3.5rem;
+    color: #ffffff;
+    font-weight: 300;
+    margin-bottom: 1rem;
+    font-family: 'Playfair Display', serif;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.corner-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-style: italic;
+    margin-bottom: 2rem;
+}
+
+.wisdom-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.wisdom-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.wisdom-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.quote-text {
+    font-size: 1.3rem;
+    color: #ffffff;
+    font-style: italic;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    font-family: 'Georgia', serif;
+}
+
+.philosopher-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.philosopher-name {
+    font-size: 1.1rem;
+    color: var(--warm-gold);
+    font-weight: 600;
+}
+
+.philosopher-era {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.philosopher-origin {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+}
+
+.daily-reflection {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.reflection-title {
+    font-size: 2rem;
+    color: var(--warm-gold);
+    margin-bottom: 1.5rem;
+    font-family: 'Playfair Display', serif;
+}
+
+.reflection-quote {
+    font-size: 1.5rem;
+    color: #ffffff;
+    font-style: italic;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+    font-family: 'Georgia', serif;
+}
+
+.reflection-author {
+    font-size: 1.2rem;
+    color: var(--warm-gold);
+    font-weight: 600;
+}
+
+.contemplation-tools {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.tool-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.tool-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tool-icon {
+    font-size: 3rem;
+    color: var(--warm-gold);
+    margin-bottom: 1rem;
+}
+
+.tool-title {
+    font-size: 1.3rem;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.tool-description {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+}
+
+.philosophy-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.philosophy-tab {
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.philosophy-tab:hover,
+.philosophy-tab.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border-color: var(--warm-gold);
+}
+
+@media (max-width: 768px) {
+    .corner-title {
+        font-size: 2.5rem;
+    }
+    
+    .wisdom-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wisdom-card {
+        padding: 1.5rem;
+    }
+    
+    .quote-text {
+        font-size: 1.1rem;
+    }
+}
+</style>
+
+<div class="philosophers-corner">
+    <!-- Header Section -->
+    <div class="header-section">
+        <h1 class="corner-title">🏛️ Philosopher's Corner</h1>
+        <p class="corner-subtitle">
+            "The unexamined life is not worth living" — Socrates<br>
+            Draw inspiration from the greatest minds of East and West
+        </p>
+    </div>
+
+    <!-- Daily Reflection -->
+    <div class="daily-reflection" id="daily-reflection">
+        <h2 class="reflection-title">✨ Today's Reflection</h2>
+        <div class="reflection-quote" id="daily-quote">
+            "The only true wisdom is in knowing you know nothing."
+        </div>
+        <div class="reflection-author" id="daily-author">
+            — Socrates (470-399 BCE)
+        </div>
+    </div>
+
+    <!-- Philosophy Tradition Tabs -->
+    <div class="philosophy-tabs">
+        <div class="philosophy-tab active" onclick="showPhilosophy('all')">All Traditions</div>
+        <div class="philosophy-tab" onclick="showPhilosophy('western')">Western Philosophy</div>
+        <div class="philosophy-tab" onclick="showPhilosophy('eastern')">Eastern Wisdom</div>
+        <div class="philosophy-tab" onclick="showPhilosophy('modern')">Modern Thinkers</div>
+    </div>
+
+    <!-- Wisdom Cards Grid -->
+    <div class="wisdom-grid" id="wisdom-grid">
+        <!-- Cards will be dynamically populated -->
+    </div>
+
+    <!-- Contemplation Tools -->
+    <div class="contemplation-tools">
+        <div class="tool-card" onclick="openJournal()">
+            <div class="tool-icon">
+                <i class="fas fa-feather-alt"></i>
+            </div>
+            <h3 class="tool-title">Philosophical Journal</h3>
+            <p class="tool-description">
+                Reflect on wisdom and record your thoughts in a dedicated contemplation space.
+            </p>
+        </div>
+        
+        <div class="tool-card" onclick="generateWisdom()">
+            <div class="tool-icon">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <h3 class="tool-title">Daily Wisdom</h3>
+            <p class="tool-description">
+                Receive a new philosophical insight each day to inspire your creative journey.
+            </p>
+        </div>
+        
+        <div class="tool-card" onclick="openMeditation()">
+            <div class="tool-icon">
+                <i class="fas fa-om"></i>
+            </div>
+            <h3 class="tool-title">Contemplation Timer</h3>
+            <p class="tool-description">
+                Set aside time for mindful reflection with guided philosophical meditation.
+            </p>
+        </div>
+        
+        <div class="tool-card" onclick="explorePhilosopher()">
+            <div class="tool-icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h3 class="tool-title">Philosopher Explorer</h3>
+            <p class="tool-description">
+                Discover the life stories and teachings of history's greatest philosophical minds.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Philosophical wisdom database
+const philosophers = {
+    western: [
+        {
+            quote: "I think, therefore I am.",
+            name: "René Descartes",
+            era: "1596-1650",
+            origin: "French",
+            tradition: "western"
+        },
+        {
+            quote: "Man is condemned to be free; because once thrown into the world, he is responsible for everything he does.",
+            name: "Jean-Paul Sartre",
+            era: "1905-1980",
+            origin: "French",
+            tradition: "western"
+        },
+        {
+            quote: "The cave you fear to enter holds the treasure you seek.",
+            name: "Joseph Campbell",
+            era: "1904-1987",
+            origin: "American",
+            tradition: "western"
+        },
+        {
+            quote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+            name: "Aristotle",
+            era: "384-322 BCE",
+            origin: "Greek",
+            tradition: "western"
+        },
+        {
+            quote: "The mind is everything. What you think you become.",
+            name: "Marcus Aurelius",
+            era: "121-180 CE",
+            origin: "Roman",
+            tradition: "western"
+        }
+    ],
+    eastern: [
+        {
+            quote: "The journey of a thousand miles begins with one step.",
+            name: "Lao Tzu",
+            era: "6th century BCE",
+            origin: "Chinese",
+            tradition: "eastern"
+        },
+        {
+            quote: "Do not believe in anything simply because you have heard it. But after observation and analysis, when you find that anything agrees with reason and is conducive to the good and benefit of one and all, then accept it and live up to it.",
+            name: "Buddha",
+            era: "563-483 BCE",
+            origin: "Indian",
+            tradition: "eastern"
+        },
+        {
+            quote: "The superior man thinks of virtue; the small man thinks of comfort.",
+            name: "Confucius",
+            era: "551-479 BCE",
+            origin: "Chinese",
+            tradition: "eastern"
+        },
+        {
+            quote: "You are what your deep, driving desire is. As your desire is, so is your will. As your will is, so is your deed. As your deed is, so is your destiny.",
+            name: "Brihadaranyaka Upanishad",
+            era: "800-400 BCE",
+            origin: "Indian",
+            tradition: "eastern"
+        },
+        {
+            quote: "The best time to plant a tree was 20 years ago. The second best time is now.",
+            name: "Chinese Proverb",
+            era: "Ancient",
+            origin: "Chinese",
+            tradition: "eastern"
+        }
+    ],
+    modern: [
+        {
+            quote: "In the midst of winter, I found there was, within me, an invincible summer.",
+            name: "Albert Camus",
+            era: "1913-1960",
+            origin: "French-Algerian",
+            tradition: "modern"
+        },
+        {
+            quote: "The most thought-provoking thing in our thought-provoking time is that we are still not thinking.",
+            name: "Martin Heidegger",
+            era: "1889-1976",
+            origin: "German",
+            tradition: "modern"
+        },
+        {
+            quote: "One cannot think well, love well, sleep well, if one has not dined well.",
+            name: "Virginia Woolf",
+            era: "1882-1941",
+            origin: "English",
+            tradition: "modern"
+        },
+        {
+            quote: "The privilege of a lifetime is to become who you truly are.",
+            name: "Carl Jung",
+            era: "1875-1961",
+            origin: "Swiss",
+            tradition: "modern"
+        }
+    ]
+};
+
+let currentFilter = 'all';
+
+function showPhilosophy(filter) {
+    currentFilter = filter;
+    
+    // Update active tab
+    document.querySelectorAll('.philosophy-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filter and display wisdom cards
+    renderWisdomCards(filter);
+}
+
+function renderWisdomCards(filter = 'all') {
+    const grid = document.getElementById('wisdom-grid');
+    let quotesToShow = [];
+    
+    if (filter === 'all') {
+        quotesToShow = [...philosophers.western, ...philosophers.eastern, ...philosophers.modern];
+    } else {
+        quotesToShow = philosophers[filter] || [];
+    }
+    
+    // Shuffle quotes for variety
+    quotesToShow = quotesToShow.sort(() => Math.random() - 0.5);
+    
+    grid.innerHTML = quotesToShow.map(philosopher => `
+        <div class="wisdom-card" onclick="contemplateQuote('${philosopher.name}', '${philosopher.quote.replace(/'/g, "\\'")}')">
+            <div class="quote-text">"${philosopher.quote}"</div>
+            <div class="philosopher-info">
+                <div>
+                    <div class="philosopher-name">${philosopher.name}</div>
+                    <div class="philosopher-era">${philosopher.era}</div>
+                </div>
+                <div class="philosopher-origin">
+                    <i class="fas fa-globe-asia me-1"></i>
+                    ${philosopher.origin}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function generateDailyWisdom() {
+    const allQuotes = [...philosophers.western, ...philosophers.eastern, ...philosophers.modern];
+    const randomQuote = allQuotes[Math.floor(Math.random() * allQuotes.length)];
+    
+    document.getElementById('daily-quote').textContent = `"${randomQuote.quote}"`;
+    document.getElementById('daily-author').textContent = `— ${randomQuote.name} (${randomQuote.era})`;
+}
+
+function contemplateQuote(name, quote) {
+    alert(`Contemplating wisdom from ${name}:\n\n"${quote}"\n\nTake a moment to reflect on how this insight might inspire your writing...`);
+}
+
+function openJournal() {
+    // Redirect to Google Docs editor for philosophical journaling
+    window.location.href = "{% url 'writer:google_docs_editor' %}";
+}
+
+function generateWisdom() {
+    generateDailyWisdom();
+    alert('✨ Your daily wisdom has been refreshed! Let this new insight guide your thoughts and writing.');
+}
+
+function openMeditation() {
+    alert('🧘‍♂️ Contemplation Timer\n\nThis feature will provide guided philosophical meditation sessions to help center your mind before writing.');
+}
+
+function explorePhilosopher() {
+    alert('🏛️ Philosopher Explorer\n\nThis feature will provide detailed biographies and teaching summaries of great philosophical minds throughout history.');
+}
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    generateDailyWisdom();
+    renderWisdomCards('all');
+});
+</script>
+
+{% endblock %}
