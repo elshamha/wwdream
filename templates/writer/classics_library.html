@@ -1318,9 +1318,26 @@
                         <div class="book-description">${book.description}</div>
                         
                         <div class="book-actions">
+                            <div style="display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap;">
+                                ${book.epub_url || book.gutenberg_id ? `
+                                    <button class="book-action-btn btn-download" style="background: #28a745; flex: 1;" onclick="event.stopPropagation(); downloadBook(${book.id}, 'epub')" title="Download EPUB">
+                                        <i class="fas fa-download"></i> EPUB
+                                    </button>
+                                ` : ''}
+                                ${book.txt_url || book.gutenberg_id ? `
+                                    <button class="book-action-btn btn-download" style="background: #6c757d; flex: 1;" onclick="event.stopPropagation(); downloadBook(${book.id}, 'txt')" title="Download TXT">
+                                        <i class="fas fa-file-alt"></i> TXT
+                                    </button>
+                                ` : ''}
+                                ${book.html_url || book.gutenberg_id ? `
+                                    <button class="book-action-btn btn-download" style="background: #17a2b8; flex: 1;" onclick="event.stopPropagation(); downloadBook(${book.id}, 'html')" title="Read Online">
+                                        <i class="fas fa-globe"></i> WEB
+                                    </button>
+                                ` : ''}
+                            </div>
                             ${book.is_borrowed ? `
                                 <button class="book-action-btn btn-primary" onclick="event.stopPropagation(); readBook(${book.id})">
-                                    <i class="fas fa-book-open"></i> Continue Reading
+                                    <i class="fas fa-book-open"></i> Read in App
                                 </button>
                                 <button class="book-action-btn btn-return" onclick="event.stopPropagation(); returnBook(${book.id})">
                                     <i class="fas fa-undo"></i> Return
@@ -1328,9 +1345,6 @@
                             ` : `
                                 <button class="book-action-btn btn-borrow" onclick="event.stopPropagation(); borrowBook(${book.id})">
                                     <i class="fas fa-plus"></i> Add to Library
-                                </button>
-                                <button class="book-action-btn btn-preview" onclick="event.stopPropagation(); previewBook(${book.id})">
-                                    <i class="fas fa-eye"></i> Preview
                                 </button>
                             `}
                         </div>
@@ -1706,24 +1720,62 @@
         }
 
         function openBookDetails(bookId) {
-            const book = classicBooks.find(b => b.id === bookId);
-            if (book) {
-                // Create detailed modal or navigate to book details page
-                const details = `
-                    📖 ${book.title}
-                    ✍️ by ${book.author}
-                    📅 Published: ${book.year > 0 ? book.year : Math.abs(book.year) + ' BC'}
-                    📄 Pages: ${book.pages}
-                    🌟 Rating: ${book.rating}/5 (${book.downloads.toLocaleString()} downloads)
-                    🏷️ Genre: ${book.genre.charAt(0).toUpperCase() + book.genre.slice(1)}
-                    🌍 Language: ${book.language.charAt(0).toUpperCase() + book.language.slice(1)}
-                    
-                    📝 Description:
-                    ${book.description}
-                    
-                    💾 Available formats: ${book.formats.join(', ').toUpperCase()}
-                `;
-                alert(details);
+            // For now, just prevent the default card click when clicking buttons
+            event.stopPropagation();
+        }
+        
+        function downloadBook(bookId, format) {
+            // Stop event propagation to prevent card click
+            event.stopPropagation();
+            
+            // Find the book from filtered books
+            const book = filteredBooks.find(b => b.id === bookId);
+            if (!book) {
+                showToast('Book not found', 'error');
+                return;
+            }
+            
+            // Check which URL to use based on format
+            let downloadUrl = '';
+            switch(format) {
+                case 'epub':
+                    downloadUrl = book.epub_url || '';
+                    break;
+                case 'pdf':
+                    downloadUrl = book.pdf_url || '';
+                    break;
+                case 'txt':
+                    downloadUrl = book.txt_url || '';
+                    break;
+                case 'html':
+                    downloadUrl = book.html_url || '';
+                    break;
+            }
+            
+            if (downloadUrl) {
+                // Open download URL in new tab
+                window.open(downloadUrl, '_blank');
+                showToast(`Downloading ${book.title} as ${format.toUpperCase()}`, 'success');
+            } else {
+                // If no URL available, try Project Gutenberg directly
+                const gutenbergId = book.gutenberg_id || book.id;
+                const gutenbergBase = 'https://www.gutenberg.org';
+                
+                switch(format) {
+                    case 'epub':
+                        window.open(`${gutenbergBase}/ebooks/${gutenbergId}.epub.images`, '_blank');
+                        break;
+                    case 'txt':
+                        window.open(`${gutenbergBase}/files/${gutenbergId}/${gutenbergId}-0.txt`, '_blank');
+                        break;
+                    case 'html':
+                        window.open(`${gutenbergBase}/files/${gutenbergId}/${gutenbergId}-h/${gutenbergId}-h.htm`, '_blank');
+                        break;
+                    default:
+                        showToast(`${format.toUpperCase()} format not available for ${book.title}`, 'error');
+                        return;
+                }
+                showToast(`Opening ${book.title} from Project Gutenberg`, 'info');
             }
         }
 

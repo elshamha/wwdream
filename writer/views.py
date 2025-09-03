@@ -5772,6 +5772,11 @@ def classics_search_api(request):
                 'cover_image_url': book.cover_image_url,
                 'available_formats': book.available_formats,
                 'is_borrowed': book.id in user_borrowed_books,
+                'epub_url': book.epub_url,
+                'pdf_url': book.pdf_url,
+                'txt_url': book.txt_url,
+                'html_url': book.html_url,
+                'gutenberg_id': book.gutenberg_id,
             })
         
         return JsonResponse({
@@ -5865,7 +5870,6 @@ def return_classic_book(request, book_id):
 
 
 @csrf_exempt
-@login_required
 def read_classic_book(request, book_id):
     """API endpoint to start reading a classic book"""
     if request.method == 'POST':
@@ -5875,34 +5879,41 @@ def read_classic_book(request, book_id):
         try:
             book = get_object_or_404(ClassicBook, id=book_id, is_active=True)
             
-            # Check if book is borrowed
-            try:
-                borrowed_book = BorrowedBook.objects.get(user=request.user, book=book)
-            except BorrowedBook.DoesNotExist:
-                # Auto-borrow if not already borrowed
-                borrowed_book = BorrowedBook.objects.create(
-                    user=request.user,
-                    book=book,
-                    reading_progress=0,
-                    current_page=1,
-                    reading_status='reading'
-                )
+            # Check if book is borrowed (only if user is authenticated)
+            borrowed_book = None
+            if request.user.is_authenticated:
+                try:
+                    borrowed_book = BorrowedBook.objects.get(user=request.user, book=book)
+                except BorrowedBook.DoesNotExist:
+                    # Auto-borrow if not already borrowed
+                    borrowed_book = BorrowedBook.objects.create(
+                        user=request.user,
+                        book=book,
+                        reading_progress=0,
+                        current_page=1,
+                        reading_status='reading'
+                    )
+                    book.download_count += 1
+                    book.save()
+            else:
+                # For anonymous users, just track download count
                 book.download_count += 1
                 book.save()
             
-            # Update reading status
-            if borrowed_book.reading_status == 'not_started':
-                borrowed_book.reading_status = 'reading'
-                borrowed_book.save()
-            
-            # Get reading data
-            if request.content_type == 'application/json':
-                data = json.loads(request.body)
-                if 'progress' in data:
-                    borrowed_book.reading_progress = min(100, max(0, int(data['progress'])))
-                if 'page' in data:
-                    borrowed_book.current_page = max(1, int(data['page']))
-                borrowed_book.save()
+            # Update reading status (only for authenticated users)
+            if borrowed_book:
+                if borrowed_book.reading_status == 'not_started':
+                    borrowed_book.reading_status = 'reading'
+                    borrowed_book.save()
+                
+                # Get reading data
+                if request.content_type == 'application/json':
+                    data = json.loads(request.body)
+                    if 'progress' in data:
+                        borrowed_book.reading_progress = min(100, max(0, int(data['progress'])))
+                    if 'page' in data:
+                        borrowed_book.current_page = max(1, int(data['page']))
+                    borrowed_book.save()
             
             return JsonResponse({
                 'success': True,
@@ -5917,10 +5928,11 @@ def read_classic_book(request, book_id):
                     'pdf_url': book.pdf_url,
                     'txt_url': book.txt_url,
                     'html_url': book.html_url,
+                    'gutenberg_id': book.gutenberg_id,
                 },
-                'reading_progress': borrowed_book.reading_progress,
-                'current_page': borrowed_book.current_page,
-                'reading_status': borrowed_book.reading_status
+                'reading_progress': borrowed_book.reading_progress if borrowed_book else 0,
+                'current_page': borrowed_book.current_page if borrowed_book else 1,
+                'reading_status': borrowed_book.reading_status if borrowed_book else 'reading'
             })
             
         except Exception as e:
@@ -6092,6 +6104,11 @@ def classics_search_api(request):
                 'cover_image_url': book.cover_image_url,
                 'available_formats': book.available_formats,
                 'is_borrowed': book.id in user_borrowed_books,
+                'epub_url': book.epub_url,
+                'pdf_url': book.pdf_url,
+                'txt_url': book.txt_url,
+                'html_url': book.html_url,
+                'gutenberg_id': book.gutenberg_id,
             })
         
         return JsonResponse({
@@ -6185,7 +6202,6 @@ def return_classic_book(request, book_id):
 
 
 @csrf_exempt
-@login_required
 def read_classic_book(request, book_id):
     """API endpoint to start reading a classic book"""
     if request.method == 'POST':
@@ -6195,34 +6211,41 @@ def read_classic_book(request, book_id):
         try:
             book = get_object_or_404(ClassicBook, id=book_id, is_active=True)
             
-            # Check if book is borrowed
-            try:
-                borrowed_book = BorrowedBook.objects.get(user=request.user, book=book)
-            except BorrowedBook.DoesNotExist:
-                # Auto-borrow if not already borrowed
-                borrowed_book = BorrowedBook.objects.create(
-                    user=request.user,
-                    book=book,
-                    reading_progress=0,
-                    current_page=1,
-                    reading_status='reading'
-                )
+            # Check if book is borrowed (only if user is authenticated)
+            borrowed_book = None
+            if request.user.is_authenticated:
+                try:
+                    borrowed_book = BorrowedBook.objects.get(user=request.user, book=book)
+                except BorrowedBook.DoesNotExist:
+                    # Auto-borrow if not already borrowed
+                    borrowed_book = BorrowedBook.objects.create(
+                        user=request.user,
+                        book=book,
+                        reading_progress=0,
+                        current_page=1,
+                        reading_status='reading'
+                    )
+                    book.download_count += 1
+                    book.save()
+            else:
+                # For anonymous users, just track download count
                 book.download_count += 1
                 book.save()
             
-            # Update reading status
-            if borrowed_book.reading_status == 'not_started':
-                borrowed_book.reading_status = 'reading'
-                borrowed_book.save()
-            
-            # Get reading data
-            if request.content_type == 'application/json':
-                data = json.loads(request.body)
-                if 'progress' in data:
-                    borrowed_book.reading_progress = min(100, max(0, int(data['progress'])))
-                if 'page' in data:
-                    borrowed_book.current_page = max(1, int(data['page']))
-                borrowed_book.save()
+            # Update reading status (only for authenticated users)
+            if borrowed_book:
+                if borrowed_book.reading_status == 'not_started':
+                    borrowed_book.reading_status = 'reading'
+                    borrowed_book.save()
+                
+                # Get reading data
+                if request.content_type == 'application/json':
+                    data = json.loads(request.body)
+                    if 'progress' in data:
+                        borrowed_book.reading_progress = min(100, max(0, int(data['progress'])))
+                    if 'page' in data:
+                        borrowed_book.current_page = max(1, int(data['page']))
+                    borrowed_book.save()
             
             return JsonResponse({
                 'success': True,
@@ -6237,10 +6260,11 @@ def read_classic_book(request, book_id):
                     'pdf_url': book.pdf_url,
                     'txt_url': book.txt_url,
                     'html_url': book.html_url,
+                    'gutenberg_id': book.gutenberg_id,
                 },
-                'reading_progress': borrowed_book.reading_progress,
-                'current_page': borrowed_book.current_page,
-                'reading_status': borrowed_book.reading_status
+                'reading_progress': borrowed_book.reading_progress if borrowed_book else 0,
+                'current_page': borrowed_book.current_page if borrowed_book else 1,
+                'reading_status': borrowed_book.reading_status if borrowed_book else 'reading'
             })
             
         except Exception as e:
