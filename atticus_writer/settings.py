@@ -27,6 +27,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.34', 'elshamha.pythonanywhere.com', '.railway.app', '.up.railway.app', 'web-production-42009.up.railway.app']
 
+# CSRF Trusted Origins for Railway
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-42009.up.railway.app',
+    'https://*.up.railway.app', 
+    'https://*.railway.app',
+]
+
 
 # Application definition
 

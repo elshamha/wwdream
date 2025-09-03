@@ -44,5 +44,14 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-42009.up.railway.app',
+    'https://*.up.railway.app',
+    'https://*.railway.app',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
 # Add whitenoise middleware for static files
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
