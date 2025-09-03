@@ -1,13 +1,16 @@
 {
   "expo": {
     "name": "A Writer's Web Dream",
-    "slug": "writers-web-dream-mobile",
+    "slug": "atticus-bookshelf-mobile", 
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "description": "The ultimate writing and project management app for authors, bloggers, and content creators.",
     "splash": {
-      "backgroundColor": "#667eea"
+      "backgroundColor": "#667eea",
+      "resizeMode": "contain"
     },
+    "icon": "./assets/icon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -17,13 +20,16 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#667eea"
       },
-      "package": "com.writerswebdream.mobile"
+      "package": "com.writerswebdream.mobile",
+      "versionCode": 1,
+      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"]
     },
     "web": {},
     "extra": {
-      "apiUrl": "http://192.168.0.34:8000",
+      "apiUrl": "https://writerswebdream.com",
       "eas": {
         "projectId": "e0570b63-8e60-4a5f-b17a-cd7472a84464"
       }
