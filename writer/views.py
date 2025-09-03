@@ -2507,7 +2507,7 @@ def api_ai_assistance(request):
             mock_responses = {
                 'continue': f"Continuing from your text: '{text[:50]}...', here's a possible continuation: The story unfolds with unexpected twists as the protagonist discovers hidden truths about their world.",
                 'improve': f"Here's an improved version: {text.replace('good', 'excellent').replace('bad', 'terrible').replace('nice', 'wonderful')}" if text else "Please select some text to improve.",
-                'grammar': f"Grammar-corrected version: {text.replace(' i ', ' I ').replace('dont', \"don't\").replace('cant', \"can't\")}" if text else "No grammar issues found.",
+                'grammar': "Grammar-corrected version: " + text.replace(' i ', ' I ').replace('dont', "don't").replace('cant', "can't") if text else "No grammar issues found.",
                 'character': "Character development suggestion: Consider adding internal conflict to make your character more relatable and three-dimensional.",
                 'plot': "Plot suggestion: What if the protagonist's greatest strength becomes their weakness at the climax?"
             }
