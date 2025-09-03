@@ -7,7 +7,7 @@
     }
   },
   "deploy": {
-    "startCommand": "python manage.py collectstatic --noinput --no-post-process || true && gunicorn atticus_writer.wsgi --bind 0.0.0.0:$PORT --log-level debug --workers 1",
+    "startCommand": "export DJANGO_SETTINGS_MODULE=atticus_writer.production_settings && python manage.py collectstatic --noinput --no-post-process || true && gunicorn atticus_writer.wsgi --bind 0.0.0.0:$PORT --log-level debug --workers 1",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
