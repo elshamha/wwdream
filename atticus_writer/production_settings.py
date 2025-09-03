@@ -6,10 +6,13 @@ DEBUG = True  # Temporarily enable to see errors
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 ALLOWED_HOSTS = [
     '.railway.app',
+    'web-production-42009.up.railway.app',
+    '.up.railway.app',
     '.onrender.com',
     '.herokuapp.com',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    '*'  # Temporary for debugging
 ]
 
 # Add your domain when you have it
