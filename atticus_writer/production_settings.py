@@ -2,7 +2,7 @@ import os
 from .settings import *
 
 # Security Settings for Production
-DEBUG = True  # Temporarily enable to see errors
+DEBUG = False  # Set to False for production
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 ALLOWED_HOSTS = [
     '.railway.app',
