@@ -2,7 +2,7 @@ import os
 from .settings import *
 
 # Security Settings for Production
-DEBUG = False
+DEBUG = True  # Temporarily enable to see errors
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 ALLOWED_HOSTS = [
     '.railway.app',
@@ -33,10 +33,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Security
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# Security - Disabled temporarily for debugging
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
