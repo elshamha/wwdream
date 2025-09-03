@@ -1,0 +1,659 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Academic Editor - {% if document %}{{ document.title }}{% else %}New Document{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Times New Roman', serif;
+        background-color: #f0f2f5;
+        margin: 0;
+        padding: 0;
+    }
+
+    .academic-editor-container {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Sidebar */
+    .editor-sidebar {
+        width: 300px;
+        background: white;
+        border-right: 1px solid #ddd;
+        padding: 20px;
+        overflow-y: auto;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .format-selector {
+        margin-bottom: 20px;
+    }
+
+    .format-selector label {
+        font-weight: bold;
+        color: #333;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .format-selector select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .document-info {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .document-info input {
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    /* Main Editor Area */
+    .editor-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .editor-toolbar {
+        background: white;
+        border-bottom: 1px solid #ddd;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .save-status {
+        font-size: 12px;
+        color: #666;
+    }
+
+    .page-counter {
+        font-size: 12px;
+        color: #666;
+        background: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 3px;
+    }
+
+    /* Paper Container */
+    .paper-container {
+        flex: 1;
+        padding: 40px 20px;
+        overflow-y: auto;
+        background: #e9ecef;
+        display: flex;
+        justify-content: center;
+    }
+
+    .paper-pages {
+        max-width: 850px;
+        width: 100%;
+    }
+
+    /* Individual Paper Page */
+    .paper-page {
+        width: 8.5in;
+        min-height: 11in;
+        background: white;
+        margin: 0 auto 30px auto;
+        padding: 1in;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        position: relative;
+        page-break-after: always;
+        font-family: 'Times New Roman', serif;
+        font-size: 12pt;
+        line-height: 2;
+        color: #000;
+    }
+
+    /* MLA Format Styles */
+    .mla-format .paper-page {
+        padding: 1in;
+    }
+
+    .mla-header {
+        position: absolute;
+        top: 0.5in;
+        right: 1in;
+        font-size: 12pt;
+        line-height: 2;
+    }
+
+    .mla-heading {
+        margin-bottom: 1in;
+        line-height: 2;
+    }
+
+    .mla-heading div {
+        margin: 0;
+    }
+
+    .mla-title {
+        text-align: center;
+        font-weight: normal;
+        margin: 1in 0 0 0;
+        line-height: 2;
+    }
+
+    /* APA Format Styles */
+    .apa-format .paper-page {
+        padding: 1in;
+    }
+
+    .apa-header {
+        position: absolute;
+        top: 0.5in;
+        left: 1in;
+        right: 1in;
+        display: flex;
+        justify-content: space-between;
+        font-size: 12pt;
+    }
+
+    .apa-title-page {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+
+    .apa-title {
+        font-weight: bold;
+        font-size: 12pt;
+        line-height: 2;
+        margin-bottom: 2in;
+    }
+
+    .apa-author-info {
+        line-height: 2;
+    }
+
+    /* Quill Editor Styles */
+    .ql-editor {
+        font-family: 'Times New Roman', serif !important;
+        font-size: 12pt !important;
+        line-height: 2 !important;
+        color: #000 !important;
+        padding: 0 !important;
+        border: none !important;
+        min-height: 9in;
+    }
+
+    .ql-editor p {
+        margin: 0 0 0 0;
+        text-indent: 0.5in;
+        line-height: 2;
+    }
+
+    .ql-editor h1, .ql-editor h2, .ql-editor h3 {
+        font-family: 'Times New Roman', serif !important;
+        font-weight: normal !important;
+        text-align: center;
+        margin: 1em 0;
+        text-indent: 0;
+    }
+
+    .ql-container {
+        border: none !important;
+        font-family: 'Times New Roman', serif !important;
+    }
+
+    .ql-toolbar {
+        border: none !important;
+        background: #f8f9fa;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    /* Page Break Indicator */
+    .page-break {
+        border-top: 2px dashed #ccc;
+        margin: 20px 0;
+        position: relative;
+        height: 0;
+    }
+
+    .page-break:before {
+        content: "Page Break";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #f0f2f5;
+        padding: 0 10px;
+        font-size: 10px;
+        color: #666;
+    }
+
+    /* Citation Helper */
+    .citation-helper {
+        margin-top: 20px;
+        padding: 15px;
+        background: #e3f2fd;
+        border-radius: 5px;
+    }
+
+    .citation-helper h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #1565c0;
+    }
+
+    .citation-helper p {
+        margin: 5px 0;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    /* Word Count */
+    .word-count-display {
+        font-size: 12px;
+        color: #666;
+        background: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 3px;
+        margin-left: 10px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .paper-page {
+            width: 100%;
+            max-width: 8.5in;
+            margin: 0 auto 20px auto;
+        }
+        
+        .editor-sidebar {
+            width: 250px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .academic-editor-container {
+            flex-direction: column;
+        }
+        
+        .editor-sidebar {
+            width: 100%;
+            height: auto;
+            max-height: 200px;
+        }
+        
+        .paper-page {
+            padding: 0.5in;
+        }
+    }
+
+    /* Print Styles */
+    @media print {
+        .editor-sidebar,
+        .editor-toolbar {
+            display: none !important;
+        }
+        
+        .paper-container {
+            padding: 0;
+            background: white;
+        }
+        
+        .paper-page {
+            box-shadow: none;
+            margin: 0;
+            page-break-after: always;
+        }
+        
+        .page-break {
+            page-break-before: always;
+            border: none;
+            height: 0;
+            visibility: hidden;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="academic-editor-container">
+    <!-- Sidebar -->
+    <div class="editor-sidebar">
+        <div class="format-selector">
+            <label for="formatStyle">Citation Format:</label>
+            <select id="formatStyle" onchange="changeFormat()">
+                <option value="mla" {% if document.format_style == 'mla' %}selected{% endif %}>MLA Format</option>
+                <option value="apa" {% if document.format_style == 'apa' %}selected{% endif %}>APA Format</option>
+                <option value="chicago" {% if document.format_style == 'chicago' %}selected{% endif %}>Chicago Style</option>
+                <option value="harvard" {% if document.format_style == 'harvard' %}selected{% endif %}>Harvard Style</option>
+            </select>
+        </div>
+
+        <div class="document-info">
+            <h4>Document Information</h4>
+            <input type="text" id="docTitle" placeholder="Document Title" value="{% if document %}{{ document.title }}{% endif %}">
+            <input type="text" id="authorName" placeholder="Author Name" value="{% if user.first_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}">
+            <input type="text" id="courseName" placeholder="Course Name" value="{% if document %}{{ document.course_name }}{% endif %}">
+            <input type="text" id="instructorName" placeholder="Instructor Name" value="{% if document %}{{ document.instructor_name }}{% endif %}">
+            <input type="date" id="assignmentDate" value="{% if document.assignment_date %}{{ document.assignment_date|date:'Y-m-d' }}{% endif %}">
+        </div>
+
+        <div class="citation-helper" id="citationHelper">
+            <h4>Citation Guide</h4>
+            <div id="citationContent">
+                <!-- Citation examples will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Editor -->
+    <div class="editor-main">
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <button onclick="saveDocument()" class="btn btn-primary btn-sm">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button onclick="exportPDF()" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                <button onclick="printDocument()" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+            <div class="toolbar-right">
+                <span class="save-status" id="saveStatus">All changes saved</span>
+                <span class="word-count-display" id="wordCount">0 words</span>
+                <span class="page-counter" id="pageCounter">Page 1</span>
+            </div>
+        </div>
+
+        <div class="paper-container">
+            <div class="paper-pages" id="paperPages">
+                <div class="paper-page mla-format" id="page1">
+                    <!-- Header will be inserted here based on format -->
+                    <div class="document-header" id="documentHeader">
+                        <!-- Dynamic header content -->
+                    </div>
+                    
+                    <!-- Quill Editor Container -->
+                    <div id="editor">
+                        {% if document %}{{ document.content|safe }}{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for saving -->
+<form id="saveForm" method="post" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" id="hiddenTitle" name="title">
+    <input type="hidden" id="hiddenContent" name="content">
+    <input type="hidden" id="hiddenFormat" name="format_style">
+    <input type="hidden" id="hiddenType" name="document_type">
+    <input type="hidden" id="hiddenCourse" name="course_name">
+    <input type="hidden" id="hiddenInstructor" name="instructor_name">
+    <input type="hidden" id="hiddenDate" name="assignment_date">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+let quill;
+let currentFormat = '{% if document %}{{ document.format_style }}{% else %}mla{% endif %}';
+let documentId = {% if document %}{{ document.id }}{% else %}null{% endif %};
+let saveTimeout;
+
+// Initialize editor when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEditor();
+    setupAutoSave();
+    updateCitationGuide();
+    updateDocumentHeader();
+    updateWordCount();
+});
+
+function initializeEditor() {
+    // Configure Quill with academic writing toolbar
+    const toolbarOptions = [
+        ['bold', 'italic', 'underline'],
+        [{'header': [1, 2, 3, false]}],
+        [{'list': 'ordered'}, {'list': 'bullet'}],
+        [{'indent': '-1'}, {'indent': '+1'}],
+        ['blockquote', 'code-block'],
+        ['link'],
+        ['clean']
+    ];
+
+    quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: toolbarOptions
+        }
+    });
+
+    // Set up content change listener
+    quill.on('text-change', function() {
+        clearTimeout(saveTimeout);
+        updateSaveStatus('Unsaved changes...');
+        updateWordCount();
+        
+        // Auto-save after 2 seconds of inactivity
+        saveTimeout = setTimeout(() => {
+            saveDocument(true);
+        }, 2000);
+    });
+}
+
+function setupAutoSave() {
+    // Save document info when changed
+    ['docTitle', 'authorName', 'courseName', 'instructorName', 'assignmentDate'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            updateSaveStatus('Unsaved changes...');
+            saveTimeout = setTimeout(() => saveDocument(true), 1000);
+        });
+    });
+}
+
+function changeFormat() {
+    currentFormat = document.getElementById('formatStyle').value;
+    updateDocumentHeader();
+    updateCitationGuide();
+    
+    // Update page classes
+    const pages = document.querySelectorAll('.paper-page');
+    pages.forEach(page => {
+        page.className = `paper-page ${currentFormat}-format`;
+    });
+    
+    // Save the change
+    saveDocument(true);
+}
+
+function updateDocumentHeader() {
+    const header = document.getElementById('documentHeader');
+    const title = document.getElementById('docTitle').value || 'Untitled Document';
+    const author = document.getElementById('authorName').value || 'Author Name';
+    const course = document.getElementById('courseName').value || '';
+    const instructor = document.getElementById('instructorName').value || '';
+    const date = document.getElementById('assignmentDate').value || '';
+
+    let headerHTML = '';
+
+    switch(currentFormat) {
+        case 'mla':
+            headerHTML = `
+                <div class="mla-header">
+                    ${author} 1
+                </div>
+                <div class="mla-heading">
+                    <div>${author}</div>
+                    <div>${instructor}</div>
+                    <div>${course}</div>
+                    <div>${date ? new Date(date).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'}) : ''}</div>
+                </div>
+                <div class="mla-title">${title}</div>
+            `;
+            break;
+        case 'apa':
+            headerHTML = `
+                <div class="apa-header">
+                    <span>${title.toUpperCase()}</span>
+                    <span>1</span>
+                </div>
+                <div class="apa-title-page">
+                    <div class="apa-title">${title}</div>
+                    <div class="apa-author-info">
+                        <div>${author}</div>
+                        <div>${course}</div>
+                        <div>${instructor}</div>
+                        <div>${date ? new Date(date).toLocaleDateString() : ''}</div>
+                    </div>
+                </div>
+            `;
+            break;
+        default:
+            headerHTML = `<div style="text-align: center; margin-bottom: 2em;"><h1>${title}</h1><p>by ${author}</p></div>`;
+    }
+
+    header.innerHTML = headerHTML;
+}
+
+function updateCitationGuide() {
+    const citationContent = document.getElementById('citationContent');
+    let content = '';
+
+    switch(currentFormat) {
+        case 'mla':
+            content = `
+                <p><strong>In-text citation:</strong><br>(Author Page#)</p>
+                <p><strong>Works Cited:</strong><br>Author. "Title." Source, Date.</p>
+                <p><strong>Website:</strong><br>Author. "Page Title." Website Name, Date, URL.</p>
+            `;
+            break;
+        case 'apa':
+            content = `
+                <p><strong>In-text citation:</strong><br>(Author, Year, p. #)</p>
+                <p><strong>References:</strong><br>Author, A. (Year). Title. Source.</p>
+                <p><strong>Website:</strong><br>Author, A. (Year). Page title. Site Name. URL</p>
+            `;
+            break;
+        default:
+            content = `<p>Citation format guidelines will appear here based on your selected style.</p>`;
+    }
+
+    citationContent.innerHTML = content;
+}
+
+function updateWordCount() {
+    const text = quill.getText();
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    document.getElementById('wordCount').textContent = `${words} words`;
+}
+
+function updateSaveStatus(status) {
+    document.getElementById('saveStatus').textContent = status;
+}
+
+function saveDocument(isAutoSave = false) {
+    const formData = new FormData();
+    formData.append('title', document.getElementById('docTitle').value || 'Untitled Document');
+    formData.append('content', quill.root.innerHTML);
+    formData.append('format_style', currentFormat);
+    formData.append('document_type', 'essay'); // Default for now
+    formData.append('course_name', document.getElementById('courseName').value);
+    formData.append('instructor_name', document.getElementById('instructorName').value);
+    formData.append('assignment_date', document.getElementById('assignmentDate').value);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    const url = documentId ? 
+        `/writer/academic/${documentId}/update/` : 
+        '/writer/academic/save/';
+
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (!documentId && data.document_id) {
+                documentId = data.document_id;
+                // Update URL without page reload
+                window.history.replaceState({}, '', `/writer/academic/${documentId}/`);
+            }
+            
+            updateSaveStatus('All changes saved');
+            if (!isAutoSave) {
+                alert('Document saved successfully!');
+            }
+        } else {
+            updateSaveStatus('Save failed');
+            if (!isAutoSave) {
+                alert('Failed to save document: ' + (data.error || 'Unknown error'));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Save error:', error);
+        updateSaveStatus('Save failed');
+        if (!isAutoSave) {
+            alert('An error occurred while saving the document');
+        }
+    });
+}
+
+function exportPDF() {
+    window.print();
+}
+
+function printDocument() {
+    window.print();
+}
+
+// Handle page refresh warning
+window.addEventListener('beforeunload', function(e) {
+    if (document.getElementById('saveStatus').textContent !== 'All changes saved') {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+{% endblock %}

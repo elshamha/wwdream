@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if character %}Edit Character{% else %}Add Character{% endif %} - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    {% if project %}
+                        <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' project.pk %}" style="color: #ffffff !important;">{{ project.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'writer:character_list' project.pk %}">Characters</a></li>
+                    {% elif character %}
+                        <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' character.project.pk %}" style="color: #ffffff !important;">{{ character.project.title }}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'writer:character_list' character.project.pk %}">Characters</a></li>
+                    {% endif %}
+                    <li class="breadcrumb-item active">{% if character %}Edit Character{% else %}Add Character{% endif %}</li>
+                </ol>
+            </nav>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-user-plus text-primary"></i>
+                        {% if character %}Edit Character: {{ character.name }}{% else %}Add New Character{% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="character-form">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information Section -->
+                        <div class="form-section mb-4">
+                            <h4 class="section-title">
+                                <i class="fas fa-id-card text-info"></i> Basic Information
+                            </h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                                            <i class="fas fa-user"></i> Character Name *
+                                        </label>
+                                        {{ form.name }}
+                                        {% if form.name.help_text %}
+                                            <div class="form-text">{{ form.name.help_text }}</div>
+                                        {% endif %}
+                                        {% if form.name.errors %}
+                                            <div class="text-danger">{{ form.name.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.role.id_for_label }}" class="form-label">
+                                            <i class="fas fa-star"></i> Role in Story
+                                        </label>
+                                        {{ form.role }}
+                                        {% if form.role.help_text %}
+                                            <div class="form-text">{{ form.role.help_text }}</div>
+                                        {% endif %}
+                                        {% if form.role.errors %}
+                                            <div class="text-danger">{{ form.role.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.character_type.id_for_label }}" class="form-label">
+                                            <i class="fas fa-tags"></i> Character Type
+                                        </label>
+                                        {{ form.character_type }}
+                                        {% if form.character_type.errors %}
+                                            <div class="text-danger">{{ form.character_type.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.age.id_for_label }}" class="form-label">
+                                            <i class="fas fa-birthday-cake"></i> Age
+                                        </label>
+                                        {{ form.age }}
+                                        {% if form.age.errors %}
+                                            <div class="text-danger">{{ form.age.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.occupation.id_for_label }}" class="form-label">
+                                            <i class="fas fa-briefcase"></i> Occupation
+                                        </label>
+                                        {{ form.occupation }}
+                                        {% if form.occupation.errors %}
+                                            <div class="text-danger">{{ form.occupation.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description Section -->
+                        <div class="form-section mb-4">
+                            <h4 class="section-title">
+                                <i class="fas fa-book text-warning"></i> Character Description
+                            </h4>
+                            <div class="form-group mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    <i class="fas fa-align-left"></i> General Description
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.help_text %}
+                                    <div class="form-text">{{ form.description.help_text }}</div>
+                                {% endif %}
+                                {% if form.description.errors %}
+                                    <div class="text-danger">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.physical_description.id_for_label }}" class="form-label">
+                                    <i class="fas fa-eye"></i> Physical Description
+                                </label>
+                                {{ form.physical_description }}
+                                {% if form.physical_description.help_text %}
+                                    <div class="form-text">{{ form.physical_description.help_text }}</div>
+                                {% endif %}
+                                {% if form.physical_description.errors %}
+                                    <div class="text-danger">{{ form.physical_description.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Character Development Section -->
+                        <div class="form-section mb-4">
+                            <h4 class="section-title">
+                                <i class="fas fa-brain text-purple"></i> Character Development
+                            </h4>
+                            <div class="form-group mb-3">
+                                <label for="{{ form.personality_traits.id_for_label }}" class="form-label">
+                                    <i class="fas fa-smile"></i> Personality & Traits
+                                </label>
+                                {{ form.personality_traits }}
+                                {% if form.personality_traits.help_text %}
+                                    <div class="form-text">{{ form.personality_traits.help_text }}</div>
+                                {% endif %}
+                                {% if form.personality_traits.errors %}
+                                    <div class="text-danger">{{ form.personality_traits.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.backstory.id_for_label }}" class="form-label">
+                                    <i class="fas fa-history"></i> Backstory
+                                </label>
+                                {{ form.backstory }}
+                                {% if form.backstory.help_text %}
+                                    <div class="form-text">{{ form.backstory.help_text }}</div>
+                                {% endif %}
+                                {% if form.backstory.errors %}
+                                    <div class="text-danger">{{ form.backstory.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.goals_motivations.id_for_label }}" class="form-label">
+                                    <i class="fas fa-bullseye"></i> Goals & Motivations
+                                </label>
+                                {{ form.goals_motivations }}
+                                {% if form.goals_motivations.help_text %}
+                                    <div class="form-text">{{ form.goals_motivations.help_text }}</div>
+                                {% endif %}
+                                {% if form.goals_motivations.errors %}
+                                    <div class="text-danger">{{ form.goals_motivations.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="{{ form.relationships.id_for_label }}" class="form-label">
+                                    <i class="fas fa-heart"></i> Relationships
+                                </label>
+                                {{ form.relationships }}
+                                {% if form.relationships.help_text %}
+                                    <div class="form-text">{{ form.relationships.help_text }}</div>
+                                {% endif %}
+                                {% if form.relationships.errors %}
+                                    <div class="text-danger">{{ form.relationships.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Notes Section -->
+                        <div class="form-section mb-4">
+                            <h4 class="section-title">
+                                <i class="fas fa-sticky-note text-secondary"></i> Additional Notes
+                            </h4>
+                            <div class="form-group mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    <i class="fas fa-pencil-alt"></i> Personal Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.help_text %}
+                                    <div class="form-text">{{ form.notes.help_text }}</div>
+                                {% endif %}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger">{{ form.notes.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions d-flex justify-content-between">
+                            <a href="{% if character %}{% url 'writer:character_detail' character.pk %}{% else %}{% url 'writer:character_list' project.pk %}{% endif %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% if character %}Update Character{% else %}Create Character{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.character-form .form-control, 
+.character-form .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+}
+
+.character-form .form-control:focus,
+.character-form .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-section {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.section-title {
+    color: #495057;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 8px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-label i {
+    margin-right: 5px;
+    width: 16px;
+}
+
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+.form-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #dee2e6;
+}
+
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+</style>
+{% endblock %}

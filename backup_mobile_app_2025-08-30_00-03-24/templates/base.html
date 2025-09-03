@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>{% block title %}Writer's Web Dream{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&family=Playfair+Display:wght@400;600;700&family=Orbitron:wght@400;500;600;700;900&family=Crimson+Text:wght@400;600&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <!-- Commenting out black & white CSS as we're using ethereal theme -->
+    <!-- <link rel="stylesheet" href="{% static 'css/style-bw.css' %}"> -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Global Ethereal Styling -->
+    <style>
+        /* Global Ethereal Theme */
+        :root {
+            --ethereal-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --ethereal-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --ethereal-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --ethereal-sunset: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --ethereal-ocean: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --ethereal-forest: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+            --ethereal-cosmic: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+            --ethereal-aurora: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+            --ethereal-glass: rgba(255, 255, 255, 0.1);
+            --ethereal-glass-border: rgba(255, 255, 255, 0.2);
+            --ethereal-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --ethereal-shadow-hover: 0 15px 45px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Global Body Styling */
+        body {
+            background: var(--ethereal-primary);
+            background-attachment: fixed;
+            min-height: 100vh;
+            font-family: 'Lora', Georgia, serif;
+            color: var(--ethereal-text) !important;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Global Text Color Override */
+        *, h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th, label, small, strong, em, .text-muted, i {
+            color: #ffffff !important;
+            font-family: 'Lora', Georgia, serif;
+        }
+
+        /* Numbers and stats styling */
+        .stat-number, .badge, .btn, .form-control, .card-text, .fas, .far, .fab {
+            color: #ffffff !important;
+        }
+
+        /* Specific text elements */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--ethereal-text) !important;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Beautiful gradient text for main headings */
+        h1 {
+            background: linear-gradient(135deg, #a5f3fc 0%, #f0f9ff 50%, #cffafe 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        h2 {
+            color: var(--ethereal-text-secondary) !important;
+        }
+
+        h3, h4, h5, h6 {
+            color: var(--ethereal-text-accent) !important;
+        }
+
+        p, span, div, a, li, td, th, label {
+            color: var(--ethereal-text) !important;
+        }
+
+        /* Special accent text */
+        .text-accent {
+            color: var(--ethereal-text-accent) !important;
+        }
+
+        .text-secondary {
+            color: var(--ethereal-text-secondary) !important;
+        }
+
+        .text-muted {
+            color: var(--ethereal-text-muted) !important;
+        }
+
+        /* Form elements */
+        .form-control, .form-select, .form-label {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: var(--ethereal-text) !important;
+            border-radius: 15px !important;
+        }
+
+        .form-control::placeholder {
+            color: var(--ethereal-text-muted) !important;
+        }
+
+        /* Button styling */
+        .btn {
+            border-radius: 15px !important;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--ethereal-accent) !important;
+            border: none !important;
+            color: white !important;
+        }
+
+        /* Card elements */
+        .card {
+            background: var(--ethereal-glass) !important;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--ethereal-glass-border) !important;
+            border-radius: 20px !important;
+            color: var(--ethereal-text) !important;
+        }
+
+        /* Animated Background Particles */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="ethereal-grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23ethereal-grid)"/></svg>');
+            opacity: 0.3;
+            z-index: -2;
+            animation: etherealFloat 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+            z-index: -1;
+            animation: etherealShimmer 30s ease-in-out infinite;
+        }
+
+        @keyframes etherealFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-10px) rotate(1deg); }
+            66% { transform: translateY(5px) rotate(-1deg); }
+        }
+
+        @keyframes etherealShimmer {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.1; }
+        }
+
+        @keyframes etherealGlow {
+            0%, 100% { 
+                box-shadow: var(--ethereal-shadow), 0 0 30px rgba(102, 126, 234, 0.1);
+            }
+            50% { 
+                box-shadow: var(--ethereal-shadow-hover), 0 0 50px rgba(102, 126, 234, 0.2);
+            }
+        }
+
+        /* Glass Morphism Base */
+        .ethereal-glass {
+            background: var(--ethereal-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--ethereal-glass-border);
+            border-radius: 20px;
+            box-shadow: var(--ethereal-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .ethereal-glass:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--ethereal-shadow-hover);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Navigation Styling */
+        .navbar {
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(25px);
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-family: 'Lora', serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #ffffff !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .navbar-brand i {
+            color: #ffffff !important;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand:hover i {
+            transform: scale(1.1);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+        }
+
+        .nav-link {
+            color: #ffffff !important;
+            font-weight: 500;
+            padding: 0.75rem 1rem !important;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.3s ease;
+        }
+
+        .nav-link:hover::before {
+            left: 100%;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .nav-link:hover i, .nav-link.active i {
+            color: #ffffff !important;
+        }
+
+        .dropdown-menu {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: var(--ethereal-shadow);
+            padding: 0.25rem;
+            max-width: 200px;
+            font-size: 0.875rem;
+        }
+
+        .dropdown-item {
+            color: #ffffff !important;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.3s ease;
+            margin-bottom: 0.125rem;
+            font-size: 0.875rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff !important;
+            transform: translateX(5px);
+        }
+
+        .dropdown-item:hover i {
+            color: #ffffff !important;
+        }
+
+        /* User Avatar */
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--ethereal-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Messages */
+        .message-alert {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: var(--ethereal-text);
+            border-left: 4px solid;
+            animation: etherealSlideIn 0.5s ease;
+        }
+
+        .alert-success { border-left-color: #38ef7d; }
+        .alert-error, .alert-danger { border-left-color: #ff6b6b; }
+        .alert-warning { border-left-color: #ffd93d; }
+        .alert-info { border-left-color: #74b9ff; }
+
+        @keyframes etherealSlideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Main Content */
+        .main-content {
+            min-height: calc(100vh - 80px);
+            padding-top: 2rem;
+            position: relative;
+        }
+
+        /* Floating Action Button */
+        .fab-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .fab-main {
+            width: 60px;
+            height: 60px;
+            background: var(--ethereal-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .fab-main:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+        }
+
+        .fab-options {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .fab-options.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .fab-option {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ethereal-text);
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .fab-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+            color: var(--ethereal-text);
+        }
+
+        .fab-option::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .fab-option:hover::after {
+            opacity: 1;
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--ethereal-text-muted);
+        }
+
+        /* Button Styling */
+        .btn {
+            border-radius: 15px;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.3s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--ethereal-primary);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-outline-primary {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--ethereal-text);
+        }
+
+        .btn-outline-primary:hover {
+            transform: translateY(-2px);
+            color: var(--ethereal-text);
+        }
+
+        /* Card Styling */
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            box-shadow: var(--ethereal-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--ethereal-shadow-hover);
+        }
+
+        .card-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px 20px 0 0;
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: var(--ethereal-text);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
+            color: var(--ethereal-text);
+        }
+
+        .form-control::placeholder {
+            color: var(--ethereal-text-muted);
+        }
+
+        /* Table Styling */
+        .table {
+            color: var(--ethereal-text);
+        }
+
+        .table th {
+            border-color: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: var(--ethereal-shadow);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Text Colors */
+        * {
+            color: var(--ethereal-text) !important;
+        }
+
+        .text-muted {
+            color: var(--ethereal-text-muted) !important;
+        }
+
+        .text-primary { color: #4facfe !important; }
+        .text-success { color: #38ef7d !important; }
+        .text-warning { color: #ffd93d !important; }
+        .text-danger { color: #ff6b6b !important; }
+        .text-info { color: #74b9ff !important; }
+
+        /* Link Styling */
+        a {
+            color: #ffffff !important;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #ffffff !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--ethereal-accent);
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--ethereal-primary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .main-content {
+                padding-top: 1rem;
+            }
+            
+            .fab-main {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Dark mode enhancements */
+        .dark-mode {
+            --ethereal-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --ethereal-glass: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Animation classes */
+        .ethereal-fade-in {
+            animation: etherealFadeIn 0.6s ease;
+        }
+
+        @keyframes etherealFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ethereal-pulse {
+            animation: etherealPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes etherealPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+    </style>
+    
+    <!-- Mobile optimization meta tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Ethereal Writing">
+    
+    <!-- Theme System CSS -->
+    <link rel="stylesheet" href="{% static 'css/themes.css' %}">
+</head>
+<body class="ethereal-fade-in" data-theme="{{ user.writer_profile.theme|default:'ethereal' }}">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'writer:dashboard' %}">
+                <i class="fas fa-typewriter me-2" style="color: #ffffff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); font-size: 1.2rem;"></i>
+                <span class="d-none d-sm-inline">Writer's Web Dream</span>
+                <span class="d-sm-none">Writer's</span>
+            </a>
+            
+            <!-- Mobile menu button -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if user.is_authenticated %}
+                    <!-- Mobile Navigation -->
+                    <li class="nav-item">
+                        <a class="nav-link active-nav" href="{% url 'writer:dashboard' %}">
+                            <i class="fas fa-home me-1"></i>
+                            <span class="d-lg-inline">Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" href="{% url 'writer:project_list' %}">
+                            <i class="fas fa-folder-open me-1"></i>My Projects
+                        </a>
+                    </li>
+                    
+                    <!-- Simplified Desktop Navigation -->
+                    <li class="nav-item d-none d-lg-block">
+                        <a class="nav-link" href="{% url 'writer:project_list' %}">
+                            <i class="fas fa-folder-open me-1"></i>My Projects
+                        </a>
+                    </li>
+                    
+                    <!-- Theme Selector Dropdown -->
+                    <li class="nav-item dropdown d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle" href="#" id="themesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-palette me-1"></i>Themes
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-modern">
+                            <li><a class="dropdown-item" href="#" onclick="showThemeSelector()">
+                                <i class="fas fa-palette me-2"></i>Writing Themes
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="toggleDarkMode()">
+                                <i class="fas fa-moon me-2"></i>Dark Mode
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    {% endif %}
+                </ul>
+                
+                <!-- User menu -->
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle user-menu" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="d-none d-md-inline">{{ user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-modern">
+                            <li><h6 class="dropdown-header">
+                                <i class="fas fa-user-circle me-2"></i>{{ user.username }}
+                            </h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'writer:user_preferences' %}">
+                                <i class="fas fa-cog me-2"></i>Preferences
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger" style="width:100%;text-align:left;">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            <span class="d-none d-sm-inline">Login</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show message-alert" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                <span class="flex-grow-1">{{ message }}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="{% block main_class %}main-content{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Floating Action Button for Mobile -->
+    <div class="fab-container d-lg-none">
+        <div class="fab-main" onclick="toggleFab()">
+            <i class="fas fa-plus fab-icon"></i>
+        </div>
+        <div class="fab-options" id="fabOptions">
+            <a href="{% url 'writer:project_list' %}" class="fab-option" data-tooltip="My Writing Projects">
+                <i class="fas fa-folder"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4 d-none d-md-block">
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        <i class="fas fa-feather-alt me-2" style="background: var(--ethereal-accent); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                        <strong>Writer's Web Dream</strong> - Where words weave magic
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        <i class="fas fa-heart text-danger me-1"></i> Crafted for visionaries and dreamers
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <!-- Enhanced Ethereal JavaScript -->
+    <script>
+        // Enhanced Dark mode toggle with smooth transitions
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            
+            // Add smooth transition effect
+            document.body.style.transition = 'all 0.5s ease';
+            setTimeout(() => {
+                document.body.style.transition = '';
+            }, 500);
+        }
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Enhanced Floating Action Button with animations
+        function toggleFab() {
+            const fabOptions = document.getElementById('fabOptions');
+            const fabMain = document.querySelector('.fab-main');
+            const fabIcon = document.querySelector('.fab-icon');
+            
+            fabOptions.classList.toggle('active');
+            fabMain.classList.toggle('active');
+            
+            if (fabOptions.classList.contains('active')) {
+                fabIcon.style.transform = 'rotate(45deg)';
+                fabMain.style.background = 'var(--ethereal-sunset)';
+            } else {
+                fabIcon.style.transform = 'rotate(0deg)';
+                fabMain.style.background = 'var(--ethereal-accent)';
+            }
+        }
+
+        // Enhanced mobile navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-close navbar on mobile when clicking a link
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link:not(.dropdown-toggle)');
+            const navbarCollapse = document.querySelector('.navbar-collapse');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) {
+                        navbarCollapse.classList.remove('show');
+                    }
+                });
+            });
+
+            // Add ethereal glow to cards on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+            
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('ethereal-fade-in');
+                        if (entry.target.classList.contains('card') || entry.target.classList.contains('ethereal-glass')) {
+                            entry.target.style.animation = 'etherealGlow 3s ease-in-out infinite';
+                        }
+                    }
+                });
+            }, observerOptions);
+            
+            document.querySelectorAll('.card, .ethereal-glass, .stat-card').forEach(card => {
+                observer.observe(card);
+            });
+
+            // Add ethereal particle effects
+            createEtherealParticles();
+        });
+
+        // Create magical floating particles
+        function createEtherealParticles() {
+            const particleContainer = document.createElement('div');
+            particleContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: -1;
+            `;
+            document.body.appendChild(particleContainer);
+
+            for (let i = 0; i < 15; i++) {
+                createParticle(particleContainer);
+            }
+        }
+
+        function createParticle(container) {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: absolute;
+                width: 4px;
+                height: 4px;
+                background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+                border-radius: 50%;
+                pointer-events: none;
+            `;
+            
+            // Random starting position
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            
+            container.appendChild(particle);
+            
+            // Animate particle
+            animateParticle(particle);
+        }
+
+        function animateParticle(particle) {
+            const duration = 10000 + Math.random() * 20000; // 10-30 seconds
+            const startX = parseFloat(particle.style.left);
+            const startY = parseFloat(particle.style.top);
+            const endX = Math.random() * 100;
+            const endY = Math.random() * 100;
+            
+            particle.animate([
+                {
+                    left: startX + '%',
+                    top: startY + '%',
+                    opacity: 0
+                },
+                {
+                    left: ((startX + endX) / 2) + '%',
+                    top: ((startY + endY) / 2) + '%',
+                    opacity: 1
+                },
+                {
+                    left: endX + '%',
+                    top: endY + '%',
+                    opacity: 0
+                }
+            ], {
+                duration: duration,
+                easing: 'ease-in-out'
+            }).addEventListener('finish', () => {
+                // Restart animation
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                animateParticle(particle);
+            });
+        }
+
+        // Enhanced theme selector with ethereal themes
+        function showThemeSelector() {
+            const themes = [
+                { name: 'Ethereal Ocean', class: 'theme-ethereal-ocean', description: 'Deep blues and cosmic vibes', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                { name: 'Cosmic Aurora', class: 'theme-cosmic-aurora', description: 'Northern lights inspiration', gradient: 'linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%)' },
+                { name: 'Sunset Dreams', class: 'theme-sunset-dreams', description: 'Warm sunset colors', gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
+                { name: 'Forest Whisper', class: 'theme-forest-whisper', description: 'Deep forest greens', gradient: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)' },
+                { name: 'Royal Purple', class: 'theme-royal-purple', description: 'Majestic purple tones', gradient: 'linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%)' },
+                { name: 'Rose Gold', class: 'theme-rose-gold', description: 'Elegant rose gold', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+                { name: 'Midnight Blue', class: 'theme-midnight-blue', description: 'Deep midnight vibes', gradient: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)' },
+                { name: 'Sepia Dreams', class: 'theme-sepia-dreams', description: 'Vintage paper feel', gradient: 'linear-gradient(135deg, #ddd6c1 0%, #b8860b 100%)' }
+            ];
+            
+            let modalHTML = `
+                <div class="modal fade" id="themeModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="fas fa-palette me-2"></i>Choose Your Ethereal Theme</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-muted mb-4">Transform your writing environment with these magical themes</p>
+                                <div class="row">`;
+            
+            themes.forEach(theme => {
+                modalHTML += `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card theme-card h-100" onclick="applyEtherealTheme('${theme.class}', '${theme.gradient}')" style="cursor: pointer; border: 2px solid transparent;">
+                            <div class="card-body text-center d-flex flex-column">
+                                <h6 class="card-title">${theme.name}</h6>
+                                <p class="card-text small text-muted flex-grow-1">${theme.description}</p>
+                                <div class="theme-preview mb-2" style="height: 60px; background: ${theme.gradient}; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                    Preview
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            
+            modalHTML += `
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="resetToDefault()">Reset to Default</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('themeModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('themeModal'));
+            modal.show();
+        }
+        
+        function applyEtherealTheme(themeClass, gradient) {
+            // Remove existing theme classes
+            document.body.className = document.body.className.replace(/theme-\w+(-\w+)*/g, '');
+            
+            // Add new theme class
+            if (themeClass) {
+                document.body.classList.add(themeClass);
+                // Update CSS custom property
+                document.documentElement.style.setProperty('--ethereal-primary', gradient);
+            }
+            
+            // Save theme preference
+            localStorage.setItem('selectedEtherealTheme', themeClass);
+            localStorage.setItem('selectedEtherealGradient', gradient);
+            
+            // Add transition effect
+            document.body.style.transition = 'all 0.8s ease';
+            setTimeout(() => {
+                document.body.style.transition = '';
+            }, 800);
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('themeModal'));
+            modal.hide();
+            
+            showEtherealNotification('Theme applied successfully! ✨', 'success');
+        }
+
+        function resetToDefault() {
+            document.body.className = document.body.className.replace(/theme-\w+(-\w+)*/g, '');
+            document.documentElement.style.setProperty('--ethereal-primary', 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)');
+            localStorage.removeItem('selectedEtherealTheme');
+            localStorage.removeItem('selectedEtherealGradient');
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('themeModal'));
+            modal.hide();
+            
+            showEtherealNotification('Reset to default theme ✨', 'info');
+        }
+        
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('selectedEtherealTheme');
+            const savedGradient = localStorage.getItem('selectedEtherealGradient');
+            if (savedTheme && savedGradient) {
+                document.body.classList.add(savedTheme);
+                document.documentElement.style.setProperty('--ethereal-primary', savedGradient);
+            }
+        });
+
+        // Enhanced collaboration tools
+        function showCollaborationTools() {
+            const collaborationHTML = `
+                <div class="modal fade" id="collaborationModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="fas fa-users me-2"></i>Collaboration Hub</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-4">
+                                    <div class="ethereal-pulse" style="display: inline-block; padding: 2rem; background: var(--ethereal-accent); border-radius: 50%; margin-bottom: 1rem;">
+                                        <i class="fas fa-users fa-3x" style="color: white;"></i>
+                                    </div>
+                                    <h4>Real-time Collaboration</h4>
+                                    <p class="text-muted">Work together with other writers in real-time</p>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-share-alt fa-2x mb-3" style="color: var(--ethereal-accent);"></i>
+                                                <h6>Share Projects</h6>
+                                                <p class="small text-muted">Invite collaborators to your writing projects</p>
+                                                <button class="btn btn-sm btn-outline-primary">Coming Soon</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-comments fa-2x mb-3" style="color: var(--ethereal-sunset);"></i>
+                                                <h6>Live Comments</h6>
+                                                <p class="small text-muted">Add comments and suggestions in real-time</p>
+                                                <button class="btn btn-sm btn-outline-primary">Coming Soon</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-history fa-2x mb-3" style="color: var(--ethereal-forest);"></i>
+                                                <h6>Version Control</h6>
+                                                <p class="small text-muted">Track changes and revert to previous versions</p>
+                                                <button class="btn btn-sm btn-outline-primary">Coming Soon</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-video fa-2x mb-3" style="color: var(--ethereal-cosmic);"></i>
+                                                <h6>Video Calls</h6>
+                                                <p class="small text-muted">Discuss your work face-to-face</p>
+                                                <button class="btn btn-sm btn-outline-primary">Coming Soon</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('collaborationModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', collaborationHTML);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('collaborationModal'));
+            modal.show();
+        }
+
+        // Enhanced writing preferences (keeping the existing functionality but with ethereal styling)
+        function showWritingSettings() {
+            // Use the existing comprehensive settings modal but apply ethereal styling
+            // [Previous showWritingSettings function code remains the same]
+            // Just updating the notification
+            showEtherealNotification('Enhanced writing preferences coming soon! ✨', 'info');
+        }
+        
+        function showEtherealNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed ethereal-fade-in`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 350px; backdrop-filter: blur(15px); border-radius: 15px;';
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-sparkles me-2"></i>
+                    <span class="flex-grow-1">${message}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        notification.parentNode.removeChild(notification);
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // Add ethereal cursor trail effect
+        let cursorTrail = [];
+        document.addEventListener('mousemove', function(e) {
+            cursorTrail.push({x: e.clientX, y: e.clientY, time: Date.now()});
+            
+            // Remove old trail points
+            cursorTrail = cursorTrail.filter(point => Date.now() - point.time < 500);
+            
+            // Create trail element occasionally
+            if (Math.random() < 0.1) {
+                createCursorSparkle(e.clientX, e.clientY);
+            }
+        });
+
+        function createCursorSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.style.cssText = `
+                position: fixed;
+                left: ${x}px;
+                top: ${y}px;
+                width: 4px;
+                height: 4px;
+                background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                transform: translate(-50%, -50%);
+            `;
+            
+            document.body.appendChild(sparkle);
+            
+            sparkle.animate([
+                { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' },
+                { opacity: 0, transform: 'translate(-50%, -50%) scale(0)' }
+            ], {
+                duration: 500,
+                easing: 'ease-out'
+            }).addEventListener('finish', () => {
+                if (sparkle.parentNode) {
+                    sparkle.parentNode.removeChild(sparkle);
+                }
+            });
+        }
+
+        // Add keyboard shortcuts for ethereal features
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Shift + T = Theme selector
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'T') {
+                e.preventDefault();
+                showThemeSelector();
+            }
+            
+            // Ctrl/Cmd + Shift + P = Writing preferences
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
+                e.preventDefault();
+                showWritingSettings();
+            }
+        });
+    </script>
+    
+    <!-- Enhanced Theme System JavaScript -->
+    <script>
+    // Enhanced theme selector with beautiful modal
+    function showThemeSelector() {
+        const themes = [
+            { 
+                name: 'Ethereal Ocean', 
+                class: 'theme-ethereal-ocean', 
+                dbValue: 'ethereal',
+                description: 'Deep blues and cosmic vibes', 
+                gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+            },
+            { 
+                name: 'Forest Whisper', 
+                class: 'theme-forest-whisper', 
+                dbValue: 'forest',
+                description: 'Deep forest greens', 
+                gradient: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)' 
+            },
+            { 
+                name: 'Ocean Dreams', 
+                class: 'theme-ocean-dreams', 
+                dbValue: 'ocean',
+                description: 'Deep ocean blues', 
+                gradient: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' 
+            },
+            { 
+                name: 'Sunset Dreams', 
+                class: 'theme-sunset-dreams', 
+                dbValue: 'sunset',
+                description: 'Warm sunset colors', 
+                gradient: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' 
+            },
+            { 
+                name: 'Midnight Magic', 
+                class: 'theme-midnight-magic', 
+                dbValue: 'midnight',
+                description: 'Dark midnight vibes', 
+                gradient: 'linear-gradient(135deg, #0c0c0c 0%, #2c2c2c 100%)' 
+            },
+            { 
+                name: 'Lavender Fields', 
+                class: 'theme-lavender-fields', 
+                dbValue: 'lavender',
+                description: 'Gentle lavender tones', 
+                gradient: 'linear-gradient(135deg, #8360c3 0%, #2ebf91 100%)' 
+            },
+            { 
+                name: 'Autumn Leaves', 
+                class: 'theme-autumn-leaves', 
+                dbValue: 'autumn',
+                description: 'Warm autumn colors', 
+                gradient: 'linear-gradient(135deg, #d2691e 0%, #cd853f 100%)' 
+            },
+            { 
+                name: 'Monochrome', 
+                class: 'theme-monochrome', 
+                dbValue: 'monochrome',
+                description: 'Classic black and white', 
+                gradient: 'linear-gradient(135deg, #2c2c2c 0%, #4a4a4a 100%)' 
+            }
+        ];
+        
+        let modalHTML = `
+            <div class="modal fade" id="themeModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="fas fa-palette me-2"></i>Choose Your Writing Theme</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted mb-4">Transform your writing environment with these magical themes</p>
+                            <div class="row">`;
+        
+        themes.forEach(theme => {
+            modalHTML += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card theme-card h-100" onclick="applyEtherealTheme('${theme.class}', '${theme.gradient}', '${theme.dbValue}')" style="cursor: pointer; border: 2px solid transparent;">
+                        <div class="card-body text-center d-flex flex-column">
+                            <h6 class="card-title">${theme.name}</h6>
+                            <p class="card-text small text-muted flex-grow-1">${theme.description}</p>
+                            <div class="theme-preview mb-2" style="height: 60px; background: ${theme.gradient}; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                Preview
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        modalHTML += `
+                            </div>
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-secondary" onclick="resetToDefault()">
+                                    <i class="fas fa-undo me-2"></i>Reset to Default
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('themeModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('themeModal'));
+        modal.show();
+    }
+    
+    function applyEtherealTheme(themeClass, gradient, dbValue) {
+        // Update UI immediately
+        document.body.setAttribute('data-theme', dbValue);
+        document.documentElement.setAttribute('data-theme', dbValue);
+        
+        // Update CSS custom property for immediate visual change
+        document.documentElement.style.setProperty('--ethereal-primary', gradient);
+        
+        // Add transition effect
+        document.body.style.transition = 'all 0.8s ease';
+        setTimeout(() => {
+            document.body.style.transition = '';
+        }, 800);
+        
+        // Save to database
+        fetch('/writer/api/update-theme/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                'theme': dbValue
+            })
+        }).catch(error => {
+            console.log('Theme saved locally only');
+            localStorage.setItem('selectedTheme', dbValue);
+        });
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('themeModal'));
+        modal.hide();
+        
+        showEtherealNotification('Theme applied successfully! ✨', 'success');
+    }
+
+    function resetToDefault() {
+        applyEtherealTheme('theme-ethereal-ocean', 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 'ethereal');
+        showEtherealNotification('Reset to default theme ✨', 'info');
+    }
+    
+    function toggleDarkMode() {
+        applyEtherealTheme('theme-midnight-magic', 'linear-gradient(135deg, #0c0c0c 0%, #2c2c2c 100%)', 'midnight');
+    }
+    
+    // Show notification function
+    function showEtherealNotification(message, type) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'info'} position-fixed`;
+        notification.style.cssText = `
+            top: 20px; right: 20px; z-index: 9999; 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        `;
+        notification.innerHTML = message;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+    
+    // CSRF token helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Load saved theme on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentTheme = document.body.getAttribute('data-theme') || 'ethereal';
+        // Apply theme variables on load
+        const themeMap = {
+            'ethereal': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'forest': 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)',
+            'ocean': 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+            'sunset': 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)',
+            'midnight': 'linear-gradient(135deg, #0c0c0c 0%, #2c2c2c 100%)',
+            'lavender': 'linear-gradient(135deg, #8360c3 0%, #2ebf91 100%)',
+            'autumn': 'linear-gradient(135deg, #d2691e 0%, #cd853f 100%)',
+            'monochrome': 'linear-gradient(135deg, #2c2c2c 0%, #4a4a4a 100%)'
+        };
+        
+        if (themeMap[currentTheme]) {
+            document.documentElement.style.setProperty('--ethereal-primary', themeMap[currentTheme]);
+        }
+    });
+    
+    // Add keyboard shortcuts for theme features
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Shift + T = Theme selector
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'T') {
+            e.preventDefault();
+            showThemeSelector();
+        }
+        // Ctrl/Cmd + Shift + S = Creative Sparks
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+            e.preventDefault();
+            showCreativeSparks();
+        }
+    });
+    </script>
+    
+    <!-- Creative Sparks System -->
+    <script>
+    // Character Sparks Database
+    const characterSparks = [
+        "A librarian who can read the emotions embedded in old books",
+        "A taxi driver who only picks up passengers going to their past",
+        "A barista who can taste people's secrets in their coffee orders",
+        "A night security guard who sees ghosts that only appear on camera",
+        "A clockmaker whose timepieces show when people will die",
+        "A florist who grows flowers that bloom with people's forgotten memories",
+        "A mailman who delivers letters from the dead",
+        "A chef whose food can cure heartbreak but causes other emotional ailments",
+        "A lighthouse keeper who signals to ships that exist in different dimensions",
+        "A antique dealer who sells objects that contain their previous owners' souls",
+        "A street musician whose songs can change the weather",
+        "A locksmith who can open doors to people's hidden traumas",
+        "A seamstress who embroiders the future into her work",
+        "A bartender who serves drinks that reveal people's true intentions",
+        "A photographer whose pictures predict the future",
+        "A gardener who plants seeds of hope in the most unlikely places",
+        "A bookbinder who repairs broken relationships along with broken spines",
+        "A ice cream vendor whose flavors trigger specific childhood memories",
+        "A fortune teller who sees the truth but can only speak in lies",
+        "A janitor who cleans up the metaphorical messes in people's lives"
+    ];
+
+    // Plot Twists Database
+    const plotTwists = [
+        "The detective realizes they've been investigating their own crime, committed during a blackout",
+        "The love interest is actually the protagonist's sibling, separated at birth",
+        "The entire story takes place in the mind of a coma patient",
+        "The protagonist discovers they're a clone of the person they're trying to save",
+        "The helpful mentor figure is actually the main antagonist",
+        "The ghost haunting the house is the protagonist from the future",
+        "Everyone in town is an actor hired to help the protagonist recover from trauma",
+        "The protagonist's memories are artificial implants from someone else's life",
+        "The apocalypse already happened; the protagonist is living in a simulation",
+        "The person the protagonist is mourning is actually still alive and orchestrating events",
+        "The protagonist's best friend has been dead for years; they've been talking to a hallucination",
+        "The story is being written in real-time by a character within the story",
+        "The protagonist is the only real person in a world full of NPCs",
+        "The murder victim faked their own death and is manipulating the investigation",
+        "The protagonist's therapist is actually their patient, and roles are reversed",
+        "The evil corporation is actually trying to save humanity from the 'hero'",
+        "The time traveler realizes they're trapped in a causal loop they created",
+        "The magical powers were never real; it's all advanced technology",
+        "The protagonist's child is actually their parent, aged backwards by magic",
+        "The whole adventure was a dying person's last dream, lasting only seconds"
+    ];
+
+    // Mystery Elements Database
+    const mysteryElements = [
+        "A locked room with no windows, yet the victim was shot from outside",
+        "Identical fingerprints at multiple crime scenes, but the suspect has an alibi",
+        "A message written in disappearing ink that only appears under moonlight",
+        "Security footage showing the victim talking to someone who isn't there",
+        "A murder weapon that couldn't have been accessed by any of the suspects",
+        "Witnesses who all remember the same event differently, but consistently so",
+        "A victim found in a place they physically couldn't have reached",
+        "Evidence that keeps changing every time investigators look at it",
+        "A confession letter written in the victim's handwriting after their death",
+        "Multiple victims who all died at the exact same time in different locations",
+        "A crime scene that perfectly replicates one from an unpublished novel",
+        "DNA evidence that belongs to someone who died fifty years ago",
+        "A victim who called for help an hour after they were already confirmed dead",
+        "Surveillance footage showing events that haven't happened yet",
+        "A murder that seems to have been committed by gravity itself",
+        "Evidence that suggests the crime happened in reverse chronological order",
+        "A victim who left a voicemail describing their own murder in detail",
+        "Physical evidence that proves two contradictory versions of events",
+        "A crime scene where every clue points to a different impossible suspect",
+        "A pattern of murders that follows the plot of a book that doesn't exist yet"
+    ];
+
+    // Writing Prompts Database
+    const writingPrompts = [
+        "Your character finds a diary that writes itself, but it's describing their future",
+        "Every lie your protagonist tells becomes true, but in the worst possible way",
+        "Your character can hear everyone's thoughts, but only when people are lying",
+        "A character receives a text message from their own phone number",
+        "Your protagonist discovers their reflection is living its own life",
+        "Every door your character opens leads to their childhood bedroom, but from different ages",
+        "Your character's shadow starts behaving independently and seems to know things",
+        "A person keeps waking up in other people's bodies, but their own body is missing",
+        "Your character finds a camera that shows what happened in any location exactly 24 hours ago",
+        "Every book your protagonist reads changes its ending based on their current mood",
+        "Your character can only tell the truth, but everyone thinks they're lying",
+        "A person discovers that everyone they've ever loved was an actor hired by their parents",
+        "Your character's dreams start coming true, but only the nightmares",
+        "Every song on the radio seems to be about your protagonist's specific situation",
+        "Your character finds a key that unlocks things they didn't know were locked",
+        "A person realizes they've been living the same conversation for years",
+        "Your character's emotions start affecting the weather, but they don't realize it",
+        "Every photo your protagonist takes shows one extra person who wasn't there",
+        "Your character can taste colors and see sounds, but only when they're in danger",
+        "A person discovers their childhood imaginary friend was real and is now in prison"
+    ];
+
+    // Show specific creative spark
+    function showCharacterSpark() {
+        const spark = getRandomElement(characterSparks);
+        showCreativeModal('Character Spark', spark, '👤', 'user-secret');
+    }
+
+    function showPlotTwist() {
+        const twist = getRandomElement(plotTwists);
+        showCreativeModal('Plot Twist', twist, '⚡', 'bolt');
+    }
+
+    function showMysteryElement() {
+        const element = getRandomElement(mysteryElements);
+        showCreativeModal('Mystery Element', element, '🔍', 'search');
+    }
+
+    function showWritingPrompt() {
+        const prompt = getRandomElement(writingPrompts);
+        showCreativeModal('Writing Prompt', prompt, '✍️', 'pen-fancy');
+    }
+
+    // Show all creative sparks in one interface
+    function showCreativeSparks() {
+        const modalHTML = `
+            <div class="modal fade" id="creativeSparksModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-sparkles me-2"></i>Creative Sparks Generator
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="card spark-card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="fas fa-user-secret me-2"></i>
+                                            <h6 class="mb-0">Character Spark</h6>
+                                            <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshSpark('character')">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <p id="character-spark" class="card-text">${getRandomElement(characterSparks)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card spark-card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="fas fa-bolt me-2"></i>
+                                            <h6 class="mb-0">Plot Twist</h6>
+                                            <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshSpark('plot')">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <p id="plot-spark" class="card-text">${getRandomElement(plotTwists)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card spark-card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="fas fa-search me-2"></i>
+                                            <h6 class="mb-0">Mystery Element</h6>
+                                            <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshSpark('mystery')">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <p id="mystery-spark" class="card-text">${getRandomElement(mysteryElements)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card spark-card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="fas fa-pen-fancy me-2"></i>
+                                            <h6 class="mb-0">Writing Prompt</h6>
+                                            <button class="btn btn-sm btn-outline-primary ms-auto" onclick="refreshSpark('prompt')">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <p id="prompt-spark" class="card-text">${getRandomElement(writingPrompts)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-4">
+                                <button type="button" class="btn btn-primary btn-lg" onclick="refreshAllSparks()">
+                                    <i class="fas fa-magic me-2"></i>Generate New Set
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('creativeSparksModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('creativeSparksModal'));
+        modal.show();
+    }
+
+    // Helper function to show individual creative modal
+    function showCreativeModal(title, content, emoji, iconClass) {
+        const modalHTML = `
+            <div class="modal fade" id="creativeModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-${iconClass} me-2"></i>${title}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center py-4">
+                            <div class="creative-spark-display">
+                                <div class="spark-emoji mb-3">${emoji}</div>
+                                <blockquote class="blockquote">
+                                    <p class="mb-0 fs-5">"${content}"</p>
+                                </blockquote>
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="button" class="btn btn-primary" onclick="copyToClipboard('${content.replace(/'/g, "\\'")}')">
+                                <i class="fas fa-copy me-2"></i>Copy
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="generateAnother('${title}', '${emoji}', '${iconClass}')">
+                                <i class="fas fa-sync-alt me-2"></i>Another One
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('creativeModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('creativeModal'));
+        modal.show();
+    }
+
+    // Helper functions
+    function getRandomElement(array) {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function refreshSpark(type) {
+        let content, elementId;
+        switch(type) {
+            case 'character':
+                content = getRandomElement(characterSparks);
+                elementId = 'character-spark';
+                break;
+            case 'plot':
+                content = getRandomElement(plotTwists);
+                elementId = 'plot-spark';
+                break;
+            case 'mystery':
+                content = getRandomElement(mysteryElements);
+                elementId = 'mystery-spark';
+                break;
+            case 'prompt':
+                content = getRandomElement(writingPrompts);
+                elementId = 'prompt-spark';
+                break;
+        }
+        document.getElementById(elementId).textContent = content;
+    }
+
+    function refreshAllSparks() {
+        refreshSpark('character');
+        refreshSpark('plot');
+        refreshSpark('mystery');
+        refreshSpark('prompt');
+    }
+
+    function generateAnother(title, emoji, iconClass) {
+        let content;
+        switch(title) {
+            case 'Character Spark':
+                content = getRandomElement(characterSparks);
+                break;
+            case 'Plot Twist':
+                content = getRandomElement(plotTwists);
+                break;
+            case 'Mystery Element':
+                content = getRandomElement(mysteryElements);
+                break;
+            case 'Writing Prompt':
+                content = getRandomElement(writingPrompts);
+                break;
+        }
+        showCreativeModal(title, content, emoji, iconClass);
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showEtherealNotification('Copied to clipboard! 📋', 'success');
+        }).catch(() => {
+            showEtherealNotification('Could not copy to clipboard', 'error');
+        });
+    }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

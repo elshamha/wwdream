@@ -11,7 +11,7 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="{% url 'writer:project_detail' character.project.pk %}" style="color: #ffffff !important;">{{ character.project.title }}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'writer:character_list' character.project.pk %}">Characters</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:character_universe' character.project.pk %}">Universe</a></li>
                     <li class="breadcrumb-item"><a href="{% url 'writer:character_detail' character.pk %}">{{ character.name }}</a></li>
                     <li class="breadcrumb-item active">Delete</li>
                 </ol>

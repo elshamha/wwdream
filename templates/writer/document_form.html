@@ -104,7 +104,7 @@
                     <i class="fas fa-save me-1"></i>Save Document
                 </button>
                 {% if object %}
-                <a href="{% url 'writer:document_detail' object.pk %}" class="btn btn-outline-info ms-2">
+                <a href="{% url 'writer:google_docs_editor_document' object.pk %}" class="btn btn-outline-info ms-2">
                     <i class="fas fa-eye me-1"></i>View Document
                 </a>
                 {% endif %}

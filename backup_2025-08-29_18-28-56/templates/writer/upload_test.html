@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Document Upload Test{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Document Upload & Analysis Test</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form id="uploadForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="fileInput" class="form-label">Choose File</label>
+                    <input type="file" class="form-control" id="fileInput" name="file" accept=".txt,.html">
+                </div>
+                
+                <button type="button" class="btn btn-primary" onclick="uploadFile()">Upload & Analyze</button>
+            </form>
+            
+            <div id="results" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function uploadFile() {
+    const fileInput = document.getElementById('fileInput');
+    const results = document.getElementById('results');
+    
+    if (!fileInput.files.length) {
+        alert('Please select a file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    results.innerHTML = '<div class="alert alert-info">Uploading...</div>';
+    
+    fetch('/writer/upload-analysis/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        return response.text();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        try {
+            const jsonData = JSON.parse(data);
+            if (jsonData.success) {
+                results.innerHTML = '<div class="alert alert-success">Analysis Complete!</div>' + displayAnalysisResults(jsonData.analysis);
+            } else {
+                results.innerHTML = '<div class="alert alert-danger">Error: ' + jsonData.error + '</div>';
+            }
+        } catch (e) {
+            results.innerHTML = '<div class="alert alert-warning">Non-JSON response:</div><pre>' + data.substring(0, 500) + '</pre>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        results.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+    });
+}
+
+function displayAnalysisResults(analysis) {
+    let html = '<div class="analysis-summary mb-4">';
+    html += '<div class="row text-center">';
+    html += `<div class="col-3"><div class="h4 text-primary">${analysis.titles.length}</div><small>Titles Found</small></div>`;
+    html += `<div class="col-3"><div class="h4 text-success">${analysis.chapters.length}</div><small>Chapters Detected</small></div>`;
+    html += `<div class="col-3"><div class="h4 text-info">${analysis.total_words}</div><small>Total Words</small></div>`;
+    html += `<div class="col-3"><div class="h4 text-warning">${analysis.total_sentences}</div><small>Total Sentences</small></div>`;
+    html += '</div></div>';
+    
+    if (analysis.chapters.length > 0) {
+        html += '<h6><i class="fas fa-bookmark text-primary"></i> Detected Chapters:</h6>';
+        analysis.chapters.forEach((chapter, index) => {
+            html += `
+                <div class="border rounded p-3 mb-2 bg-light">
+                    <strong>Chapter ${index + 1}:</strong> ${chapter.text}
+                    <small class="text-muted d-block">Found at position: ${chapter.position}</small>
+                </div>
+            `;
+        });
+    }
+    
+    if (analysis.suggested_splits.length > 0) {
+        html += '<h6><i class="fas fa-cut text-warning"></i> Automatic Pagination (4000 words each):</h6>';
+        html += '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Document will be automatically split into chapters of ~4000 words, ending at the last period:</div>';
+        analysis.suggested_splits.forEach((split, index) => {
+            const endingIcon = split.ends_with_period ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-exclamation-triangle text-warning"></i>';
+            const endingText = split.ends_with_period ? 'Ends with period' : 'No period found, split at word boundary';
+            
+            html += `
+                <div class="border rounded p-3 mb-2 bg-light">
+                    <strong>${split.chapter_name}</strong>
+                    <div class="row mt-1">
+                        <div class="col-6">
+                            <small class="text-muted">~${split.word_count} words</small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">${endingIcon} ${endingText}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    if (analysis.chapters.length === 0 && analysis.suggested_splits.length === 0) {
+        html += '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Document will be imported as a single chapter (under 4000 words).</div>';
+    }
+    
+    return html;
+}
+</script>
+{% endblock %}

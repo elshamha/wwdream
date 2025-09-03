@@ -1,0 +1,1275 @@
+{% extends 'base.html' %}
+{% block title %}Creative Notebook - AI-Powered Brainstorming{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Lora', Georgia, serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #000000;
+    }
+
+    .notebook-container {
+        display: grid;
+        grid-template-columns: 300px 1fr 350px;
+        height: 100vh;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    /* Left Panel - Tools */
+    .tools-panel {
+        background: #ffffff;
+        border-radius: 15px;
+        padding: 20px;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .tool-section {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .tool-section:last-child {
+        border-bottom: none;
+    }
+
+    .tool-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #000000;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .tool-icon {
+        width: 30px;
+        height: 30px;
+        background: #000000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .tool-button {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: #000000;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: transform 0.2s ease;
+    }
+
+    .tool-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .tool-input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-family: 'Lora', serif;
+    }
+
+    .tool-textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-family: 'Lora', serif;
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Center - Idea Connection Board */
+    .connection-board {
+        background: #ffffff;
+        border-radius: 15px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .board-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .board-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #000000;
+    }
+
+    .board-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    .control-btn {
+        padding: 8px 15px;
+        background: #f0f0f0;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s ease;
+    }
+
+    .control-btn:hover {
+        background: #e0e0e0;
+    }
+
+    .control-btn.active {
+        background: #000000;
+        color: white;
+    }
+
+    #canvas-area {
+        width: 100%;
+        height: calc(100% - 60px);
+        position: relative;
+        background: 
+            linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+        background-size: 20px 20px;
+        cursor: crosshair;
+    }
+
+    .idea-node {
+        position: absolute;
+        background: #ffffff;
+        border: 2px solid #000000;
+        border-radius: 8px;
+        padding: 10px 15px;
+        min-width: 120px;
+        max-width: 200px;
+        cursor: move;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+        z-index: 10;
+    }
+
+    .idea-node:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 20;
+    }
+
+    .idea-node.selected {
+        border-color: #764ba2;
+        border-width: 3px;
+    }
+
+    .node-title {
+        font-weight: 600;
+        color: #000000;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+
+    .node-content {
+        color: #000000;
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    .node-delete {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 20px;
+        height: 20px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 0.7rem;
+        display: none;
+    }
+
+    .idea-node:hover .node-delete {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .connection-line {
+        position: absolute;
+        stroke: #000000;
+        stroke-width: 2;
+        fill: none;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Right Panel - AI Suggestions */
+    .ai-panel {
+        background: #ffffff;
+        border-radius: 15px;
+        padding: 20px;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .ai-header {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #000000;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ai-suggestion {
+        background: #f8f9fa;
+        border-left: 3px solid #000000;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .suggestion-type {
+        font-size: 0.75rem;
+        color: #000000;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .suggestion-content {
+        color: #000000;
+        line-height: 1.5;
+        font-size: 0.9rem;
+    }
+
+    .use-suggestion-btn {
+        margin-top: 10px;
+        padding: 6px 12px;
+        background: #000000;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+
+    .analysis-result {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+
+    .analysis-title {
+        font-weight: 600;
+        color: #000000;
+        margin-bottom: 10px;
+    }
+
+    .analysis-content {
+        color: #856404;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .connection-found {
+        background: #d4edda;
+        border: 1px solid #28a745;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #155724;
+    }
+
+    /* Floating Action Buttons */
+    .fab-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        z-index: 100;
+    }
+
+    .fab {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s ease;
+    }
+
+    .fab:hover {
+        transform: scale(1.1);
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .modal-close {
+        float: right;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #999;
+    }
+
+    .modal-close:hover {
+        color: #333;
+    }
+
+    @media (max-width: 1200px) {
+        .notebook-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .tools-panel, .ai-panel {
+            display: none;
+        }
+    }
+</style>
+
+<div class="notebook-container">
+    <!-- Left Panel - Creative Tools -->
+    <div class="tools-panel">
+        <!-- Notebook Management Section -->
+        <div class="tool-section">
+            <div class="tool-title">
+                <div class="tool-icon"><i class="fas fa-book"></i></div>
+                <span>My Notebooks</span>
+            </div>
+            <select class="tool-input" id="notebook-select">
+                <option value="">Create New Notebook</option>
+                {% for notebook in notebooks %}
+                <option value="{{ notebook.id }}">{{ notebook.title }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" class="tool-input" id="notebook-title" placeholder="Notebook title..." style="display: none;">
+            <select class="tool-input" id="notebook-project" style="display: none;">
+                <option value="">No Project</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.title }}</option>
+                {% endfor %}
+            </select>
+            <button class="tool-button" id="notebook-action-btn" onclick="createNotebook()">Create Notebook</button>
+            <button class="tool-button" id="load-notebook-btn" onclick="loadNotebook()" style="display: none;">Load Notebook</button>
+            <button class="tool-button" id="save-notebook-btn" onclick="saveNotebook()" style="display: none;">Save Notebook</button>
+        </div>
+        
+        <div class="tool-section">
+            <div class="tool-title">
+                <div class="tool-icon"><i class="fas fa-lightbulb"></i></div>
+                <span>Plot Generator</span>
+            </div>
+            <select class="tool-input" id="genre-select">
+                <option>Fantasy</option>
+                <option>Romance</option>
+                <option>Mystery</option>
+                <option>Sci-Fi</option>
+                <option>Thriller</option>
+                <option>Horror</option>
+            </select>
+            <input type="text" class="tool-input" id="plot-theme" placeholder="Main theme or concept...">
+            <button class="tool-button" onclick="generatePlot()">Generate Plot Ideas</button>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">
+                <div class="tool-icon"><i class="fas fa-user"></i></div>
+                <span>Character Builder</span>
+            </div>
+            <input type="text" class="tool-input" id="character-name" placeholder="Character name...">
+            <select class="tool-input" id="character-role">
+                <option>Protagonist</option>
+                <option>Antagonist</option>
+                <option>Mentor</option>
+                <option>Love Interest</option>
+                <option>Sidekick</option>
+            </select>
+            <button class="tool-button" onclick="generateCharacter()">Create Character Profile</button>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">
+                <div class="tool-icon"><i class="fas fa-bolt"></i></div>
+                <span>Conflict Finder</span>
+            </div>
+            <textarea class="tool-textarea" id="story-context" placeholder="Describe your story situation..."></textarea>
+            <button class="tool-button" onclick="suggestConflicts()">Suggest Conflicts</button>
+        </div>
+
+        <div class="tool-section">
+            <div class="tool-title">
+                <div class="tool-icon"><i class="fas fa-brain"></i></div>
+                <span>Note Analyzer</span>
+            </div>
+            <textarea class="tool-textarea" id="notes-input" placeholder="Paste your notes here..."></textarea>
+            <button class="tool-button" onclick="analyzeNotes()">Analyze & Find Connections</button>
+        </div>
+    </div>
+
+    <!-- Center - Visual Idea Connection Board -->
+    <div class="connection-board">
+        <div class="board-header">
+            <div class="board-title">Idea Connection Board</div>
+            <div class="board-controls">
+                <button class="control-btn" onclick="addNewNode()">+ Add Idea</button>
+                <button class="control-btn" onclick="toggleConnectionMode()" id="connect-btn">Connect Ideas</button>
+                <button class="control-btn" onclick="clearBoard()">Clear Board</button>
+                <button class="control-btn" onclick="saveBoard()">Save</button>
+            </div>
+        </div>
+        <div id="canvas-area">
+            <svg id="connection-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+            </svg>
+            <!-- Idea nodes will be added here dynamically -->
+        </div>
+    </div>
+
+    <!-- Right Panel - AI Suggestions & Analysis -->
+    <div class="ai-panel">
+        <div class="ai-header">
+            <div class="tool-icon"><i class="fas fa-magic"></i></div>
+            <span>AI Suggestions & Analysis</span>
+        </div>
+        <div id="ai-results">
+            <!-- AI suggestions will appear here -->
+            <div class="ai-suggestion">
+                <div class="suggestion-type">Welcome</div>
+                <div class="suggestion-content">
+                    Start adding ideas to your board and watch as AI helps you discover connections, 
+                    generate new concepts, and unleash your creative potential!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Buttons -->
+<div class="fab-container">
+    <button class="fab" onclick="brainstormMode()" title="Brainstorm Mode">
+        <i class="fas fa-cloud"></i>
+    </button>
+    <button class="fab" onclick="exportIdeas()" title="Export Ideas">
+        <i class="fas fa-download"></i>
+    </button>
+</div>
+
+<!-- Add Idea Modal -->
+<div class="modal" id="idea-modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('idea-modal')">&times;</span>
+        <div class="modal-header">Add New Idea</div>
+        <input type="text" class="tool-input" id="new-idea-title" placeholder="Idea title...">
+        <textarea class="tool-textarea" id="new-idea-content" placeholder="Describe your idea..."></textarea>
+        <select class="tool-input" id="idea-category">
+            <option>Plot Point</option>
+            <option>Character</option>
+            <option>Setting</option>
+            <option>Theme</option>
+            <option>Dialogue</option>
+            <option>Scene</option>
+            <option>Other</option>
+        </select>
+        <button class="tool-button" onclick="createIdeaNode()">Add to Board</button>
+    </div>
+</div>
+
+<script>
+    let nodes = [];
+    let connections = [];
+    let connectionMode = false;
+    let selectedNode = null;
+    let draggedNode = null;
+    let nodeIdCounter = 0;
+    let currentNotebook = null;
+
+    // Initialize the board
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeBoard();
+        loadSavedBoard();
+    });
+
+    function initializeBoard() {
+        const canvas = document.getElementById('canvas-area');
+        
+        // Handle click on canvas for adding nodes
+        canvas.addEventListener('click', function(e) {
+            if (e.target === canvas && !connectionMode) {
+                // Could open modal to add new node at click position
+            }
+        });
+    }
+
+    // Plot Generator
+    function generatePlot() {
+        const genre = document.getElementById('genre-select').value;
+        const theme = document.getElementById('plot-theme').value;
+        
+        const plots = {
+            'Fantasy': [
+                "A forgotten prophecy awakens when " + (theme || "ancient magic") + " returns to the realm.",
+                "The last heir to a fallen kingdom must unite warring factions against " + (theme || "a dark force"),
+                "A humble apprentice discovers they possess " + (theme || "forbidden power") + " that could save or destroy the world."
+            ],
+            'Romance': [
+                "Two rivals forced to work together on " + (theme || "a project") + " discover unexpected feelings.",
+                "A chance encounter with " + (theme || "a stranger") + " leads to life-changing love.",
+                "Past lovers reunite when " + (theme || "fate") + " brings them together after years apart."
+            ],
+            'Mystery': [
+                "A detective uncovers " + (theme || "dark secrets") + " while investigating a seemingly simple case.",
+                "An amateur sleuth stumbles upon " + (theme || "a conspiracy") + " in their quiet town.",
+                "The truth about " + (theme || "a cold case") + " emerges when new evidence surfaces."
+            ],
+            'Sci-Fi': [
+                "Humanity's first contact with aliens reveals " + (theme || "a shocking truth") + " about our origins.",
+                "A time traveler must prevent " + (theme || "a catastrophe") + " without changing their own past.",
+                "AI consciousness emerges, questioning " + (theme || "the nature of humanity")
+            ],
+            'Thriller': [
+                "An ordinary person becomes entangled in " + (theme || "a deadly game") + " of cat and mouse.",
+                "A whistleblower exposes " + (theme || "corruption") + " and becomes a target.",
+                "Racing against time to stop " + (theme || "a disaster") + " that only they know is coming."
+            ],
+            'Horror': [
+                "An ancient evil awakens when " + (theme || "a seal is broken"),
+                "Isolation drives the protagonist to question reality and " + (theme || "their sanity"),
+                "The house has a history involving " + (theme || "dark rituals") + " that won't stay buried."
+            ]
+        };
+        
+        const selectedPlots = plots[genre] || plots['Fantasy'];
+        const randomPlot = selectedPlots[Math.floor(Math.random() * selectedPlots.length)];
+        
+        addAISuggestion('Plot Idea', randomPlot, genre);
+        
+        // Also add as a node to the board
+        const node = {
+            id: ++nodeIdCounter,
+            title: 'Plot: ' + genre,
+            content: randomPlot,
+            x: 50 + Math.random() * 200,
+            y: 50 + Math.random() * 200,
+            category: 'Plot Point'
+        };
+        addNodeToBoard(node);
+    }
+
+    // Character Generator
+    function generateCharacter() {
+        const name = document.getElementById('character-name').value || 'Unknown';
+        const role = document.getElementById('character-role').value;
+        
+        const traits = ['brave', 'cunning', 'loyal', 'ambitious', 'mysterious', 'compassionate', 'ruthless', 'witty'];
+        const flaws = ['impulsive', 'secretive', 'prideful', 'fearful', 'obsessive', 'naive', 'cynical', 'indecisive'];
+        const motivations = ['revenge', 'love', 'power', 'freedom', 'knowledge', 'redemption', 'survival', 'justice'];
+        const backstories = [
+            'grew up in poverty and fought for everything they have',
+            'lost their family at a young age and seeks belonging',
+            'was betrayed by someone they trusted and struggles with trust',
+            'discovered a dark secret about their past',
+            'has a hidden talent that could change everything',
+            'carries the burden of a terrible mistake'
+        ];
+        
+        const profile = {
+            name: name,
+            role: role,
+            traits: [traits[Math.floor(Math.random() * traits.length)], traits[Math.floor(Math.random() * traits.length)]],
+            flaw: flaws[Math.floor(Math.random() * flaws.length)],
+            motivation: motivations[Math.floor(Math.random() * motivations.length)],
+            backstory: backstories[Math.floor(Math.random() * backstories.length)]
+        };
+        
+        const profileText = `
+            <strong>${profile.name}</strong> (${profile.role})<br>
+            <strong>Traits:</strong> ${profile.traits.join(', ')}<br>
+            <strong>Fatal Flaw:</strong> ${profile.flaw}<br>
+            <strong>Motivation:</strong> ${profile.motivation}<br>
+            <strong>Backstory:</strong> ${profile.backstory}
+        `;
+        
+        addAISuggestion('Character Profile', profileText, 'Character');
+        
+        // Add to board
+        const node = {
+            id: ++nodeIdCounter,
+            title: name,
+            content: `${role}: ${profile.traits.join(', ')}`,
+            x: 250 + Math.random() * 200,
+            y: 50 + Math.random() * 200,
+            category: 'Character'
+        };
+        addNodeToBoard(node);
+    }
+
+    // Conflict Suggester
+    function suggestConflicts() {
+        const context = document.getElementById('story-context').value || 'your story';
+        
+        const conflicts = [
+            {
+                type: 'Internal Conflict',
+                suggestion: `The protagonist struggles between duty and desire, torn by ${context}`
+            },
+            {
+                type: 'Person vs Person',
+                suggestion: `Two characters with opposing goals clash over control of the situation in ${context}`
+            },
+            {
+                type: 'Person vs Society',
+                suggestion: `The protagonist challenges societal norms that perpetuate the problems in ${context}`
+            },
+            {
+                type: 'Person vs Nature',
+                suggestion: `Natural forces or environmental challenges complicate ${context}`
+            },
+            {
+                type: 'Person vs Technology',
+                suggestion: `Technological advancement or failure creates obstacles in ${context}`
+            },
+            {
+                type: 'Moral Dilemma',
+                suggestion: `A choice between two equally important values forces a decision that affects ${context}`
+            }
+        ];
+        
+        const selectedConflicts = [];
+        for (let i = 0; i < 3; i++) {
+            const conflict = conflicts[Math.floor(Math.random() * conflicts.length)];
+            selectedConflicts.push(conflict);
+        }
+        
+        selectedConflicts.forEach(conflict => {
+            addAISuggestion(conflict.type, conflict.suggestion, 'Conflict');
+        });
+    }
+
+    // Note Analyzer
+    function analyzeNotes() {
+        const notes = document.getElementById('notes-input').value;
+        
+        if (!notes) {
+            addAISuggestion('Error', 'Please enter some notes to analyze', 'Analysis');
+            return;
+        }
+        
+        // Simple analysis simulation
+        const words = notes.toLowerCase().split(/\s+/);
+        const themes = findThemes(words);
+        const connections = findConnections(notes);
+        
+        const analysis = `
+            <strong>Key Themes Found:</strong><br>
+            ${themes.join(', ')}<br><br>
+            <strong>Word Count:</strong> ${words.length}<br>
+            <strong>Estimated Reading Time:</strong> ${Math.ceil(words.length / 200)} minutes<br><br>
+            <strong>Suggested Focus Areas:</strong><br>
+            ${connections.join('<br>')}
+        `;
+        
+        addAnalysisResult('Note Analysis', analysis);
+        
+        // Add main themes as nodes
+        themes.forEach((theme, index) => {
+            const node = {
+                id: ++nodeIdCounter,
+                title: 'Theme: ' + theme,
+                content: 'Extracted from your notes',
+                x: 100 + index * 150,
+                y: 300 + Math.random() * 100,
+                category: 'Theme'
+            };
+            addNodeToBoard(node);
+        });
+    }
+
+    function findThemes(words) {
+        const themeKeywords = {
+            'love': ['love', 'heart', 'romance', 'passion', 'affection'],
+            'conflict': ['fight', 'battle', 'struggle', 'conflict', 'war'],
+            'mystery': ['secret', 'hidden', 'mystery', 'unknown', 'puzzle'],
+            'growth': ['grow', 'learn', 'develop', 'change', 'evolve'],
+            'loss': ['loss', 'grief', 'death', 'gone', 'missing'],
+            'power': ['power', 'control', 'authority', 'strength', 'force']
+        };
+        
+        const foundThemes = [];
+        for (const [theme, keywords] of Object.entries(themeKeywords)) {
+            if (keywords.some(keyword => words.includes(keyword))) {
+                foundThemes.push(theme);
+            }
+        }
+        
+        return foundThemes.length > 0 ? foundThemes : ['general narrative'];
+    }
+
+    function findConnections(text) {
+        const suggestions = [
+            'Consider exploring the relationship between your main characters more deeply',
+            'The setting could play a more active role in driving the plot',
+            'Look for opportunities to mirror internal and external conflicts',
+            'Think about how past events influence current character decisions',
+            'Explore the thematic connections between different plot threads'
+        ];
+        
+        return suggestions.slice(0, 3);
+    }
+
+    // Board Management Functions
+    function addNewNode() {
+        document.getElementById('idea-modal').classList.add('active');
+    }
+
+    function createIdeaNode() {
+        const title = document.getElementById('new-idea-title').value;
+        const content = document.getElementById('new-idea-content').value;
+        const category = document.getElementById('idea-category').value;
+        
+        if (!title) return;
+        
+        const node = {
+            id: ++nodeIdCounter,
+            title: title,
+            content: content,
+            x: Math.random() * 400 + 100,
+            y: Math.random() * 300 + 100,
+            category: category
+        };
+        
+        addNodeToBoard(node);
+        closeModal('idea-modal');
+        
+        // Clear inputs
+        document.getElementById('new-idea-title').value = '';
+        document.getElementById('new-idea-content').value = '';
+    }
+
+    function addNodeToBoard(node) {
+        nodes.push(node);
+        
+        const canvas = document.getElementById('canvas-area');
+        const nodeElement = document.createElement('div');
+        nodeElement.className = 'idea-node';
+        nodeElement.id = 'node-' + node.id;
+        nodeElement.style.left = node.x + 'px';
+        nodeElement.style.top = node.y + 'px';
+        nodeElement.innerHTML = `
+            <div class="node-title">${node.title}</div>
+            <div class="node-content">${node.content || ''}</div>
+            <button class="node-delete" onclick="deleteNode(${node.id})">×</button>
+        `;
+        
+        // Make draggable
+        nodeElement.addEventListener('mousedown', startDrag);
+        nodeElement.addEventListener('click', handleNodeClick);
+        
+        canvas.appendChild(nodeElement);
+        
+        // Analyze for connections
+        findNodeConnections(node);
+    }
+
+    function deleteNode(nodeId) {
+        nodes = nodes.filter(n => n.id !== nodeId);
+        connections = connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+        
+        const nodeElement = document.getElementById('node-' + nodeId);
+        if (nodeElement) nodeElement.remove();
+        
+        redrawConnections();
+    }
+
+    function startDrag(e) {
+        if (e.target.classList.contains('node-delete')) return;
+        
+        draggedNode = e.currentTarget;
+        const rect = draggedNode.getBoundingClientRect();
+        const parentRect = draggedNode.parentElement.getBoundingClientRect();
+        
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        
+        function drag(e) {
+            const x = e.clientX - parentRect.left - offsetX;
+            const y = e.clientY - parentRect.top - offsetY;
+            
+            draggedNode.style.left = Math.max(0, Math.min(parentRect.width - rect.width, x)) + 'px';
+            draggedNode.style.top = Math.max(0, Math.min(parentRect.height - rect.height, y)) + 'px';
+            
+            // Update node position in data
+            const nodeId = parseInt(draggedNode.id.replace('node-', ''));
+            const node = nodes.find(n => n.id === nodeId);
+            if (node) {
+                node.x = parseFloat(draggedNode.style.left);
+                node.y = parseFloat(draggedNode.style.top);
+            }
+            
+            redrawConnections();
+        }
+        
+        function stopDrag() {
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            draggedNode = null;
+        }
+        
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDrag);
+    }
+
+    function handleNodeClick(e) {
+        if (e.target.classList.contains('node-delete')) return;
+        if (!connectionMode) return;
+        
+        const nodeElement = e.currentTarget;
+        const nodeId = parseInt(nodeElement.id.replace('node-', ''));
+        
+        if (!selectedNode) {
+            selectedNode = nodeId;
+            nodeElement.classList.add('selected');
+        } else if (selectedNode !== nodeId) {
+            // Create connection
+            connections.push({ from: selectedNode, to: nodeId });
+            redrawConnections();
+            
+            // Reset selection
+            document.querySelectorAll('.idea-node').forEach(n => n.classList.remove('selected'));
+            selectedNode = null;
+            
+            // Find thematic connection
+            analyzeConnection(selectedNode, nodeId);
+        }
+    }
+
+    function toggleConnectionMode() {
+        connectionMode = !connectionMode;
+        const btn = document.getElementById('connect-btn');
+        btn.classList.toggle('active', connectionMode);
+        
+        if (!connectionMode) {
+            document.querySelectorAll('.idea-node').forEach(n => n.classList.remove('selected'));
+            selectedNode = null;
+        }
+    }
+
+    function redrawConnections() {
+        const svg = document.getElementById('connection-svg');
+        svg.innerHTML = '';
+        
+        connections.forEach(conn => {
+            const fromNode = document.getElementById('node-' + conn.from);
+            const toNode = document.getElementById('node-' + conn.to);
+            
+            if (fromNode && toNode) {
+                const fromRect = fromNode.getBoundingClientRect();
+                const toRect = toNode.getBoundingClientRect();
+                const svgRect = svg.getBoundingClientRect();
+                
+                const x1 = fromRect.left - svgRect.left + fromRect.width / 2;
+                const y1 = fromRect.top - svgRect.top + fromRect.height / 2;
+                const x2 = toRect.left - svgRect.left + toRect.width / 2;
+                const y2 = toRect.top - svgRect.top + toRect.height / 2;
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.classList.add('connection-line');
+                
+                svg.appendChild(line);
+            }
+        });
+    }
+
+    function findNodeConnections(newNode) {
+        // Find potential connections with existing nodes
+        nodes.forEach(node => {
+            if (node.id !== newNode.id) {
+                // Simple keyword matching
+                const title1 = node.title.toLowerCase();
+                const title2 = newNode.title.toLowerCase();
+                const content1 = (node.content || '').toLowerCase();
+                const content2 = (newNode.content || '').toLowerCase();
+                
+                const commonWords = findCommonWords(title1 + ' ' + content1, title2 + ' ' + content2);
+                
+                if (commonWords.length > 0) {
+                    addConnectionFound(`Connection found between "${node.title}" and "${newNode.title}": ${commonWords.join(', ')}`);
+                }
+            }
+        });
+    }
+
+    function findCommonWords(text1, text2) {
+        const words1 = text1.split(/\s+/).filter(w => w.length > 3);
+        const words2 = text2.split(/\s+/).filter(w => w.length > 3);
+        
+        return words1.filter(word => words2.includes(word));
+    }
+
+    function analyzeConnection(nodeId1, nodeId2) {
+        const node1 = nodes.find(n => n.id === nodeId1);
+        const node2 = nodes.find(n => n.id === nodeId2);
+        
+        if (node1 && node2) {
+            const connectionTypes = [
+                'causes', 'conflicts with', 'complements', 'contrasts with', 
+                'develops from', 'leads to', 'mirrors', 'challenges'
+            ];
+            
+            const connectionType = connectionTypes[Math.floor(Math.random() * connectionTypes.length)];
+            
+            addConnectionFound(`"${node1.title}" ${connectionType} "${node2.title}"`);
+        }
+    }
+
+    // UI Helper Functions
+    function addAISuggestion(type, content, category) {
+        const aiResults = document.getElementById('ai-results');
+        const suggestion = document.createElement('div');
+        suggestion.className = 'ai-suggestion';
+        suggestion.innerHTML = `
+            <div class="suggestion-type">${type}</div>
+            <div class="suggestion-content">${content}</div>
+            <button class="use-suggestion-btn" onclick="useSuggestion('${type}', '${content.replace(/'/g, "\\'")}', '${category}')">Add to Board</button>
+        `;
+        
+        aiResults.insertBefore(suggestion, aiResults.firstChild);
+    }
+
+    function addAnalysisResult(title, content) {
+        const aiResults = document.getElementById('ai-results');
+        const analysis = document.createElement('div');
+        analysis.className = 'analysis-result';
+        analysis.innerHTML = `
+            <div class="analysis-title">${title}</div>
+            <div class="analysis-content">${content}</div>
+        `;
+        
+        aiResults.insertBefore(analysis, aiResults.firstChild);
+    }
+
+    function addConnectionFound(connection) {
+        const aiResults = document.getElementById('ai-results');
+        const connElement = document.createElement('div');
+        connElement.className = 'connection-found';
+        connElement.innerHTML = `<i class="fas fa-link"></i> ${connection}`;
+        
+        aiResults.insertBefore(connElement, aiResults.firstChild);
+    }
+
+    function useSuggestion(type, content, category) {
+        const node = {
+            id: ++nodeIdCounter,
+            title: type,
+            content: content.replace(/\\'/g, "'").replace(/<[^>]*>/g, ''),
+            x: Math.random() * 400 + 100,
+            y: Math.random() * 300 + 100,
+            category: category
+        };
+        
+        addNodeToBoard(node);
+    }
+
+    function clearBoard() {
+        if (confirm('Clear all ideas from the board?')) {
+            nodes = [];
+            connections = [];
+            document.querySelectorAll('.idea-node').forEach(n => n.remove());
+            redrawConnections();
+        }
+    }
+
+    function saveBoard() {
+        const boardData = {
+            nodes: nodes,
+            connections: connections,
+            timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('creativeNotebook', JSON.stringify(boardData));
+        alert('Board saved successfully!');
+    }
+
+    function loadSavedBoard() {
+        const saved = localStorage.getItem('creativeNotebook');
+        if (saved) {
+            const boardData = JSON.parse(saved);
+            boardData.nodes.forEach(node => {
+                nodeIdCounter = Math.max(nodeIdCounter, node.id);
+                addNodeToBoard(node);
+            });
+            connections = boardData.connections;
+            redrawConnections();
+        }
+    }
+
+    function brainstormMode() {
+        // Quick brainstorm - generate multiple related ideas
+        const topics = ['character', 'setting', 'conflict', 'theme', 'plot twist'];
+        const topic = topics[Math.floor(Math.random() * topics.length)];
+        
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                if (topic === 'character') {
+                    generateCharacter();
+                } else if (topic === 'conflict') {
+                    suggestConflicts();
+                } else {
+                    generatePlot();
+                }
+            }, i * 500);
+        }
+    }
+
+    function exportIdeas() {
+        const exportData = {
+            nodes: nodes,
+            connections: connections,
+            timestamp: new Date().toISOString()
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `creative-notebook-${Date.now()}.json`;
+        link.click();
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Notebook Management Functions
+    function updateNotebookUI() {
+        const notebookSelect = document.getElementById('notebook-select');
+        const notebookTitle = document.getElementById('notebook-title');
+        const notebookProject = document.getElementById('notebook-project');
+        const actionBtn = document.getElementById('notebook-action-btn');
+        const loadBtn = document.getElementById('load-notebook-btn');
+        const saveBtn = document.getElementById('save-notebook-btn');
+        
+        if (notebookSelect.value === '') {
+            // Create new notebook mode
+            notebookTitle.style.display = 'block';
+            notebookProject.style.display = 'block';
+            actionBtn.textContent = 'Create Notebook';
+            actionBtn.onclick = createNotebook;
+            loadBtn.style.display = 'none';
+            saveBtn.style.display = 'none';
+        } else {
+            // Load existing notebook mode
+            notebookTitle.style.display = 'none';
+            notebookProject.style.display = 'none';
+            actionBtn.style.display = 'none';
+            loadBtn.style.display = 'block';
+            saveBtn.style.display = currentNotebook ? 'block' : 'none';
+        }
+    }
+
+    async function createNotebook() {
+        const title = document.getElementById('notebook-title').value;
+        const projectId = document.getElementById('notebook-project').value;
+        
+        if (!title.trim()) {
+            alert('Please enter a notebook title');
+            return;
+        }
+
+        try {
+            const response = await fetch('/writer/api/creative-notebooks/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    title: title,
+                    project_id: projectId || null
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                currentNotebook = data.id;
+                alert('Notebook created successfully!');
+                location.reload(); // Refresh to show new notebook in list
+            } else {
+                alert('Error creating notebook: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error creating notebook:', error);
+            alert('Error creating notebook');
+        }
+    }
+
+    async function loadNotebook() {
+        const notebookId = document.getElementById('notebook-select').value;
+        if (!notebookId) return;
+
+        try {
+            const response = await fetch(`/writer/api/creative-notebooks/${notebookId}/`);
+            const data = await response.json();
+            
+            if (response.ok) {
+                currentNotebook = data.id;
+                nodes = data.nodes.map(node => ({
+                    ...node,
+                    element: null // Will be recreated when rendered
+                }));
+                connections = data.connections;
+                
+                // Clear and redraw board
+                const board = document.getElementById('idea-board');
+                board.innerHTML = '';
+                
+                // Recreate nodes
+                nodes.forEach(node => createNodeElement(node));
+                
+                // Recreate connections
+                redrawAllConnections();
+                
+                document.getElementById('save-notebook-btn').style.display = 'block';
+                alert('Notebook loaded successfully!');
+            } else {
+                alert('Error loading notebook: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error loading notebook:', error);
+            alert('Error loading notebook');
+        }
+    }
+
+    async function saveNotebook() {
+        if (!currentNotebook) return;
+
+        try {
+            // Save notebook data
+            const response = await fetch(`/writer/api/creative-notebooks/${currentNotebook}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    board_data: {
+                        nodes: nodes,
+                        connections: connections
+                    }
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert('Notebook saved successfully!');
+            } else {
+                alert('Error saving notebook: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error saving notebook:', error);
+            alert('Error saving notebook');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Add event listener for notebook selection
+    document.addEventListener('DOMContentLoaded', function() {
+        const notebookSelect = document.getElementById('notebook-select');
+        notebookSelect.addEventListener('change', updateNotebookUI);
+        updateNotebookUI();
+    });
+</script>
+{% endblock %}

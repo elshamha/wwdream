@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Simulate document analysis
         const projectId = document.getElementById('target-project').value;
         
-        fetch(`/writer/projects/${projectId}/editor/`, {
+        fetch(`/writer/projects/${projectId}/docs-editor/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('import-chapters').addEventListener('click', function() {
         const projectId = document.getElementById('target-project').value;
-        window.location.href = `/writer/projects/${projectId}/editor/`;
+        window.location.href = `/writer/projects/${projectId}/docs-editor/`;
     });
     
     function getCookie(name) {

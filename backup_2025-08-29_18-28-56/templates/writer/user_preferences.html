@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}User Preferences - Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px;">
+                <div class="card-header" style="background: transparent; border-bottom: 1px solid rgba(255, 255, 255, 0.15);">
+                    <h3 class="mb-0" style="color: #ffffff;"><i class="fas fa-cog me-2"></i>User Preferences</h3>
+                </div>
+                <div class="card-body" style="padding: 30px;">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h5 style="color: #ffffff; margin-bottom: 20px;">Dashboard Settings</h5>
+                            
+                            <div class="form-check">
+                                {{ form.show_bookshelf }}
+                                <label class="form-check-label" for="{{ form.show_bookshelf.id_for_label }}" style="color: rgba(255, 255, 255, 0.9);">
+                                    {{ form.show_bookshelf.label }}
+                                </label>
+                                {% if form.show_bookshelf.help_text %}
+                                <small class="form-text" style="color: rgba(255, 255, 255, 0.7);">
+                                    {{ form.show_bookshelf.help_text }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'writer:dashboard' %}" class="btn" style="background: rgba(255, 255, 255, 0.1); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2);">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; border: none; padding: 10px 30px; border-radius: 8px;">
+                                <i class="fas fa-save me-2"></i>Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+body {
+    background: var(--ethereal-primary) !important;
+    min-height: 100vh;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.form-check-input:focus {
+    border-color: #764ba2;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}

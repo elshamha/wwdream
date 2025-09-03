@@ -1,0 +1,524 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ project.title }} - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<style>
+/* Project Detail Page Styling */
+.project-detail-container {
+    min-height: 100vh;
+    padding: 2rem;
+    background: transparent;
+}
+
+.project-header {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.project-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    margin-bottom: 0.5rem;
+}
+
+.project-description {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    color: white !important;
+}
+
+.btn-action-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-action-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Writing Tools Section */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.tool-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+}
+
+.tool-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tool-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff !important;
+    margin-bottom: 0.5rem;
+}
+
+.tool-description {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Progress Section */
+.progress-section {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.progress-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff !important;
+    margin-bottom: 1.5rem;
+}
+
+.progress-bar-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    height: 30px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: width 1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+/* Recent Activity */
+.activity-section {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.3s ease;
+}
+
+.activity-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    color: #ffffff !important;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.activity-time {
+    color: rgba(255, 255, 255, 0.5) !important;
+    font-size: 0.85rem;
+}
+
+/* Chapter List */
+.chapter-list {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.chapter-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.chapter-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.chapter-info {
+    flex: 1;
+}
+
+.chapter-title {
+    color: #ffffff !important;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.chapter-stats {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 0.85rem;
+}
+
+.chapter-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-chapter {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff !important;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-chapter:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .project-title {
+        font-size: 2rem;
+    }
+    
+    .tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="project-detail-container">
+    <!-- Project Header -->
+    <div class="project-header">
+        <h1 class="project-title">
+            <i class="fas fa-book me-2"></i>{{ project.title }}
+        </h1>
+        <p class="project-description">{{ project.description|default:"Begin your creative journey with this project" }}</p>
+        
+        <div class="action-buttons">
+            <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn-action">
+                <i class="fas fa-feather-alt"></i>
+                Write Now
+            </a>
+            <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn-action btn-action-secondary">
+                <i class="fas fa-edit"></i>
+                Edit Chapters
+            </a>
+            <button onclick="window.location.href='{% url 'writer:dashboard' %}'" class="btn-action btn-action-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ project.total_word_count|default:0 }}</div>
+            <div class="stat-label">Total Words</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ project.chapter_set.count|default:0 }}</div>
+            <div class="stat-label">Chapters</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{% if project.target_word_count %}{{ project.target_word_count }}{% else %}∞{% endif %}</div>
+            <div class="stat-label">Target Words</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ collaborators.count|add:1 }}</div>
+            <div class="stat-label">{% if project.is_collaborative %}Collaborators{% else %}Author{% endif %}</div>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    {% if project.target_word_count %}
+    <div class="progress-section">
+        <h2 class="progress-title">Writing Progress</h2>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: {% widthratio project.total_word_count project.target_word_count 100 %}%">
+                {% widthratio project.total_word_count project.target_word_count 100 %}%
+            </div>
+        </div>
+        <p style="color: rgba(255, 255, 255, 0.7);">
+            {{ project.total_word_count|default:0 }} of {{ project.target_word_count }} words completed
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Writing Tools -->
+    <div class="mb-4">
+        <h2 class="progress-title mb-3">Writing Tools</h2>
+        <div class="tools-grid">
+            <a href="{% url 'writer:chapter_editor' project.pk %}" class="tool-card">
+                <i class="fas fa-pen-fancy tool-icon"></i>
+                <div class="tool-title">Chapter Editor</div>
+                <div class="tool-description">Write and edit your chapters with our powerful editor</div>
+            </a>
+            
+            <a href="{% url 'writer:creativity_workshop' %}" class="tool-card">
+                <i class="fas fa-lightbulb tool-icon"></i>
+                <div class="tool-title">Creativity Workshop</div>
+                <div class="tool-description">Brainstorm ideas and overcome writer's block</div>
+            </a>
+            
+            <a href="{% url 'writer:creative_notebook' %}" class="tool-card">
+                <i class="fas fa-brain tool-icon"></i>
+                <div class="tool-title">Creative Notebook</div>
+                <div class="tool-description">Connect ideas and create mind maps</div>
+            </a>
+            
+            <a href="{% url 'writer:character_list' project.pk %}" class="tool-card">
+                <i class="fas fa-users tool-icon"></i>
+                <div class="tool-title">Character Manager</div>
+                <div class="tool-description">Develop and track your characters</div>
+            </a>
+            
+            <a href="#" onclick="exportProject({{ project.pk }}); return false;" class="tool-card">
+                <i class="fas fa-download tool-icon"></i>
+                <div class="tool-title">Export Project</div>
+                <div class="tool-description">Download your work in various formats</div>
+            </a>
+            
+            <a href="#" onclick="showAIAssistant(); return false;" class="tool-card">
+                <i class="fas fa-robot tool-icon"></i>
+                <div class="tool-title">AI Assistant</div>
+                <div class="tool-description">Get AI-powered writing suggestions</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Chapters and Activity -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Chapter List -->
+            <div class="chapter-list mb-4">
+                <h2 class="progress-title mb-3">Chapters</h2>
+                {% for chapter in project.chapter_set.all %}
+                <div class="chapter-item" onclick="window.location.href='{% url 'writer:chapter_editor' project.pk %}#chapter-{{ chapter.pk }}'">
+                    <div class="chapter-info">
+                        <div class="chapter-title">
+                            Chapter {{ chapter.order }}: {{ chapter.title|default:"Untitled Chapter" }}
+                        </div>
+                        <div class="chapter-stats">
+                            {{ chapter.word_count|default:0 }} words • Last edited {{ chapter.updated_at|timesince }} ago
+                        </div>
+                    </div>
+                    <div class="chapter-actions">
+                        <button class="btn-chapter" onclick="event.stopPropagation(); window.location.href='{% url 'writer:chapter_editor' project.pk %}#chapter-{{ chapter.pk }}'">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; padding: 3rem;">
+                    <i class="fas fa-feather-alt" style="font-size: 3rem; color: rgba(255, 255, 255, 0.3); margin-bottom: 1rem; display: block;"></i>
+                    <p style="color: rgba(255, 255, 255, 0.7);">No chapters yet. Start writing your first chapter!</p>
+                    <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn-action" style="margin-top: 1rem;">
+                        <i class="fas fa-plus"></i> Create First Chapter
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <h2 class="progress-title mb-3">Recent Activity</h2>
+                {% if writing_sessions %}
+                    {% for session in writing_sessions|slice:":5" %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ session.user.username }} is writing</div>
+                            <div class="activity-time">Started {{ session.start_time|timesince }} ago</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: rgba(255, 255, 255, 0.7); text-align: center; padding: 2rem 0;">
+                        No recent activity
+                    </p>
+                {% endif %}
+                
+                {% if project.is_collaborative and collaborators %}
+                <h3 style="color: #ffffff; font-size: 1.2rem; margin-top: 2rem; margin-bottom: 1rem;">Collaborators</h3>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ project.author.username }}</div>
+                        <div class="activity-time">Project Owner</div>
+                    </div>
+                </div>
+                {% for collaborator in collaborators %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ collaborator.user.username }}</div>
+                        <div class="activity-time">{{ collaborator.get_role_display }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportProject(projectId) {
+    // Implement export functionality
+    alert('Export feature coming soon!');
+}
+
+function showAIAssistant() {
+    // Implement AI assistant modal
+    alert('AI Assistant coming soon!');
+}
+</script>
+
+{% endblock %}

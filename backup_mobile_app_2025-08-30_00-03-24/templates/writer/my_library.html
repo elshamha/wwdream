@@ -1,0 +1,659 @@
+{% extends 'base.html' %}
+{% block title %}My Library - Personal Collection{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Lora', Georgia, serif;
+    }
+
+    .library-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+
+    .library-header {
+        text-align: center;
+        margin-bottom: 40px;
+        color: white;
+    }
+
+    .library-title {
+        font-size: 2.5rem;
+        font-weight: 300;
+        margin-bottom: 10px;
+    }
+
+    .library-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.8;
+        font-style: italic;
+    }
+
+    .library-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .library-sections {
+        display: grid;
+        gap: 40px;
+    }
+
+    .library-section {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border-radius: 15px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 25px;
+        color: white;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        color: white;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .books-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .book-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 20px;
+        color: white;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .book-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .book-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: white;
+    }
+
+    .book-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+
+    .book-description {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        margin-bottom: 15px;
+        line-height: 1.4;
+    }
+
+    .book-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%);
+    }
+
+    .bookshelf-toggle {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-left: 10px;
+    }
+
+    .bookshelf-toggle:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .bookshelf-toggle.on-shelf {
+        background: rgba(46, 191, 145, 0.3);
+        border-color: rgba(46, 191, 145, 0.5);
+        color: #2ebf91;
+    }
+
+    .section-count {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        margin-left: 10px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .empty-state h3 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        font-weight: 400;
+    }
+
+    .empty-state p {
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    @media (max-width: 768px) {
+        .library-title {
+            font-size: 2rem;
+        }
+        
+        .books-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .library-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<div class="library-container">
+    <div class="library-header">
+        <h1 class="library-title">My Library</h1>
+        <p class="library-subtitle">Your personal collection of literary works</p>
+    </div>
+
+    <div class="library-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_books }}</div>
+            <div class="stat-label">Total Books</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_words|floatformat:0 }}</div>
+            <div class="stat-label">Words Written</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ user_projects.count }}</div>
+            <div class="stat-label">Projects</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ user_documents.count }}</div>
+            <div class="stat-label">Documents</div>
+        </div>
+    </div>
+
+    <div class="library-sections">
+        <!-- Bookshelf Projects Section -->
+        <div class="library-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-bookmark"></i>
+                </div>
+                <h2 class="section-title">Bookshelf Display <span class="section-count">({{ bookshelf_projects.count }})</span></h2>
+            </div>
+            
+            {% if bookshelf_projects %}
+            <div class="books-grid">
+                {% for project in bookshelf_projects %}
+                <div class="book-card">
+                    <div class="book-title">
+                        {{ project.title }}
+                        <button class="bookshelf-toggle on-shelf" onclick="toggleBookshelf({{ project.pk }}, this)">
+                            <i class="fas fa-eye"></i> On Shelf
+                        </button>
+                    </div>
+                    <div class="book-meta">
+                        <span>{{ project.created_at|date:"M d, Y" }}</span>
+                        <span>{{ project.total_word_count|default:0 }} words</span>
+                    </div>
+                    <div class="book-description">
+                        {{ project.description|default:"A work in progress"|truncatewords:15 }}
+                    </div>
+                    <div class="book-actions">
+                        <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn btn-primary">Continue Writing</a>
+                        <a href="{% url 'writer:project_detail' project.pk %}" class="btn">View Details</a>
+                        <button class="btn" onclick="shareBook({{ project.pk }}, '{{ project.title|escapejs }}')">
+                            <i class="fas fa-share me-1"></i>Share
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-bookmark"></i>
+                <h3>No Books on Bookshelf</h3>
+                <p>Books displayed on your bookshelf will appear here</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Library Projects Section -->
+        <div class="library-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <h2 class="section-title">Project Library <span class="section-count">({{ library_projects.count }})</span></h2>
+            </div>
+            
+            {% if library_projects %}
+            <div class="books-grid">
+                {% for project in library_projects %}
+                <div class="book-card">
+                    <div class="book-title">
+                        {{ project.title }}
+                        <button class="bookshelf-toggle" onclick="toggleBookshelf({{ project.pk }}, this)">
+                            <i class="fas fa-eye-slash"></i> Hidden
+                        </button>
+                    </div>
+                    <div class="book-meta">
+                        <span>{{ project.created_at|date:"M d, Y" }}</span>
+                        <span>{{ project.total_word_count|default:0 }} words</span>
+                    </div>
+                    <div class="book-description">
+                        {{ project.description|default:"A work in progress"|truncatewords:15 }}
+                    </div>
+                    <div class="book-actions">
+                        <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn btn-primary">Continue Writing</a>
+                        <a href="{% url 'writer:project_detail' project.pk %}" class="btn">View Details</a>
+                        <button class="btn" onclick="shareBook({{ project.pk }}, '{{ project.title|escapejs }}')">
+                            <i class="fas fa-share me-1"></i>Share
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <h3>No Hidden Projects</h3>
+                <p>Projects hidden from your bookshelf will appear here</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- All Projects Overview -->
+        {% if not user_projects %}
+        <div class="library-section">
+            <div class="empty-state">
+                <i class="fas fa-book-open"></i>
+                <h3>No Projects Yet</h3>
+                <p>Start your first project to begin building your literary collection</p>
+                <a href="{% url 'writer:project_create' %}" class="btn btn-primary" style="margin-top: 15px;">Create New Project</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Documents Section -->
+        <div class="library-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h2 class="section-title">Documents</h2>
+            </div>
+            
+            {% if user_documents %}
+            <div class="books-grid">
+                {% for document in user_documents %}
+                <div class="book-card">
+                    <div class="book-title">{{ document.title }}</div>
+                    <div class="book-meta">
+                        <span>{{ document.created_at|date:"M d, Y" }}</span>
+                        <span>{{ document.word_count|default:0 }} words</span>
+                    </div>
+                    <div class="book-description">
+                        {{ document.content|truncatewords:15|default:"A document waiting to be filled with your words" }}
+                    </div>
+                    <div class="book-actions">
+                        <a href="{% url 'writer:document_detail' document.pk %}" class="btn btn-primary">Open</a>
+                        <a href="{% url 'writer:document_update' document.pk %}" class="btn">Edit</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-plus"></i>
+                <h3>No Documents Yet</h3>
+                <p>Create standalone documents for quick writing sessions</p>
+                <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary" style="margin-top: 15px;">Start Writing</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleBookshelf(projectId, buttonElement) {
+    fetch('{% url "writer:toggle_bookshelf_visibility" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            project_id: projectId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update button appearance and text
+            const button = buttonElement;
+            const icon = button.querySelector('i');
+            
+            if (data.show_on_dashboard) {
+                button.classList.add('on-shelf');
+                icon.className = 'fas fa-eye';
+                button.innerHTML = '<i class="fas fa-eye"></i> On Shelf';
+            } else {
+                button.classList.remove('on-shelf');
+                icon.className = 'fas fa-eye-slash';
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hidden';
+            }
+            
+            // Show success notification
+            showNotification(data.message, 'success');
+            
+            // Reload page after a short delay to update sections
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error || 'Failed to update bookshelf visibility', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating bookshelf visibility', 'error');
+    });
+}
+
+function shareBook(projectId, projectTitle) {
+    // Create share modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        color: white;
+        text-align: center;
+    `;
+    
+    modalContent.innerHTML = `
+        <h3 style="margin-bottom: 1rem; color: white;">Share "${projectTitle}"</h3>
+        <p style="margin-bottom: 2rem; opacity: 0.8;">Choose how you'd like to share your book:</p>
+        
+        <div style="display: grid; gap: 1rem; margin-bottom: 2rem;">
+            <button class="share-option" onclick="shareViaLink(${projectId})">
+                <i class="fas fa-link"></i>
+                <span>Share via Link</span>
+            </button>
+            
+            <button class="share-option" onclick="shareViaEmail(${projectId}, '${projectTitle.replace(/'/g, "\\'")}')">
+                <i class="fas fa-envelope"></i>
+                <span>Share via Email</span>
+            </button>
+            
+            <button class="share-option" onclick="shareToSocialMedia(${projectId}, '${projectTitle.replace(/'/g, "\\'")}')">
+                <i class="fas fa-share-alt"></i>
+                <span>Social Media</span>
+            </button>
+        </div>
+        
+        <button onclick="closeShareModal()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; cursor: pointer;">
+            Close
+        </button>
+    `;
+    
+    // Add CSS for share options
+    const style = document.createElement('style');
+    style.textContent = `
+        .share-option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            text-align: left;
+        }
+        .share-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .share-option i {
+            font-size: 1.2rem;
+            width: 20px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    `;
+    
+    document.head.appendChild(style);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Store modal reference for closing
+    window.currentShareModal = modal;
+    window.currentShareStyle = style;
+}
+
+function shareViaLink(projectId) {
+    const link = `${window.location.origin}/writer/projects/${projectId}/`;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(() => {
+            showNotification('Project link copied to clipboard! 📋', 'success');
+            closeShareModal();
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = link;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        showNotification('Project link copied to clipboard! 📋', 'success');
+        closeShareModal();
+    }
+}
+
+function shareViaEmail(projectId, projectTitle) {
+    const link = `${window.location.origin}/writer/projects/${projectId}/`;
+    const subject = `Check out my book: ${projectTitle}`;
+    const body = `I'd love for you to read my latest work "${projectTitle}"!\n\nYou can view it here: ${link}\n\nHappy reading!`;
+    
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink);
+    
+    showNotification('Email client opened! ✉️', 'success');
+    closeShareModal();
+}
+
+function shareToSocialMedia(projectId, projectTitle) {
+    const link = `${window.location.origin}/writer/projects/${projectId}/`;
+    const text = `Check out my latest book "${projectTitle}"! `;
+    
+    // Try to use Web Share API if available
+    if (navigator.share) {
+        navigator.share({
+            title: projectTitle,
+            text: text,
+            url: link
+        });
+        closeShareModal();
+    } else {
+        // Fallback to Twitter
+        const twitterLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
+        window.open(twitterLink, '_blank');
+        
+        showNotification('Sharing on social media! 🐦', 'success');
+        closeShareModal();
+    }
+}
+
+function closeShareModal() {
+    if (window.currentShareModal) {
+        document.body.removeChild(window.currentShareModal);
+        window.currentShareModal = null;
+    }
+    if (window.currentShareStyle) {
+        document.head.removeChild(window.currentShareStyle);
+        window.currentShareStyle = null;
+    }
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? 'rgba(46, 191, 145, 0.9)' : 'rgba(231, 76, 60, 0.9)'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+</script>
+
+{% endblock %}

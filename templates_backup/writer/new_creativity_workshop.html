@@ -1,0 +1,372 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creativity Workshop - Profound Brainstorming</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lora', Georgia, serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .workshop-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .workshop-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .workshop-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .workshop-subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .tool-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tool-icon {
+            width: 50px;
+            height: 50px;
+            background: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .tool-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .tool-description {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        .tool-workspace {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 150px;
+        }
+
+        .brainstorm-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: 'Lora', serif;
+            font-size: 1rem;
+            color: #2c3e50;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .brainstorm-input::placeholder {
+            color: #bdc3c7;
+            font-style: italic;
+        }
+
+        .tool-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .insight-display {
+            background: #ecf0f1;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+            color: #2c3e50;
+            min-height: 60px;
+            display: none;
+        }
+
+        .profound-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .profound-quote {
+            font-size: 1.2rem;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .profound-author {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .workshop-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="workshop-container">
+        <div class="workshop-header">
+            <h1 class="workshop-title">Creativity Workshop</h1>
+            <p class="workshop-subtitle">"The unexamined story is not worth telling" - Profound brainstorming for deeper narratives</p>
+        </div>
+
+        <div class="tools-grid">
+            <!-- Truth Seeker -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon" style="background: #e67e22;">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3 class="tool-title">Truth Seeker</h3>
+                </div>
+                <p class="tool-description">Explore the fundamental truths your story wants to reveal. What universal human experience are you examining?</p>
+                <div class="tool-workspace">
+                    <textarea class="brainstorm-input" id="truthInput" placeholder="What truth about humanity, love, loss, or growth does your story explore? What would happen if this truth didn't exist?"></textarea>
+                </div>
+                <div class="tool-buttons">
+                    <button class="btn" onclick="generateTruthPrompt()">New Perspective</button>
+                    <button class="btn btn-secondary" onclick="clearInput('truthInput')">Clear</button>
+                </div>
+                <div class="insight-display" id="truthInsight"></div>
+            </div>
+
+            <!-- Character Depths -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon" style="background: #9b59b6;">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h3 class="tool-title">Character Depths</h3>
+                </div>
+                <p class="tool-description">Dive beneath surface traits to discover your character's core essence and hidden motivations.</p>
+                <div class="tool-workspace">
+                    <textarea class="brainstorm-input" id="characterInput" placeholder="What does your character fear most? What lie do they believe about themselves? What would they never admit out loud?"></textarea>
+                </div>
+                <div class="tool-buttons">
+                    <button class="btn" onclick="generateCharacterPrompt()">Deeper Question</button>
+                    <button class="btn btn-secondary" onclick="clearInput('characterInput')">Clear</button>
+                </div>
+                <div class="insight-display" id="characterInsight"></div>
+            </div>
+
+            <!-- Conflict Navigator -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon" style="background: #e74c3c;">
+                        <i class="fas fa-crosshairs"></i>
+                    </div>
+                    <h3 class="tool-title">Conflict Navigator</h3>
+                </div>
+                <p class="tool-description">Uncover the deeper conflicts that drive meaningful narratives beyond surface-level obstacles.</p>
+                <div class="tool-workspace">
+                    <textarea class="brainstorm-input" id="conflictInput" placeholder="What internal war is your character fighting? How does the external conflict mirror their internal struggle?"></textarea>
+                </div>
+                <div class="tool-buttons">
+                    <button class="btn" onclick="generateConflictPrompt()">Find Tension</button>
+                    <button class="btn btn-secondary" onclick="clearInput('conflictInput')">Clear</button>
+                </div>
+                <div class="insight-display" id="conflictInsight"></div>
+            </div>
+
+            <!-- Wisdom Weaver -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <div class="tool-icon" style="background: #27ae60;">
+                        <i class="fas fa-tree"></i>
+                    </div>
+                    <h3 class="tool-title">Wisdom Weaver</h3>
+                </div>
+                <p class="tool-description">Connect scattered ideas into meaningful patterns that reveal deeper story themes.</p>
+                <div class="tool-workspace">
+                    <textarea class="brainstorm-input" id="wisdomInput" placeholder="List 3-5 random ideas, images, or concepts floating in your mind. How might they connect to reveal something profound?"></textarea>
+                </div>
+                <div class="tool-buttons">
+                    <button class="btn" onclick="generateWisdomPrompt()">Find Patterns</button>
+                    <button class="btn btn-secondary" onclick="clearInput('wisdomInput')">Clear</button>
+                </div>
+                <div class="insight-display" id="wisdomInsight"></div>
+            </div>
+        </div>
+
+        <div class="profound-section">
+            <div class="profound-quote" id="inspirationalQuote">
+                "The role of a writer is not to say what we all can say, but what we are unable to say."
+            </div>
+            <div class="profound-author" id="quoteAuthor">- Anaïs Nin</div>
+        </div>
+    </div>
+
+    <script>
+        const truthPrompts = [
+            "What would your characters do if they knew they only had one day to live?",
+            "What universal fear drives your story's central conflict?",
+            "What truth about human nature does your antagonist represent?",
+            "How would your story change if set in a world without hope?",
+            "What does your protagonist believe about love, and how is it wrong?"
+        ];
+
+        const characterPrompts = [
+            "What childhood wound still influences your character's decisions?",
+            "What would your character do if no one was watching?",
+            "What does your character pretend not to need but desperately craves?",
+            "What truth would destroy your character if they accepted it?",
+            "What does your character judge in others that they secretly do themselves?"
+        ];
+
+        const conflictPrompts = [
+            "How is your external plot a metaphor for internal struggle?",
+            "What happens when your character gets exactly what they think they want?",
+            "What choice would force your character to betray their core values?",
+            "What truth would make your conflict irrelevant?",
+            "How does your character's greatest strength become their weakness?"
+        ];
+
+        const wisdomPrompts = [
+            "What patterns connect your scattered thoughts to a central theme?",
+            "How do these elements reflect different aspects of the human condition?",
+            "What if these ideas were symptoms of a deeper universal truth?",
+            "How might these concepts form a metaphor for personal transformation?",
+            "What wisdom emerges when these ideas converse with each other?"
+        ];
+
+        const inspirationalQuotes = [
+            { quote: "The role of a writer is not to say what we all can say, but what we are unable to say.", author: "Anaïs Nin" },
+            { quote: "There is nothing to writing. All you do is sit down at a typewriter and bleed.", author: "Ernest Hemingway" },
+            { quote: "The first draft of anything is shit.", author: "Ernest Hemingway" },
+            { quote: "You have to write the book that wants to be written.", author: "Madeleine L'Engle" },
+            { quote: "The scariest moment is always just before you start.", author: "Stephen King" }
+        ];
+
+        function generateTruthPrompt() {
+            const prompt = truthPrompts[Math.floor(Math.random() * truthPrompts.length)];
+            const insight = document.getElementById('truthInsight');
+            insight.textContent = prompt;
+            insight.style.display = 'block';
+        }
+
+        function generateCharacterPrompt() {
+            const prompt = characterPrompts[Math.floor(Math.random() * characterPrompts.length)];
+            const insight = document.getElementById('characterInsight');
+            insight.textContent = prompt;
+            insight.style.display = 'block';
+        }
+
+        function generateConflictPrompt() {
+            const prompt = conflictPrompts[Math.floor(Math.random() * conflictPrompts.length)];
+            const insight = document.getElementById('conflictInsight');
+            insight.textContent = prompt;
+            insight.style.display = 'block';
+        }
+
+        function generateWisdomPrompt() {
+            const prompt = wisdomPrompts[Math.floor(Math.random() * wisdomPrompts.length)];
+            const insight = document.getElementById('wisdomInsight');
+            insight.textContent = prompt;
+            insight.style.display = 'block';
+        }
+
+        function clearInput(inputId) {
+            document.getElementById(inputId).value = '';
+            const insightId = inputId.replace('Input', 'Insight');
+            document.getElementById(insightId).style.display = 'none';
+        }
+
+        // Change inspirational quote every 30 seconds
+        setInterval(function() {
+            const randomQuote = inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
+            document.getElementById('inspirationalQuote').textContent = randomQuote.quote;
+            document.getElementById('quoteAuthor').textContent = '- ' + randomQuote.author;
+        }, 30000);
+    </script>
+</body>
+</html>

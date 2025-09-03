@@ -69,13 +69,15 @@
         width: 100%;
         padding: 12px;
         margin-bottom: 10px;
-        background: #000000;
-        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
         border: none;
         border-radius: 8px;
         cursor: pointer;
         font-size: 0.9rem;
-        transition: transform 0.2s ease;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .tool-button:hover {
@@ -124,10 +126,144 @@
         border-bottom: 2px solid #e0e0e0;
     }
 
+    .board-title-section {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
     .board-title {
         font-size: 1.3rem;
         font-weight: 600;
         color: #000000;
+    }
+
+    /* Collaboration UI Styles */
+    .collaboration-status {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 0.8rem;
+    }
+
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #666;
+    }
+
+    .status-indicator::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ccc;
+    }
+
+    .status-indicator.connected::before {
+        background: #4CAF50;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(10px); }
+        20% { opacity: 1; transform: translateY(0); }
+        80% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-10px); }
+    }
+
+    .active-users {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+
+    .user-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: white;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        position: relative;
+        cursor: pointer;
+    }
+
+    .user-avatar::after {
+        content: attr(data-username);
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 0.6rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+
+    .user-avatar:hover::after {
+        opacity: 1;
+    }
+
+    /* Real-time Cursors */
+    .user-cursor {
+        position: absolute;
+        pointer-events: none;
+        z-index: 1000;
+        transition: all 0.1s ease;
+    }
+
+    .cursor-pointer {
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 12px solid;
+        transform: rotate(-45deg);
+    }
+
+    .cursor-label {
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        margin-left: 15px;
+        margin-top: -5px;
+    }
+
+    /* Node collaboration indicators */
+    .node-creator-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 0.6rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border: 2px solid white;
     }
 
     .board-controls {
@@ -137,21 +273,27 @@
 
     .control-btn {
         padding: 8px 15px;
-        background: #f0f0f0;
-        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        color: #333 !important;
+        border: 1px solid rgba(102, 126, 234, 0.3);
         border-radius: 6px;
         cursor: pointer;
         font-size: 0.85rem;
-        transition: background 0.2s ease;
+        font-weight: 500;
+        transition: all 0.3s ease;
     }
 
     .control-btn:hover {
-        background: #e0e0e0;
+        background: rgba(255, 255, 255, 1);
+        border-color: #667eea;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
     }
 
     .control-btn.active {
-        background: #000000;
-        color: white;
+        background: #667eea;
+        color: white !important;
+        border-color: #667eea;
     }
 
     #canvas-area {
@@ -277,12 +419,20 @@
     .use-suggestion-btn {
         margin-top: 10px;
         padding: 6px 12px;
-        background: #000000;
-        color: white;
+        background: #667eea;
+        color: white !important;
         border: none;
         border-radius: 4px;
         cursor: pointer;
         font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .use-suggestion-btn:hover {
+        background: #764ba2;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
     }
 
     .analysis-result {
@@ -484,7 +634,15 @@
     <!-- Center - Visual Idea Connection Board -->
     <div class="connection-board">
         <div class="board-header">
-            <div class="board-title">Idea Connection Board</div>
+            <div class="board-title-section">
+                <div class="board-title">Idea Connection Board</div>
+                <div class="collaboration-status" id="collaboration-status">
+                    <span class="status-indicator" id="connection-status">Connecting...</span>
+                    <div class="active-users" id="active-users">
+                        <!-- Active users will appear here -->
+                    </div>
+                </div>
+            </div>
             <div class="board-controls">
                 <button class="control-btn" onclick="addNewNode()">+ Add Idea</button>
                 <button class="control-btn" onclick="toggleConnectionMode()" id="connect-btn">Connect Ideas</button>
@@ -557,10 +715,247 @@
     let nodeIdCounter = 0;
     let currentNotebook = null;
 
+    // Collaboration variables
+    let ideaBoardSocket = null;
+    let activeUsers = {};
+    let currentUser = null;
+    let userCursors = {};
+
     // Initialize the board
     document.addEventListener('DOMContentLoaded', function() {
         initializeBoard();
+        initializeCollaboration();
         loadSavedBoard();
+    });
+
+    // Collaboration WebSocket Setup
+    function initializeCollaboration() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/ideaboard/`;
+        
+        ideaBoardSocket = new WebSocket(wsUrl);
+        
+        ideaBoardSocket.onopen = function(e) {
+            console.log('Connected to idea board collaboration');
+            updateConnectionStatus('connected', 'Connected - Collaborative Mode');
+        };
+        
+        ideaBoardSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            handleCollaborationMessage(data);
+        };
+        
+        ideaBoardSocket.onclose = function(e) {
+            console.log('Disconnected from collaboration');
+            updateConnectionStatus('disconnected', 'Disconnected - Working Offline');
+            
+            // Attempt to reconnect after 3 seconds
+            setTimeout(() => {
+                console.log('Attempting to reconnect...');
+                initializeCollaboration();
+            }, 3000);
+        };
+        
+        ideaBoardSocket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+            updateConnectionStatus('error', 'Connection Error');
+        };
+    }
+    
+    function handleCollaborationMessage(data) {
+        switch(data.type) {
+            case 'init':
+                // Initialize board with shared state
+                currentUser = data.your_info;
+                if (data.board_state.nodes.length > 0) {
+                    nodes = data.board_state.nodes;
+                    connections = data.board_state.connections;
+                    renderExistingBoard();
+                }
+                updateActiveUsers(data.active_users);
+                break;
+                
+            case 'node_added':
+                if (data.user !== currentUser?.username) {
+                    addNodeToBoard(data.node, false); // Don't broadcast back
+                    showUserAction(data.user, 'added an idea');
+                }
+                break;
+                
+            case 'node_updated':
+                if (data.user !== currentUser?.username) {
+                    updateNodeOnBoard(data.node_id, data.updates);
+                    showUserAction(data.user, 'updated an idea');
+                }
+                break;
+                
+            case 'node_deleted':
+                if (data.user !== currentUser?.username) {
+                    removeNodeFromBoard(data.node_id);
+                    showUserAction(data.user, 'deleted an idea');
+                }
+                break;
+                
+            case 'connection_added':
+                if (data.user !== currentUser?.username) {
+                    connections.push(data.connection);
+                    redrawConnections();
+                    showUserAction(data.user, 'connected ideas');
+                }
+                break;
+                
+            case 'cursor_moved':
+                updateUserCursor(data.username, data.cursor);
+                break;
+                
+            case 'user_joined':
+                addActiveUser(data.username, data.color);
+                showUserAction(data.username, 'joined the session');
+                break;
+                
+            case 'user_left':
+                removeActiveUser(data.username);
+                removeUserCursor(data.username);
+                showUserAction(data.username, 'left the session');
+                break;
+                
+            case 'board_cleared':
+                if (data.user !== currentUser?.username) {
+                    clearBoardSilent();
+                    showUserAction(data.user, 'cleared the board');
+                }
+                break;
+        }
+    }
+    
+    function sendCollaborationMessage(data) {
+        if (ideaBoardSocket && ideaBoardSocket.readyState === WebSocket.OPEN) {
+            ideaBoardSocket.send(JSON.stringify(data));
+        }
+    }
+    
+    function updateConnectionStatus(status, message) {
+        const statusElement = document.getElementById('connection-status');
+        statusElement.textContent = message;
+        statusElement.className = `status-indicator ${status}`;
+    }
+    
+    function updateActiveUsers(users) {
+        const container = document.getElementById('active-users');
+        container.innerHTML = '';
+        
+        activeUsers = {};
+        users.forEach(user => {
+            activeUsers[user.username] = user;
+            addActiveUser(user.username, user.color);
+        });
+    }
+    
+    function addActiveUser(username, color) {
+        const container = document.getElementById('active-users');
+        const existing = document.querySelector(`[data-username="${username}"]`);
+        
+        if (!existing) {
+            const avatar = document.createElement('div');
+            avatar.className = 'user-avatar';
+            avatar.style.backgroundColor = color;
+            avatar.textContent = username.charAt(0).toUpperCase();
+            avatar.setAttribute('data-username', username);
+            container.appendChild(avatar);
+        }
+        
+        activeUsers[username] = { username, color };
+    }
+    
+    function removeActiveUser(username) {
+        const avatar = document.querySelector(`[data-username="${username}"]`);
+        if (avatar) avatar.remove();
+        delete activeUsers[username];
+    }
+    
+    function updateUserCursor(username, cursor) {
+        const canvasArea = document.getElementById('canvas-area');
+        let cursorElement = document.getElementById(`cursor-${username}`);
+        
+        if (!cursorElement) {
+            cursorElement = document.createElement('div');
+            cursorElement.id = `cursor-${username}`;
+            cursorElement.className = 'user-cursor';
+            
+            const pointer = document.createElement('div');
+            pointer.className = 'cursor-pointer';
+            pointer.style.borderBottomColor = activeUsers[username]?.color || '#666';
+            
+            const label = document.createElement('div');
+            label.className = 'cursor-label';
+            label.textContent = username;
+            label.style.backgroundColor = activeUsers[username]?.color || '#666';
+            
+            cursorElement.appendChild(pointer);
+            cursorElement.appendChild(label);
+            canvasArea.appendChild(cursorElement);
+        }
+        
+        cursorElement.style.left = cursor.x + 'px';
+        cursorElement.style.top = cursor.y + 'px';
+        
+        // Hide cursor after 2 seconds of inactivity
+        clearTimeout(userCursors[username]);
+        userCursors[username] = setTimeout(() => {
+            if (cursorElement) cursorElement.style.display = 'none';
+        }, 2000);
+        cursorElement.style.display = 'block';
+    }
+    
+    function removeUserCursor(username) {
+        const cursor = document.getElementById(`cursor-${username}`);
+        if (cursor) cursor.remove();
+        clearTimeout(userCursors[username]);
+        delete userCursors[username];
+    }
+    
+    function showUserAction(username, action) {
+        // Simple notification in AI panel
+        const notification = document.createElement('div');
+        notification.className = 'user-action-notification';
+        notification.innerHTML = `<small><strong>${username}</strong> ${action}</small>`;
+        notification.style.cssText = `
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            margin: 5px 0;
+            animation: fadeInOut 3s ease-in-out;
+        `;
+        
+        const aiResults = document.getElementById('ai-results');
+        aiResults.insertBefore(notification, aiResults.firstChild);
+        
+        setTimeout(() => notification.remove(), 3000);
+    }
+    
+    // Track mouse movement for cursor sharing
+    document.getElementById('canvas-area').addEventListener('mousemove', function(e) {
+        if (!currentUser) return;
+        
+        const rect = this.getBoundingClientRect();
+        const cursor = {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+        
+        // Throttle cursor updates
+        if (!this.cursorThrottle) {
+            this.cursorThrottle = true;
+            setTimeout(() => {
+                sendCollaborationMessage({
+                    action: 'cursor_move',
+                    cursor: cursor
+                });
+                this.cursorThrottle = false;
+            }, 100);
+        }
     });
 
     function initializeBoard() {
@@ -819,7 +1214,7 @@
         document.getElementById('new-idea-content').value = '';
     }
 
-    function addNodeToBoard(node) {
+    function addNodeToBoard(node, broadcastToOthers = true) {
         nodes.push(node);
         
         const canvas = document.getElementById('canvas-area');
@@ -828,10 +1223,16 @@
         nodeElement.id = 'node-' + node.id;
         nodeElement.style.left = node.x + 'px';
         nodeElement.style.top = node.y + 'px';
+        
+        // Add creator badge if collaboration is active
+        const creatorBadge = node.created_by && currentUser ? 
+            `<div class="node-creator-badge" style="background-color: ${activeUsers[node.created_by]?.color || '#666'}">${node.created_by.charAt(0).toUpperCase()}</div>` : '';
+        
         nodeElement.innerHTML = `
             <div class="node-title">${node.title}</div>
             <div class="node-content">${node.content || ''}</div>
             <button class="node-delete" onclick="deleteNode(${node.id})">×</button>
+            ${creatorBadge}
         `;
         
         // Make draggable
@@ -839,6 +1240,14 @@
         nodeElement.addEventListener('click', handleNodeClick);
         
         canvas.appendChild(nodeElement);
+        
+        // Broadcast to other users if this is a local action
+        if (broadcastToOthers && ideaBoardSocket && ideaBoardSocket.readyState === WebSocket.OPEN) {
+            sendCollaborationMessage({
+                action: 'add_node',
+                node: node
+            });
+        }
         
         // Analyze for connections
         findNodeConnections(node);
@@ -851,7 +1260,42 @@
         const nodeElement = document.getElementById('node-' + nodeId);
         if (nodeElement) nodeElement.remove();
         
+        // Broadcast deletion to other users
+        if (ideaBoardSocket && ideaBoardSocket.readyState === WebSocket.OPEN) {
+            sendCollaborationMessage({
+                action: 'delete_node',
+                node_id: nodeId
+            });
+        }
+        
         redrawConnections();
+    }
+    
+    function removeNodeFromBoard(nodeId) {
+        // Helper function for remote deletions (no broadcast)
+        nodes = nodes.filter(n => n.id !== nodeId);
+        connections = connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+        
+        const nodeElement = document.getElementById('node-' + nodeId);
+        if (nodeElement) nodeElement.remove();
+        
+        redrawConnections();
+    }
+    
+    function updateNodeOnBoard(nodeId, updates) {
+        // Helper function for remote node updates
+        const node = nodes.find(n => n.id === nodeId);
+        if (node) {
+            Object.assign(node, updates);
+            
+            const nodeElement = document.getElementById('node-' + nodeId);
+            if (nodeElement) {
+                if (updates.x !== undefined) nodeElement.style.left = updates.x + 'px';
+                if (updates.y !== undefined) nodeElement.style.top = updates.y + 'px';
+                if (updates.title) nodeElement.querySelector('.node-title').textContent = updates.title;
+                if (updates.content) nodeElement.querySelector('.node-content').textContent = updates.content;
+            }
+        }
     }
 
     function startDrag(e) {
@@ -885,6 +1329,20 @@
         function stopDrag() {
             document.removeEventListener('mousemove', drag);
             document.removeEventListener('mouseup', stopDrag);
+            
+            // Broadcast final position to other users
+            if (draggedNode && ideaBoardSocket && ideaBoardSocket.readyState === WebSocket.OPEN) {
+                const nodeId = parseInt(draggedNode.id.replace('node-', ''));
+                const node = nodes.find(n => n.id === nodeId);
+                if (node) {
+                    sendCollaborationMessage({
+                        action: 'update_node',
+                        node_id: nodeId,
+                        updates: { x: node.x, y: node.y }
+                    });
+                }
+            }
+            
             draggedNode = null;
         }
         
@@ -904,15 +1362,25 @@
             nodeElement.classList.add('selected');
         } else if (selectedNode !== nodeId) {
             // Create connection
-            connections.push({ from: selectedNode, to: nodeId });
+            const newConnection = { from: selectedNode, to: nodeId };
+            connections.push(newConnection);
             redrawConnections();
+            
+            // Broadcast connection to other users
+            if (ideaBoardSocket && ideaBoardSocket.readyState === WebSocket.OPEN) {
+                sendCollaborationMessage({
+                    action: 'add_connection',
+                    connection: newConnection
+                });
+            }
             
             // Reset selection
             document.querySelectorAll('.idea-node').forEach(n => n.classList.remove('selected'));
+            const fromNodeId = selectedNode;
             selectedNode = null;
             
             // Find thematic connection
-            analyzeConnection(selectedNode, nodeId);
+            analyzeConnection(fromNodeId, nodeId);
         }
     }
 
@@ -1053,7 +1521,32 @@
             connections = [];
             document.querySelectorAll('.idea-node').forEach(n => n.remove());
             redrawConnections();
+            
+            // Broadcast clear to other users
+            if (ideaBoardSocket && ideaBoardSocket.readyState === WebSocket.OPEN) {
+                sendCollaborationMessage({
+                    action: 'clear_board'
+                });
+            }
         }
+    }
+    
+    function clearBoardSilent() {
+        // Helper function for remote board clearing (no confirmation, no broadcast)
+        nodes = [];
+        connections = [];
+        document.querySelectorAll('.idea-node').forEach(n => n.remove());
+        redrawConnections();
+    }
+    
+    function renderExistingBoard() {
+        // Helper function to render board state received from server
+        document.querySelectorAll('.idea-node').forEach(n => n.remove());
+        nodes.forEach(node => {
+            nodeIdCounter = Math.max(nodeIdCounter, node.id);
+            addNodeToBoard(node, false); // Don't broadcast back
+        });
+        redrawConnections();
     }
 
     function saveBoard() {

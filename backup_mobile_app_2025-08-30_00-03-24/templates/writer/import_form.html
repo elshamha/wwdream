@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Import Document - A Writer's Web Dream{% endblock %}
+
+{% block extra_css %}
+<style>
+    .import-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .import-method-toggle {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .import-method-toggle:hover {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .import-method-toggle.active {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+    
+    .import-method-toggle .icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .google-docs-preview {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        margin-top: 10px;
+        background-color: #f8f9fa;
+    }
+    
+    .supported-formats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .format-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .format-pdf { background-color: #dc3545; color: white; }
+    .format-docx { background-color: #007bff; color: white; }
+    .format-txt { background-color: #6c757d; color: white; }
+    .format-html { background-color: #28a745; color: white; }
+    .format-rtf { background-color: #ffc107; color: black; }
+    .format-odt { background-color: #17a2b8; color: white; }
+    .format-google { background-color: #4285f4; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container import-container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Import Document</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0" style="color: #ffffff !important;">
+                <i class="fas fa-upload"></i> Import Document
+            </h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="importForm">
+                {% csrf_token %}
+                
+                <!-- Import Method Selection -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="import-method-toggle active" id="fileUploadMethod">
+                            <div class="text-center">
+                                <div class="icon text-primary">
+                                    <i class="fas fa-file-upload"></i>
+                                </div>
+                                <h5 style="color: #ffffff !important;">Upload Document</h5>
+                                <p class="text-muted mb-0">Upload PDF, Word, or other supported document files</p>
+                                <div class="supported-formats">
+                                    <span class="format-badge format-pdf">PDF</span>
+                                    <span class="format-badge format-docx">DOCX</span>
+                                    <span class="format-badge format-txt">TXT</span>
+                                    <span class="format-badge format-html">HTML</span>
+                                    <span class="format-badge format-rtf">RTF</span>
+                                    <span class="format-badge format-odt">ODT</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Temporarily hidden Google Docs option
+                    <div class="col-md-6">
+                        <div class="import-method-toggle" id="googleDocsMethod" onclick="selectImportMethod('google')">
+                            <div class="text-center">
+                                <div class="icon text-success">
+                                    <i class="fab fa-google"></i>
+                                </div>
+                                <h5 style="color: #ffffff !important;">Google Docs</h5>
+                                <p class="text-muted mb-0">Import directly from Google Docs using a sharing link</p>
+                                <div class="supported-formats">
+                                    <span class="format-badge format-google">Google Docs</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    -->
+                </div>
+
+                <!-- Document Title -->
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label" style="color: #ffffff !important;">
+                        <i class="fas fa-heading"></i> Document Title *
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="text-danger">{{ form.title.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- File Upload Section -->
+                <div id="fileUploadSection" class="import-section">
+                    <div class="mb-3">
+                        <label for="{{ form.original_file.id_for_label }}" class="form-label" style="color: #ffffff !important;">
+                            <i class="fas fa-file"></i> Select File
+                        </label>
+                        {{ form.original_file }}
+                        <div class="form-text">
+                            Supported formats: PDF, DOCX, DOC, TXT, RTF, ODT, HTML. Max size: 50MB
+                        </div>
+                        {% if form.original_file.errors %}
+                            <div class="text-danger">{{ form.original_file.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Google Docs Section - Temporarily Hidden -->
+                <!-- 
+                <div id="googleDocsSection" class="import-section" style="display: none;">
+                    <div class="mb-3">
+                        <label for="{{ form.google_docs_url.id_for_label }}" class="form-label" style="color: #ffffff !important;">
+                            <i class="fab fa-google"></i> Google Docs URL
+                        </label>
+                        {{ form.google_docs_url }}
+                        <div class="form-text">
+                            Paste the sharing link of your Google Doc. Make sure it's set to "Anyone with the link can view".
+                        </div>
+                        {% if form.google_docs_url.errors %}
+                            <div class="text-danger">{{ form.google_docs_url.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="google-docs-preview" id="googleDocsPreview" style="display: none;">
+                        <h6 style="color: #ffffff !important;"><i class="fas fa-info-circle"></i> How to get the sharing link:</h6>
+                        <ol>
+                            <li>Open your Google Doc</li>
+                            <li>Click the "Share" button in the top right</li>
+                            <li>Change access to "Anyone with the link can view"</li>
+                            <li>Copy the link and paste it above</li>
+                        </ol>
+                    </div>
+                </div>
+                -->
+
+                <!-- Description -->
+                <div class="mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label" style="color: #ffffff !important;">
+                        <i class="fas fa-align-left"></i> Description (Optional)
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="text-danger">{{ form.description.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Target Project -->
+                <div class="mb-3">
+                    <label for="{{ form.target_project.id_for_label }}" class="form-label" style="color: #ffffff !important;">
+                        <i class="fas fa-folder"></i> Target Project
+                    </label>
+                    {{ form.target_project }}
+                    <div class="form-text">
+                        Select an existing project or leave blank to automatically create a new project from your document.
+                    </div>
+                    {% if form.target_project.errors %}
+                        <div class="text-danger">{{ form.target_project.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Import Options -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0" style="color: #ffffff !important;">
+                            <i class="fas fa-cog"></i> Import Options
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.preserve_formatting }}
+                                    <label class="form-check-label" for="{{ form.preserve_formatting.id_for_label }}" style="color: #ffffff !important;">
+                                        Preserve Formatting
+                                    </label>
+                                    <div class="form-text">Keep bold, italic, headings, and other formatting</div>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.extract_metadata }}
+                                    <label class="form-check-label" for="{{ form.extract_metadata.id_for_label }}" style="color: #ffffff !important;">
+                                        Extract Metadata
+                                    </label>
+                                    <div class="form-text">Get creation date, author, and other document info</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.auto_create_chapters }}
+                                    <label class="form-check-label" for="{{ form.auto_create_chapters.id_for_label }}" style="color: #ffffff !important;">
+                                        Auto-create Chapters
+                                    </label>
+                                    <div class="form-text">Split document into chapters based on headings</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Errors -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <!-- Submit Buttons -->
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'writer:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Import Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Simplified script since we're only using file upload method for now
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure file upload section is visible
+    document.getElementById('fileUploadSection').style.display = 'block';
+    
+    // Auto-generate title from filename when file is selected
+    const fileInput = document.getElementById('{{ form.original_file.id_for_label }}');
+    const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+    
+    if (fileInput && titleInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0] && !titleInput.value.trim()) {
+                let filename = this.files[0].name;
+                // Remove file extension and clean up the name
+                let title = filename.replace(/\.[^/.]+$/, "").replace(/[_-]/g, ' ');
+                // Capitalize first letter of each word
+                title = title.replace(/\w\S*/g, (txt) => 
+                    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+                );
+                titleInput.value = title;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

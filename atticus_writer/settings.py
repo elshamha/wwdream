@@ -42,6 +42,11 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    # Social login providers
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.apple',
+    'allauth.socialaccount.providers.microsoft',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
@@ -72,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'writer.context_processors.user_profile',
             ],
         },
     },
@@ -169,3 +175,80 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+# Allauth configuration (updated for latest version)
+ACCOUNT_EMAIL_VERIFICATION = "optional"  # Change to "mandatory" for production
+ACCOUNT_LOGIN_METHODS = ['username', 'email']  # Updated setting
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Updated setting
+ACCOUNT_RATE_LIMITS = {
+    'login_failed': '5/5m',  # Updated rate limiting
+}
+
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_LOGIN_ON_GET = False
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "optional"
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# Social account providers configuration
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APP': {
+            'client_id': '459077239581-6heb40l6gjdah03i8qjqibg1kpd0t40p.apps.googleusercontent.com',
+            'secret': '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',
+            'key': ''
+        }
+    },
+    'facebook': {
+        'METHOD': 'oauth2',
+        'SCOPE': ['email', 'public_profile'],
+        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+        'INIT_PARAMS': {'cookie': True},
+        'FIELDS': [
+            'id',
+            'email',
+            'name',
+            'first_name',
+            'last_name',
+        ],
+        'EXCHANGE_TOKEN': True,
+        'LOCALE_FUNC': 'path.to.callable',
+        'VERIFIED_EMAIL': False,
+        'VERSION': 'v18.0',
+        'APP': {
+            'client_id': '',  # Add your Facebook App ID here
+            'secret': '',     # Add your Facebook App Secret here
+            'key': ''
+        }
+    },
+    'apple': {
+        'APP': {
+            'client_id': '',  # Add your Apple Service ID here
+            'secret': '',     # Add your Apple private key here
+            'key': ''
+        }
+    },
+    'microsoft': {
+        'APP': {
+            'client_id': '',  # Add your Microsoft Application ID here
+            'secret': '',     # Add your Microsoft Client Secret here
+            'key': ''
+        }
+    }
+}
+
+# Redirect URLs after login/logout
+ACCOUNT_LOGIN_REDIRECT_URL = '/writer/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'

@@ -3,6 +3,55 @@
 
 {% block main_class %}auth-container{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Fix login form text colors */
+    .auth-card .form-control,
+    .auth-card .form-select,
+    .auth-card input[type="text"],
+    .auth-card input[type="password"],
+    .auth-card input[type="email"] {
+        color: #333333 !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .auth-card .form-control::placeholder {
+        color: rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .auth-card .form-control:focus {
+        color: #333333 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-color: rgba(102, 126, 234, 0.5) !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    
+    /* Keep labels and other text white */
+    .auth-card .form-label,
+    .auth-card h4,
+    .auth-card p {
+        color: #ffffff !important;
+    }
+    
+    /* Error messages should be visible */
+    .auth-card .text-danger {
+        color: #ff6b6b !important;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Alert styling */
+    .auth-card .alert-danger {
+        background: rgba(255, 107, 107, 0.1) !important;
+        border: 1px solid rgba(255, 107, 107, 0.3) !important;
+        color: #ff6b6b !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
@@ -47,7 +96,14 @@
                         </button>
                     </form>
                     
-                    <!-- Demo account info removed for production -->
+                    <div class="auth-links text-center">
+                        <p class="mb-0">
+                            Don't have an account? 
+                            <a href="{% url 'writer:signup' %}" style="color: rgba(255, 255, 255, 0.8); text-decoration: none;">
+                                Create one here
+                            </a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

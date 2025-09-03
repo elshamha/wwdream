@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}{{ document.title }} - Atticus Writer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">{{ document.title }}</h4>
+                <div class="btn-group">
+                    <a href="{% url 'writer:document_update' document.pk %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                    <a href="{% url 'writer:document_delete' document.pk %}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">
+                        <i class="fas fa-user me-1"></i>By {{ document.author.username }} | 
+                        <i class="fas fa-calendar me-1"></i>Created {{ document.created_at|date:"M d, Y" }} | 
+                        <i class="fas fa-clock me-1"></i>Updated {{ document.updated_at|timesince }} ago | 
+                        <i class="fas fa-pen me-1"></i>{{ document.word_count }} words
+                        {% if document.is_published %}
+                        | <span class="badge bg-success">
+                            <i class="fas fa-globe me-1"></i>Published
+                          </span>
+                        {% else %}
+                        | <span class="badge bg-secondary">
+                            <i class="fas fa-lock me-1"></i>Draft
+                          </span>
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <hr>
+                
+                <div class="document-content">
+                    {% if document.content %}
+                        {{ document.content|safe }}
+                    {% else %}
+                        <p class="text-muted fst-italic">This document is empty. Click "Edit" to start writing.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'writer:document_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Documents
+                </a>
+                <a href="{% url 'writer:document_update' document.pk %}" class="btn btn-primary ms-2">
+                    <i class="fas fa-edit me-1"></i>Continue Writing
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -70,9 +70,6 @@ body {
 
 .workshop-section *, 
 .quick-notes *, 
-.connection-canvas * {
-    color: #ffffff !important;
-}
 
 .workshop-section:hover {
     transform: translateY(-5px);
@@ -160,6 +157,8 @@ body {
     border-radius: 12px;
     padding: 1.5rem;
     min-height: 300px;
+    max-height: 400px;
+    overflow-y: auto;
     resize: none;
     font-family: 'Georgia', serif;
     font-size: 1rem;
@@ -211,61 +210,11 @@ body {
     transform: translateY(-2px);
 }
 
-.connection-canvas {
-    grid-column: 1 / -1;
-    background: transparent;
-    border-radius: 15px;
-    padding: 2rem;
-    margin-top: 2rem;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-}
 
-.connection-board {
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px dashed rgba(255, 255, 255, 0.3);
-    border-radius: 12px;
-    min-height: 400px;
-    position: relative;
-    padding: 2rem;
-    margin-top: 1rem;
-}
 
-.connection-node {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid #667eea;
-    border-radius: 10px;
-    padding: 1rem;
-    position: absolute;
-    cursor: move;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    max-width: 200px;
-    font-size: 0.9rem;
-    color: #ffffff !important;
-}
 
-.connection-node:hover {
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
-    transform: scale(1.05);
-}
 
-.add-node-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    margin-right: 1rem;
-}
 
-.add-node-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-}
 
 @media (max-width: 768px) {
     .workshop-grid {
@@ -465,6 +414,42 @@ body {
         </div>
     </div>
 
+    <!-- Quick Notes Section -->
+    <div class="quick-notes">
+        <div class="section-header">
+            <div class="section-icon">📝</div>
+            <h2 class="section-title">Your Creative Notebook</h2>
+        </div>
+        <div class="notes-grid">
+            <textarea class="note-pad" id="creative-notes" placeholder="Jot down your ideas, connections, and random thoughts here... Let your creativity flow!
+
+Click on any idea below to add it to your notes. You can then expand, combine, or modify them as inspiration strikes.
+
+This is your space to:
+• Brainstorm character backstories
+• Develop plot connections
+• Note interesting dialogue snippets  
+• Capture fleeting creative thoughts
+• Plan story arcs and themes
+
+Remember: There are no bad ideas in brainstorming!"></textarea>
+            
+            <div class="ai-suggestions">
+                <h3>AI Writing Assistant</h3>
+                <button class="suggestion-btn" onclick="generatePlotIdea()">Generate Plot Idea</button>
+                <button class="suggestion-btn" onclick="createCharacterProfile()">Create Character Profile</button>
+                <button class="suggestion-btn" onclick="suggestConflict()">Suggest Conflict</button>
+                <button class="suggestion-btn" onclick="analyzeNotes()">Analyze My Notes</button>
+                <button class="suggestion-btn" onclick="findConnections()">Find Connections</button>
+                <button class="suggestion-btn" onclick="summarizeIdeas()">Summarize Ideas</button>
+                
+                <div id="ai-response" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px; display: none;">
+                    <p id="ai-text"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="workshop-grid">
         <!-- Character Ideas Section -->
         <div class="workshop-section">
@@ -571,62 +556,9 @@ body {
         </div>
     </div>
 
-    <!-- Quick Notes Section -->
-    <div class="quick-notes">
-        <div class="section-header">
-            <div class="section-icon">📝</div>
-            <h2 class="section-title">Your Creative Notebook</h2>
-        </div>
-        <div class="notes-grid">
-            <textarea class="note-pad" id="creative-notes" placeholder="Jot down your ideas, connections, and random thoughts here... Let your creativity flow!
-
-Click on any idea above to add it to your notes. You can then expand, combine, or modify them as inspiration strikes.
-
-This is your space to:
-• Brainstorm character backstories
-• Develop plot connections
-• Note interesting dialogue snippets  
-• Capture fleeting creative thoughts
-• Plan story arcs and themes
-
-Remember: There are no bad ideas in brainstorming!"></textarea>
-            
-            <div class="ai-suggestions">
-                <h3>AI Writing Assistant</h3>
-                <button class="suggestion-btn" onclick="generatePlotIdea()">Generate Plot Idea</button>
-                <button class="suggestion-btn" onclick="createCharacterProfile()">Create Character Profile</button>
-                <button class="suggestion-btn" onclick="suggestConflict()">Suggest Conflict</button>
-                <button class="suggestion-btn" onclick="analyzeNotes()">Analyze My Notes</button>
-                <button class="suggestion-btn" onclick="findConnections()">Find Connections</button>
-                <button class="suggestion-btn" onclick="summarizeIdeas()">Summarize Ideas</button>
-                
-                <div id="ai-response" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px; display: none;">
-                    <p id="ai-text"></p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Connection Canvas -->
-    <div class="connection-canvas">
-        <div class="section-header">
-            <div class="section-icon">🔗</div>
-            <h2 class="section-title">Idea Connection Board</h2>
-        </div>
-        <div style="margin-bottom: 1rem;">
-            <button class="add-node-btn" onclick="addConnectionNode()">Add Idea Node</button>
-            <button class="add-node-btn" onclick="clearBoard()">Clear Board</button>
-            <span style="color: #ffffff; margin-left: 1rem; font-style: italic;">Drag nodes to connect your ideas visually!</span>
-        </div>
-        <div class="connection-board" id="connection-board">
-            <!-- Connection nodes will be added here dynamically -->
-        </div>
-    </div>
 </div>
 
 <script>
-let nodeCounter = 0;
-let connections = [];
 
 function addToNotes(element) {
     const notepad = document.getElementById('creative-notes');
@@ -774,92 +706,11 @@ function showAIResponse(text) {
     }, 8000);
 }
 
-function addConnectionNode() {
-    nodeCounter++;
-    const board = document.getElementById('connection-board');
-    const node = document.createElement('div');
-    node.className = 'connection-node';
-    node.id = `node-${nodeCounter}`;
-    node.innerHTML = `
-        <div contenteditable="true" style="outline: none; min-height: 20px;" onblur="saveNodeContent(this)">
-            Click to edit idea #${nodeCounter}
-        </div>
-        <button onclick="removeNode('node-${nodeCounter}')" style="position: absolute; top: -8px; right: -8px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px;">×</button>
-    `;
-    
-    // Random position
-    node.style.left = Math.random() * (board.offsetWidth - 200) + 'px';
-    node.style.top = Math.random() * (board.offsetHeight - 100) + 'px';
-    
-    board.appendChild(node);
-    makeDraggable(node);
-}
 
-function makeDraggable(node) {
-    let isDragging = false;
-    let startX, startY, initialLeft, initialTop;
-    
-    node.addEventListener('mousedown', (e) => {
-        if (e.target.contentEditable === 'true') return;
-        
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        
-        const rect = node.getBoundingClientRect();
-        const boardRect = node.parentElement.getBoundingClientRect();
-        initialLeft = rect.left - boardRect.left;
-        initialTop = rect.top - boardRect.top;
-        
-        node.style.zIndex = '1000';
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDrag);
-    });
-    
-    function drag(e) {
-        if (!isDragging) return;
-        
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-        
-        node.style.left = (initialLeft + deltaX) + 'px';
-        node.style.top = (initialTop + deltaY) + 'px';
-    }
-    
-    function stopDrag() {
-        isDragging = false;
-        node.style.zIndex = 'auto';
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', stopDrag);
-    }
-}
 
-function removeNode(nodeId) {
-    const node = document.getElementById(nodeId);
-    if (node) {
-        node.remove();
-    }
-}
 
-function clearBoard() {
-    const board = document.getElementById('connection-board');
-    board.innerHTML = '';
-    nodeCounter = 0;
-}
 
-function saveNodeContent(element) {
-    // Content is automatically saved as the user types
-    // This function can be extended to save to local storage or database
-}
 
-// Initialize with a sample node
-document.addEventListener('DOMContentLoaded', function() {
-    addConnectionNode();
-    const firstNode = document.querySelector('.connection-node div[contenteditable]');
-    if (firstNode) {
-        firstNode.textContent = "Start connecting your ideas here!";
-    }
-});
 
 // Workshop Session Management Functions
 let currentSessionData = {
@@ -870,7 +721,6 @@ let currentSessionData = {
     world_building_notes: [],
     general_notes: '',
     ai_suggestions_used: [],
-    connections_made: []
 };
 
 function collectWorkshopData() {
@@ -895,20 +745,8 @@ function collectWorkshopData() {
     });
     
     // Collect general notes
-    const generalNotes = document.getElementById('quick-notes')?.value || '';
+    const generalNotes = document.getElementById('creative-notes')?.value || '';
     
-    // Collect connection nodes
-    const connections = [];
-    document.querySelectorAll('.connection-node').forEach(node => {
-        connections.push({
-            content: node.querySelector('[contenteditable]').textContent,
-            position: {
-                x: parseInt(node.style.left) || 0,
-                y: parseInt(node.style.top) || 0
-            },
-            timestamp: new Date().toISOString()
-        });
-    });
     
     return {
         character_ideas: characterIdeas,
@@ -916,7 +754,6 @@ function collectWorkshopData() {
         world_building_notes: [], // Can be extended
         general_notes: generalNotes,
         ai_suggestions_used: [], // Can be extended  
-        connections_made: connections
     };
 }
 
@@ -1040,14 +877,10 @@ function loadSession(sessionId) {
             
             // Load general notes
             if (session.general_notes) {
-                const notesArea = document.getElementById('quick-notes');
+                const notesArea = document.getElementById('creative-notes');
                 if (notesArea) notesArea.value = session.general_notes;
             }
             
-            // Load connections
-            if (session.connections_made) {
-                loadConnections(session.connections_made);
-            }
             
             showNotification('Session loaded successfully!', 'success');
             closeModal('loadSessionModal');
@@ -1069,8 +902,6 @@ function clearWorkshop() {
     const notesArea = document.getElementById('quick-notes');
     if (notesArea) notesArea.value = '';
     
-    // Clear connections
-    clearBoard();
 }
 
 function loadIdeasToSection(sectionId, ideas) {
@@ -1088,22 +919,6 @@ function loadIdeasToSection(sectionId, ideas) {
     });
 }
 
-function loadConnections(connections) {
-    clearBoard();
-    
-    connections.forEach((connection, index) => {
-        const nodeId = addConnectionNode();
-        const node = document.getElementById(nodeId);
-        if (node) {
-            const editableDiv = node.querySelector('[contenteditable]');
-            if (editableDiv) {
-                editableDiv.textContent = connection.content;
-            }
-            node.style.left = connection.position.x + 'px';
-            node.style.top = connection.position.y + 'px';
-        }
-    });
-}
 
 function showNotification(message, type) {
     const notification = document.createElement('div');
@@ -1141,6 +956,32 @@ function getCookie(name) {
         }
     }
     return cookieValue;
+}
+
+function exportSessionToProject() {
+    const projectTitle = document.getElementById('projectTitle').value;
+    const projectDescription = document.getElementById('projectDescription').value;
+    
+    if (!projectTitle.trim()) {
+        showNotification('Please enter a project title', 'error');
+        return;
+    }
+    
+    const sessionData = collectWorkshopData();
+    const exportData = {
+        title: projectTitle,
+        description: projectDescription,
+        workshop_data: sessionData
+    };
+    
+    // For now, just show success message
+    // In the future, this would create an actual project
+    showNotification(`Project "${projectTitle}" would be created with your workshop ideas!`, 'success');
+    closeModal('exportProjectModal');
+    
+    // Clear form
+    document.getElementById('projectTitle').value = '';
+    document.getElementById('projectDescription').value = '';
 }
 </script>
 

@@ -1,0 +1,3426 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-5 position-relative" style="overflow:visible;">
+    <!-- Ethereal Particle Background -->
+    <div id="ethereal-particles" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;"></div>
+        <div class="row">
+            <!-- Editor Main -->
+            <div class="col-md-9">
+                <div class="card ethereal-glass shadow-sm animate__animated animate__fadeInLeft" style="border-radius:20px; box-shadow:0 8px 32px rgba(102,126,234,0.18);">
+            <div class="card-header editor-header d-flex justify-content-between align-items-center animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius:20px 20px 0 0; box-shadow:0 2px 12px rgba(240,147,251,0.12);">
+                      <h4 class="mb-0 animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size:2rem;">A Writer's Web Dream</h4>
+                      <button id="toggle-theme" class="btn btn-outline-primary btn-sm animate__animated animate__pulse animate__infinite"><i class="fas fa-moon"></i> Theme</button>
+                </div>
+                <div class="card-body editor-container" style="border-radius:0 0 20px 20px;">
+                    <!-- Word Editing Toolbar -->
+                                <div id="word-toolbar" class="editor-toolbar mb-4 animate__animated animate__fadeInUp" style="box-shadow:0 2px 12px rgba(102,126,234,0.10);">
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="replaceWord()"><i class="fas fa-exchange-alt me-1"></i> <span>Replace Word</span></button>
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="countWords()"><i class="fas fa-sort-numeric-up me-1"></i> <span>Word Count</span></button>
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="highlightWord()"><i class="fas fa-highlighter me-1"></i> <span>Highlight Word</span></button>
+                                    <span class="toolbar-divider"></span>
+                                    <button class="toolbar-btn btn-success-ethereal animate__animated animate__pulse animate__infinite" onclick="saveCKEditor()"><i class="fas fa-save me-1"></i> <span>Save</span></button>
+                                    <button class="toolbar-btn btn-warning-ethereal animate__animated animate__pulse animate__infinite" onclick="saveCKEditorToLibrary()"><i class="fas fa-book me-1"></i> <span>Save to Library</span></button>
+                                    <button class="toolbar-btn animate__animated animate__pulse animate__infinite" onclick="aiHelpCreativity()"><i class="fas fa-magic me-1"></i> <span>AI Help</span></button>
+                                    <span class="ms-auto align-self-center animate__animated animate__fadeIn" id="ckeditor-autosave-status" style="font-size:0.95em;color:#a5f3fc;">Autosave: Enabled</span>
+                                </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="text" id="ckeditor-title" name="title" class="form-control mb-3 ethereal-glass animate__animated animate__fadeIn" placeholder="Chapter Title (Ethereal)" value="{{ chapter.title|default:'' }}" required style="border-radius:12px; font-size:1.3rem; background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%); color:#fff;">
+                        <div id="ckeditor-pagination-container" style="width:100%;">
+                            <textarea id="ckeditor-content" name="content" style="min-height:600px;height:600px;width:100%;resize:vertical;">{{ chapter.content|default:'' }}</textarea>
+                                            <div class="d-flex align-items-center mt-2 page-navigation-bar animate__animated animate__fadeInUp" style="box-shadow:0 2px 12px rgba(102,126,234,0.08); border-radius:10px;">
+                                                <button type="button" class="btn btn-outline-primary btn-sm me-2 animate__animated animate__pulse animate__infinite" id="prev-page-btn" onclick="goToPrevPage()"><i class="fas fa-arrow-left"></i> Previous</button>
+                                                <span id="page-indicator" class="page-info" style="font-size:1.1em; color:#a5f3fc;"></span>
+                                                <button type="button" class="btn btn-outline-primary btn-sm ms-2 animate__animated animate__pulse animate__infinite" id="next-page-btn" onclick="goToNextPage()">Next <i class="fas fa-arrow-right"></i></button>
+                                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            </div>
+            <!-- Chapter Sidebar (moved to right) -->
+            <div class="col-md-3 chapter-sidebar ethereal-glass open animate__animated animate__fadeInRight" style="min-height:700px; border-radius:20px; box-shadow: var(--ethereal-shadow);">
+                <div class="chapter-sidebar-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:20px 20px 0 0; padding: 1.5rem; box-shadow: 0 4px 24px rgba(102,126,234,0.15);">
+                    <h5 class="chapter-sidebar-title animate__animated animate__fadeInDown" style="background: linear-gradient(135deg, #a5f3fc 0%, #f0f9ff 50%, #cffafe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size:1.6rem;">Chapters</h5>
+                    <button class="btn btn-success-ethereal btn-sm animate__animated animate__pulse animate__infinite" onclick="addChapter()"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                <ul id="chapter-list" class="chapter-list chapter-list-container py-2 animate__animated animate__fadeIn" style="min-height:500px;">
+                    {% for ch in chapters %}
+                    <li class="chapter-item d-flex justify-content-between align-items-center ethereal-glass animate__animated animate__fadeInUp" draggable="true" data-id="{{ ch.id }}" style="box-shadow:0 2px 12px rgba(102,126,234,0.08);">
+                        <span class="chapter-title" style="font-size:1.1rem;">{{ ch.title }}</span>
+                        <button class="chapter-action-btn delete animate__animated animate__pulse animate__infinite" onclick="deleteChapter({{ ch.id }})"><i class="fas fa-trash"></i></button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="ckeditor-save-status" class="mt-3 animate__animated animate__fadeIn"></div>
+        <!-- Animate.css CDN for beautiful animations -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+        <script>
+        // Ethereal Particle Background
+        function createEtherealParticles() {
+            const container = document.getElementById('ethereal-particles');
+            if (!container) return;
+            for (let i = 0; i < 18; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 8px;
+                    height: 8px;
+                    background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(102,126,234,0.5) 70%, rgba(240,147,251,0.3) 100%);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    left: ${Math.random()*100}vw;
+                    top: ${Math.random()*100}vh;
+                    opacity: ${0.2+Math.random()*0.5};
+                    filter: blur(${Math.random()*2+1}px);
+                    z-index:0;
+                `;
+                container.appendChild(particle);
+                animateParticle(particle);
+            }
+        }
+        function animateParticle(particle) {
+            const duration = 12000 + Math.random()*12000;
+            const startLeft = parseFloat(particle.style.left);
+            const startTop = parseFloat(particle.style.top);
+            const endLeft = Math.random()*100;
+            const endTop = Math.random()*100;
+            particle.animate([
+                { left: startLeft+'vw', top: startTop+'vh', opacity: particle.style.opacity },
+                { left: ((startLeft+endLeft)/2)+'vw', top: ((startTop+endTop)/2)+'vh', opacity: 1 },
+                { left: endLeft+'vw', top: endTop+'vh', opacity: particle.style.opacity }
+            ], {
+                duration: duration,
+                easing: 'ease-in-out'
+            }).addEventListener('finish', () => {
+                particle.style.left = Math.random()*100+'vw';
+                particle.style.top = Math.random()*100+'vh';
+                animateParticle(particle);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', createEtherealParticles);
+        </script>
+    </div>
+</div>
+<script>
+// Chapter drag-and-drop logic
+const chapterList = document.getElementById('chapter-list');
+let draggedItem = null;
+chapterList && chapterList.addEventListener('dragstart', function(e) {
+    draggedItem = e.target;
+});
+chapterList && chapterList.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(chapterList, e.clientY);
+    if (afterElement == null) {
+        chapterList.appendChild(draggedItem);
+    } else {
+        chapterList.insertBefore(draggedItem, afterElement);
+    }
+});
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.chapter-item:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+chapterList && chapterList.addEventListener('drop', function(e) {
+    e.preventDefault();
+    // TODO: Send new order to backend via AJAX
+});
+
+// Chapter add/delete (placeholder)
+function addChapter() {
+    alert('Add chapter logic here');
+}
+function deleteChapter(id) {
+    alert('Delete chapter ' + id);
+}
+
+// Word editing toolbar logic
+function replaceWord() {
+    const word = prompt('Word to replace:');
+    const replacement = prompt('Replace with:');
+    if (!word || !replacement) return;
+    const editor = window.ckeditorInstance;
+    if (editor) {
+        const content = editor.getData();
+        const regex = new RegExp(word, 'g');
+        editor.setData(content.replace(regex, replacement));
+    }
+}
+function countWords() {
+    const editor = window.ckeditorInstance;
+    if (editor) {
+        const text = editor.getData().replace(/<[^>]+>/g, ' ');
+        const words = text.match(/\b\w+\b/g) || [];
+        alert('Word count: ' + words.length);
+    }
+}
+function highlightWord() {
+    const word = prompt('Word to highlight:');
+    if (!word) return;
+    const editor = window.ckeditorInstance;
+    if (editor) {
+        const content = editor.getData();
+        const regex = new RegExp(`(${word})`, 'gi');
+        editor.setData(content.replace(regex, '<span style="background:yellow;">$1</span>'));
+    }
+}
+</script>
+
+<!-- CKEditor 5 Full Build CDN -->
+<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/full/ckeditor.js"></script>
+<script>
+// Pagination logic for CKEditor (500 words per page, last char a period)
+let paginatedContent = [];
+let currentPage = 0;
+function splitContentToPages(text) {
+    // Remove HTML tags for word count, but keep original for display
+    const plain = text.replace(/<[^>]+>/g, ' ');
+    const words = plain.match(/\b\w+\b/g) || [];
+    let pages = [];
+    let wordIdx = 0;
+    let htmlIdx = 0;
+    let lastPeriodIdx = 0;
+    let wordCount = 0;
+    let lastPageEnd = 0;
+    while (wordIdx < words.length) {
+        wordCount = 0;
+        let pageEnd = lastPageEnd;
+        let periodFound = false;
+        // Find 500th word
+        for (let i = 0; i < 500 && wordIdx + i < words.length; i++) {
+            wordCount++;
+        }
+        // Find the index of the 500th word in the plain text
+        let regex = new RegExp(`((?:\\b\\w+\\b\\W*){${wordCount}})`);
+        let match = plain.slice(lastPageEnd).match(regex);
+        if (match) {
+            pageEnd = lastPageEnd + match[1].length;
+        } else {
+            pageEnd = plain.length;
+        }
+        // Ensure last character is a period
+        let pageText = plain.slice(lastPageEnd, pageEnd);
+        let lastPeriod = pageText.lastIndexOf('.');
+        if (lastPeriod !== -1 && lastPeriod !== pageText.length - 1) {
+            pageEnd = lastPageEnd + lastPeriod + 1;
+        }
+        pages.push(text.slice(lastPageEnd, pageEnd));
+        lastPageEnd = pageEnd;
+        wordIdx += wordCount;
+        if (lastPageEnd >= plain.length) break;
+    }
+    return pages;
+}
+function updatePagination() {
+    const content = ckeditorInstance.getData();
+    paginatedContent = splitContentToPages(content);
+    if (currentPage >= paginatedContent.length) currentPage = paginatedContent.length - 1;
+    if (currentPage < 0) currentPage = 0;
+    ckeditorInstance.setData(paginatedContent[currentPage] || '');
+    document.getElementById('page-indicator').textContent = `Page ${currentPage + 1} of ${paginatedContent.length}`;
+    document.getElementById('prev-page-btn').disabled = currentPage === 0;
+    document.getElementById('next-page-btn').disabled = currentPage === paginatedContent.length - 1;
+}
+function goToPrevPage() {
+    if (currentPage > 0) {
+        currentPage--;
+        updatePagination();
+    }
+}
+function goToNextPage() {
+    if (currentPage < paginatedContent.length - 1) {
+        currentPage++;
+        updatePagination();
+    }
+}
+// Hook pagination to CKEditor changes
+function setupCKEditorPagination() {
+    updatePagination();
+    ckeditorInstance.model.document.on('change:data', () => {
+        updatePagination();
+    });
+}
+// Wait for CKEditor to be ready, then setup pagination
+ClassicEditor.create(document.querySelector('#ckeditor-content'), {
+    toolbar: [
+        'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'code', 'subscript', 'superscript',
+        'bulletedList', 'numberedList', 'todoList', '|', 'outdent', 'indent', '|',
+        'link', 'blockQuote', 'insertTable', 'imageUpload', 'mediaEmbed', 'codeBlock', '|',
+        'undo', 'redo', 'findAndReplace', 'selectAll', 'horizontalLine', 'specialCharacters', 'exportPdf', 'exportWord'
+    ],
+    image: {
+        toolbar: [
+            'imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side', 'linkImage'
+        ]
+    },
+    table: {
+        contentToolbar: [
+            'tableColumn', 'tableRow', 'mergeTableCells', 'tableCellProperties', 'tableProperties'
+        ]
+    },
+    heading: {
+        options: [
+            { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+            { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+            { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+            { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
+        ]
+    },
+    autosave: {
+        save(editor) {
+            // Autosave logic: save every change
+            const title = document.getElementById('ckeditor-title').value;
+            const content = editor.getData();
+            const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: new URLSearchParams({
+                    action: 'save',
+                    title: title,
+                    content: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Just now';
+                setTimeout(() => {
+                    document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Enabled';
+                }, 2000);
+            })
+            .catch(() => {
+                document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Error';
+            });
+        }
+    },
+    simpleUpload: {
+        uploadUrl: '/media/imports/', // Change to your Django upload endpoint
+        headers: {
+            'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+        }
+    },
+    ui: {
+        viewportOffset: { top: 60, bottom: 60 },
+    },
+    theme: window.localStorage.getItem('editorTheme') === 'dark' ? 'dark' : 'light',
+}).then(editor => {
+    window.ckeditorInstance = editor;
+    setEditorTheme(window.localStorage.getItem('editorTheme') || 'light');
+// Theme toggle logic
+document.getElementById('toggle-theme').onclick = function() {
+    const current = window.localStorage.getItem('editorTheme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    window.localStorage.setItem('editorTheme', next);
+    setEditorTheme(next);
+};
+
+function setEditorTheme(theme) {
+    if (theme === 'dark') {
+        const editorContainer = document.querySelector('.ck-editor__editable');
+        document.body.classList.add('ck-dark-mode', 'dark-theme');
+        document.body.classList.remove('ck-light-mode');
+        document.querySelector('.chapter-sidebar').style.background = '#222';
+        document.querySelector('.chapter-sidebar').style.color = '#fff';
+        if (editorContainer) {
+            editorContainer.style.background = '#222';
+            editorContainer.style.color = '#fff';
+        }
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.background = '#222';
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.color = '#fff';
+    } else {
+        document.body.classList.remove('ck-dark-mode', 'dark-theme');
+        document.body.classList.add('ck-light-mode');
+        document.querySelector('.chapter-sidebar').style.background = '#f8f9fa';
+        document.querySelector('.chapter-sidebar').style.color = '#222';
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.background = '#fff';
+        window.ckeditorInstance && window.ckeditorInstance.ui.view.editable.element.style.color = '#222';
+    }
+}
+    // Make sure the editor container stretches to full width/height and is readable
+    editor.ui.view.editable.element.style.minHeight = '600px';
+    editor.ui.view.editable.element.style.height = '600px';
+    editor.ui.view.editable.element.style.width = '100%';
+    editor.ui.view.editable.element.style.resize = 'vertical';
+    editor.ui.view.editable.element.style.color = '#000';
+    editor.ui.view.editable.element.style.background = '#fff';
+    editor.ui.view.editable.element.style.opacity = '1';
+    editor.ui.view.editable.element.style.filter = 'none';
+    // Remove the textarea from the DOM after CKEditor is initialized
+    const ta = document.getElementById('ckeditor-content');
+    if (ta) ta.parentNode.removeChild(ta);
+    // ...existing code...
+function aiHelpCreativity() {
+    // Placeholder for AI creativity integration
+    alert('AI Help: This will provide creative suggestions or completions. (Integrate with backend AI API)');
+}
+</script>
+<script>
+let ckeditorInstance;
+ClassicEditor.create(document.querySelector('#ckeditor-content'), {
+    toolbar: [],
+    removePlugins: ['Heading'],
+}).then(editor => {
+    ckeditorInstance = editor;
+    editor.model.document.on('change:data', () => {
+        clearTimeout(window.ckAutoSaveTimeout);
+        window.ckAutoSaveTimeout = setTimeout(function() {
+            saveCKEditor(false);
+            document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Just now';
+            setTimeout(() => {
+                document.getElementById('ckeditor-autosave-status').textContent = 'Autosave: Enabled';
+            }, 2000);
+        }, 2000);
+    });
+}).catch(error => { console.error(error); });
+
+function saveCKEditor(showMessage=true) {
+    const title = document.getElementById('ckeditor-title').value;
+    const content = ckeditorInstance.getData();
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            action: 'save',
+            title: title,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (showMessage) {
+            showCKSaveStatus(data.status === 'success' ? 'Saved!' : (data.message || 'Save failed.'), data.status);
+        }
+    })
+    .catch(() => {
+        if (showMessage) showCKSaveStatus('Error saving.', 'danger');
+    });
+}
+
+function saveCKEditorToLibrary() {
+    const title = document.getElementById('ckeditor-title').value;
+    const content = ckeditorInstance.getData();
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            action: 'save_to_library',
+            title: title,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showCKSaveStatus(data.status === 'success' ? 'Saved to library!' : (data.message || 'Save failed.'), data.status);
+    })
+    .catch(() => {
+        showCKSaveStatus('Error saving to library.', 'danger');
+    });
+}
+
+function showCKSaveStatus(message, status) {
+    const el = document.getElementById('ckeditor-save-status');
+    el.innerHTML = `<div class="alert alert-${status === 'success' ? 'success' : 'danger'}">${message}</div>`;
+    setTimeout(() => { el.innerHTML = ''; }, 3000);
+}
+
+</script>
+<style>
+.wordpad-editor.dark-theme h2,
+.wordpad-editor.dark-theme h3,
+.wordpad-editor.dark-theme h4,
+.wordpad-editor.dark-theme h5,
+.wordpad-editor.dark-theme h6,
+.wordpad-editor.dark-theme p,
+.wordpad-editor.dark-theme span,
+.wordpad-editor.dark-theme div,
+.wordpad-editor.dark-theme a,
+.wordpad-editor.dark-theme li,
+.wordpad-editor.dark-theme td,
+.wordpad-editor.dark-theme th,
+.wordpad-editor.dark-theme label,
+.wordpad-editor.dark-theme small,
+.wordpad-editor.dark-theme strong,
+.wordpad-editor.dark-theme em {
+    color: #ffffff !important;
+}
+
+/* Force clean styling for pasted content in dark mode */
+.wordpad-editor.dark-theme [style*="color"],
+.wordpad-editor.dark-theme [style*="background"],
+.wordpad-editor.dark-theme [style*="font"] {
+    color: #ffffff !important;
+    background: transparent !important;
+    font-family: 'Times New Roman', Times, serif !important;
+}
+
+/* Dark theme chapter sidebar styles */
+body.dark-theme .chapter-sidebar {
+    background: linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 28, 0.95) 100%);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme .chapter-sidebar::before {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0.08;
+}
+
+body.dark-theme .chapter-sidebar-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .chapter-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme .chapter-item:hover {
+    border-color: rgba(79, 172, 254, 0.6);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.25);
+}
+
+body.dark-theme .chapter-item.active {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.25) 0%, rgba(118, 75, 162, 0.2) 100%);
+    border-color: rgba(79, 172, 254, 0.8);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+}
+
+body.dark-theme .chapter-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-theme .chapter-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(79, 172, 254, 0.6);
+}
+
+body.dark-theme .chapter-action-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-theme .chapter-action-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(79, 172, 254, 0.6);
+}
+
+body.dark-theme .chapter-number-input {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(118, 75, 162, 0.12) 100%);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #f8fafc;
+}
+
+body.dark-theme .chapter-number-input:focus {
+    border-color: rgba(79, 172, 254, 0.8);
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.25) 0%, rgba(118, 75, 162, 0.2) 100%);
+    box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.4);
+}
+
+body.dark-theme .chapter-number-input:hover {
+    border-color: rgba(79, 172, 254, 0.6);
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(118, 75, 162, 0.15) 100%);
+}
+
+/* Dark theme ethereal editor styling */
+body.dark-theme .editor-container {
+    background: linear-gradient(135deg, rgba(30, 30, 40, 0.95) 0%, rgba(20, 20, 28, 0.95) 100%);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme .editor-container::before {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0.05;
+}
+
+body.dark-theme .editor-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-theme .editor-toolbar {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme .editor-toolbar::before {
+    opacity: 0.05;
+}
+
+body.dark-theme .formatting-toolbar {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-theme .formatting-toolbar::before {
+    opacity: 0.04;
+}
+
+body.dark-theme .toolbar-btn {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+}
+
+body.dark-theme .toolbar-btn:hover {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.25) 0%, rgba(118, 75, 162, 0.2) 100%);
+    border-color: rgba(79, 172, 254, 0.5);
+    color: #4facfe;
+}
+
+.editor-toolbar {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    backdrop-filter: blur(15px);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+        /* Center the toolbar */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.editor-toolbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+    opacity: 0.03;
+    pointer-events: none;
+    border-radius: 15px;
+}
+
+.btn-ethereal {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-ethereal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.btn-success-ethereal {
+    background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+}
+
+.btn-success-ethereal:hover {
+    box-shadow: 0 8px 25px rgba(56, 239, 125, 0.3);
+}
+
+.btn-warning-ethereal {
+    background: linear-gradient(135deg, #ffd93d 0%, #ff9a3c 100%);
+}
+
+.btn-warning-ethereal:hover {
+    box-shadow: 0 8px 25px rgba(255, 217, 61, 0.3);
+}
+
+/* Collaboration Controls */
+.collaboration-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.collaboration-controls .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.collaboration-controls .btn.active {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border-color: #4facfe;
+}
+
+.collaboration-link {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-left: 1rem;
+}
+
+.collaboration-link input {
+    width: 300px;
+    font-size: 0.875rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.collaboration-link input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #4facfe;
+    box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+}
+
+.upload-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-zone:hover {
+    border-color: rgba(79, 172, 254, 0.6);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.upload-zone.dragover {
+    border-color: #4facfe;
+    background: rgba(79, 172, 254, 0.1);
+}
+
+.alert-ethereal {
+    background: rgba(56, 239, 125, 0.1);
+    border: 1px solid rgba(56, 239, 125, 0.3);
+    border-radius: 10px;
+    color: #38ef7d;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.alert-ethereal.alert-warning {
+    background: rgba(255, 217, 61, 0.1);
+    border-color: rgba(255, 217, 61, 0.3);
+    color: #ffd93d;
+}
+
+.alert-ethereal.alert-danger {
+    background: rgba(255, 107, 107, 0.1);
+    border-color: rgba(255, 107, 107, 0.3);
+    color: #ff6b6b;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Readability Score Styles */
+.readability-dashboard {
+    margin-top: 1rem;
+}
+
+.readability-card {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.readability-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(79, 172, 254, 0.3);
+    transform: translateY(-2px);
+}
+
+.readability-score-main {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.score-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #4facfe 0%, #00f2fe 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.score-circle::before {
+    content: '';
+    position: absolute;
+    width: 85%;
+    height: 85%;
+    background: rgba(40, 40, 40, 0.95);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.score-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    z-index: 2;
+    position: relative;
+}
+
+.score-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+    position: relative;
+}
+
+.score-description {
+    flex: 1;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.readability-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-item:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.metric-value {
+    color: #4facfe;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Score Level Colors */
+.score-excellent {
+    background: conic-gradient(from 0deg, #38ef7d 0%, #11998e 100%);
+}
+
+.score-good {
+    background: conic-gradient(from 0deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.score-fair {
+    background: conic-gradient(from 0deg, #ffd93d 0%, #ff9a3c 100%);
+}
+
+.score-poor {
+    background: conic-gradient(from 0deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+/* Compact readability details */
+.readability-details {
+    animation: fadeIn 0.3s ease;
+}
+
+.score-description-small {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8rem;
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    font-style: italic;
+}
+
+.readability-metrics-small {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.75rem;
+}
+
+.metric-row:last-child {
+    border-bottom: none;
+}
+
+.metric-label-small {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.metric-value-small {
+    color: #4facfe;
+    font-weight: 600;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Rich Text Formatting Toolbar */
+.formatting-toolbar {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    padding: 1.25rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.formatting-toolbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    opacity: 0.02;
+    pointer-events: none;
+    border-radius: 15px;
+}
+
+.toolbar-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+}
+
+.toolbar-btn {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f8fafc;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toolbar-btn:hover {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(118, 75, 162, 0.15) 100%);
+    border-color: rgba(79, 172, 254, 0.4);
+    color: #4facfe;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.2);
+}
+
+.toolbar-btn.active {
+    background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+    color: white;
+    border-color: rgba(79, 172, 254, 0.6);
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+}
+
+.toolbar-btn:hover {
+    background: #e8f4fd;
+    border-color: #0078d4;
+    color: #0078d4;
+    transform: translateY(-1px);
+}
+
+.toolbar-btn:active,
+.toolbar-btn.active {
+    background: #cfe4f7;
+    border-color: #0078d4;
+    color: #0078d4;
+}
+
+.toolbar-btn:disabled {
+    background: #f5f5f5;
+    border-color: #d0d0d0;
+    color: #999999;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.toolbar-btn-chapter {
+    background: #0078d4;
+    border-color: #0078d4;
+    color: #ffffff;
+}
+
+.toolbar-btn-chapter:hover:not(:disabled) {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 0.5rem;
+}
+
+.dropdown-menu-dark {
+    background: #ffffff;
+    border: 1px solid #d0d0d0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-menu-dark .dropdown-item {
+    color: #333333;
+    padding: 0.75rem 1rem;
+}
+
+.dropdown-menu-dark .dropdown-item:hover {
+    background: #e8f4fd;
+    color: #0078d4;
+}
+
+.dropdown-menu-dark .dropdown-item h1,
+.dropdown-menu-dark .dropdown-item h2,
+.dropdown-menu-dark .dropdown-item h3,
+.dropdown-menu-dark .dropdown-item h4,
+.dropdown-menu-dark .dropdown-item p {
+    color: inherit;
+}
+
+/* Page Navigation */
+.page-navigation {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.page-info {
+    font-size: 0.85rem;
+}
+
+.page-controls .btn {
+    margin: 0 0.25rem;
+}
+
+.quick-chapter-form input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 0.8rem;
+}
+
+.quick-chapter-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.quick-chapter-form input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #4facfe;
+    box-shadow: 0 0 0 0.1rem rgba(79, 172, 254, 0.25);
+    outline: none;
+}
+
+.word-limit-warning {
+    background: rgba(255, 193, 61, 0.1);
+    border: 1px solid rgba(255, 193, 61, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* Chapter Management Bar */
+.chapter-management-bar {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chapter-list-horizontal {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.chapter-item-small {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.chapter-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+.chapter-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.chapter-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: #fff;
+}
+
+/* Page Navigation Bar */
+.page-navigation-bar {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.page-info {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+#max-words-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    text-align: center;
+}
+
+#max-words-input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    color: #fff;
+}
+
+/* Chapter Sidebar Manager - Ethereal Design */
+.chapter-sidebar {
+    position: fixed;
+    left: -320px;
+    top: 0;
+    width: 320px;
+    height: 100vh;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.chapter-sidebar.open {
+    left: 0;
+}
+
+.chapter-sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+.chapter-sidebar-header {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 25px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chapter-sidebar-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.chapter-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.chapter-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(79, 172, 254, 0.5);
+    color: #4facfe;
+    transform: scale(1.05);
+}
+
+.chapter-list-container {
+    padding: 20px;
+    height: calc(100vh - 85px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.chapter-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chapter-list-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.chapter-list-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.chapter-list-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+}
+
+.chapter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.chapter-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    padding: 16px;
+    cursor: grab;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+}
+
+.chapter-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 12px;
+}
+
+.chapter-item:hover {
+    transform: translateX(8px) translateY(-2px);
+    border-color: rgba(79, 172, 254, 0.4);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.15);
+}
+
+.chapter-item:hover::before {
+    opacity: 0.03;
+}
+
+.chapter-item.dragging {
+    opacity: 0.7;
+    transform: rotate(3deg) scale(1.02);
+    cursor: grabbing;
+    box-shadow: 0 15px 35px rgba(79, 172, 254, 0.25);
+    z-index: 1001;
+}
+
+.chapter-item.active {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-color: rgba(79, 172, 254, 0.6);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.2);
+    transform: translateX(8px);
+}
+
+.chapter-item.active::before {
+    opacity: 0.05;
+}
+
+.chapter-content {
+    flex: 1;
+    position: relative;
+    z-index: 2;
+}
+
+.chapter-number-section {
+    position: relative;
+    z-index: 3;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.chapter-number-input {
+    width: 45px;
+    height: 32px;
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #f8fafc;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    padding: 0;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+}
+
+/* Remove spinner arrows for WebKit browsers */
+.chapter-number-input::-webkit-outer-spin-button,
+.chapter-number-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Remove spinner arrows for Firefox */
+.chapter-number-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.chapter-number-input:focus {
+    outline: none;
+    border-color: rgba(79, 172, 254, 0.6);
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(118, 75, 162, 0.15) 100%);
+    box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.3);
+}
+
+.chapter-number-input:hover {
+    border-color: rgba(79, 172, 254, 0.4);
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.chapter-title {
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    line-height: 1.3;
+}
+
+.chapter-meta {
+    font-size: 12px;
+    color: rgba(248, 250, 252, 0.7);
+    margin: 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.chapter-actions {
+    display: flex;
+    gap: 6px;
+    position: relative;
+    z-index: 2;
+}
+
+.chapter-action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #f8fafc;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chapter-action-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(79, 172, 254, 0.5);
+    color: #4facfe;
+    transform: scale(1.1);
+}
+
+.chapter-action-btn.delete:hover {
+    background: linear-gradient(135deg, rgba(245, 87, 108, 0.2) 0%, rgba(240, 147, 251, 0.2) 100%);
+    border-color: rgba(245, 87, 108, 0.5);
+    color: #f5576c;
+}
+
+.chapter-toggle-btn {
+    position: fixed;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 10px;
+    border-radius: 0 12px 12px 0;
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 16px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.chapter-toggle-btn:hover {
+    background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+    transform: translateY(-50%) translateX(3px);
+    box-shadow: 0 12px 35px rgba(79, 172, 254, 0.4);
+}
+
+.chapter-toggle-btn.sidebar-open {
+    left: 335px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);
+}
+
+.chapter-toggle-btn.sidebar-open:hover {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    box-shadow: 0 12px 35px rgba(245, 87, 108, 0.4);
+}
+
+.main-content.sidebar-open {
+    margin-left: 320px;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.no-chapters {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(248, 250, 252, 0.6);
+    font-style: italic;
+    font-size: 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    list-style: none;
+}
+
+/* Chapter level indicators */
+.chapter-item[data-chapter-level="h1"] .chapter-title {
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.chapter-item[data-chapter-level="h2"] .chapter-title {
+    color: #ffffff;
+    font-size: 15px;
+    padding-left: 12px;
+}
+
+.chapter-item[data-chapter-level="h3"] .chapter-title {
+    color: #ffffff;
+    font-size: 14px;
+    padding-left: 24px;
+}
+
+.chapter-item[data-chapter-level="h4"] .chapter-title {
+    color: #ffffff;
+    font-size: 13px;
+    padding-left: 36px;
+}
+
+/* Animated background particles */
+.chapter-sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(79, 172, 254, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(240, 147, 251, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    animation: etherealFloat 20s ease-in-out infinite;
+}
+
+@keyframes etherealFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(1deg); }
+    66% { transform: translateY(5px) rotate(-1deg); }
+}
+
+/* Modal Styles */
+#new-chapter-title:focus {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
+}
+
+/* Sortable placeholder */
+.sortable-placeholder {
+    background: rgba(79, 172, 254, 0.2);
+    border: 2px dashed #4facfe;
+    border-radius: 10px;
+    height: 80px;
+    margin-bottom: 0.75rem;
+}
+
+/* Loading state */
+.loading-chapters {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .editor-container {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .editor-header {
+        padding: 1rem;
+    }
+    
+    .editor-toolbar {
+        justify-content: center;
+    }
+    
+    .readability-score-main {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .page-navigation .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .quick-chapter-form {
+        order: 2;
+    }
+    
+    .page-controls {
+        order: 1;
+    }
+    
+    .quick-chapter-form input {
+        width: 200px !important;
+    }
+    
+    /* Formatting Toolbar Mobile Styles */
+    .formatting-toolbar {
+        padding: 0.5rem;
+    }
+    
+    .toolbar-section {
+        justify-content: center;
+    }
+    
+    .toolbar-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .toolbar-btn span {
+        display: none; /* Hide text labels on mobile */
+    }
+    
+    .toolbar-divider {
+        height: 20px;
+        margin: 0 0.25rem;
+    }
+}
+    </style>
+                            <!-- Removed custom toolbar and headers dropdown for distraction-free editor -->
+                        </div>
+                    </div>
+
+                    <!-- Editor Toolbar -->
+                    <div class="mb-4">
+                        <!-- Hidden textarea for form submission -->
+                        <textarea name="content" id="hidden_content" style="display: none;">{{ form.content.value|default:"" }}</textarea>
+                        
+                        <!-- WordPad-style contenteditable editor -->
+                        <div 
+                            id="id_content" 
+                            class="wordpad-editor"
+                            contenteditable="true"
+                            data-placeholder="Begin writing your chapter here..."
+                            onkeydown="handleKeyDown(event)"
+                            oninput="handleContentChange(); autoSaveChapter();"
+                        >{{ form.content.value|default:""|safe }}</div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Removed Readability Score Section for distraction-free editor -->
+
+            <!-- File Upload Section -->
+            <div class="editor-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-upload me-2"></i>Import Document
+                </h5>
+                <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: rgba(255, 255, 255, 0.5);"></i>
+                    <p class="mb-2">Click to upload or drag and drop</p>
+                    <small class="text-muted">Supports .txt, .docx, .pdf files</small>
+                    <input type="file" id="file-input" accept=".txt,.docx,.pdf" style="display: none;" onchange="handleFileUpload(this)">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Messages -->
+<div id="status-messages" class="position-fixed" style="top: 20px; right: 20px; z-index: 1050;"></div>
+
+<!-- Split Chapter Modal -->
+<div class="modal fade" id="splitChapterModal" tabindex="-1" aria-labelledby="splitChapterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white" id="splitChapterModalLabel">
+                    <i class="fas fa-cut me-2"></i>Split Chapter
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <p class="text-light mb-3">
+                        Split the current chapter at page <span id="modal-split-page-number" class="fw-bold">1</span>. 
+                        This will create a new chapter starting from that page.
+                    </p>
+                    <label for="new-chapter-title" class="form-label text-light">New Chapter Title:</label>
+                    <input type="text" class="form-control" id="new-chapter-title" 
+                           placeholder="Enter title for the new chapter..." 
+                           style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-light">Preview:</label>
+                    <div class="card" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div class="card-body p-2">
+                            <small class="text-light" id="split-preview">
+                                Content preview will appear here...
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="executeSplitChapter()">
+                    <i class="fas fa-cut me-1"></i>Split Chapter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Save to Library button uses the same saveChapter logic, but can be extended for library-specific logic if needed
+function autoSaveChapter() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(function() {
+        saveChapter(false);
+    }, 2000); // Autosave after 2 seconds of inactivity
+}
+// Global variables
+let autoSaveTimeout;
+let paginationUpdateTimeout;
+let isLightTheme = true;
+
+// Publish chapter logic
+function publishChapter() {
+    const chapterId = document.querySelector('input[name="chapter_id"]')?.value || '{{ current_chapter.id|default:"" }}';
+    const title = document.getElementById('chapter-title').value;
+    const content = document.getElementById('id_content').innerHTML;
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    if (!chapterId) {
+        showStatusMessage('No chapter selected to publish.', 'danger');
+        return;
+    }
+
+    fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({
+            action: 'publish_chapter',
+            chapter_id: chapterId,
+            title: title,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showStatusMessage('Chapter published to your library!', 'success');
+        } else {
+            showStatusMessage(data.message || 'Failed to publish chapter.', 'danger');
+        }
+    })
+    .catch(() => {
+        showStatusMessage('Error publishing chapter.', 'danger');
+    });
+}
+
+// Initialize editor on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setupDragAndDrop();
+    loadThemePreference();
+    
+    // Only focus on content area if not editing the title
+    const contentArea = document.getElementById('id_content');
+    const titleInput = document.getElementById('chapter-title');
+    if (contentArea && !contentArea.value && document.activeElement !== titleInput) {
+        contentArea.focus();
+    }
+});
+
+// Handle keyboard shortcuts
+function handleKeyDown(event) {
+    // Tab key - insert 4 spaces
+    if (event.key === 'Tab') {
+        event.preventDefault();
+        insertAtCursor('    ');
+    }
+    
+    // Handle formatting shortcuts
+    handleKeyboardShortcuts(event);
+}
+
+// Insert text at cursor position
+function insertAtCursor(text) {
+    const editor = document.getElementById('id_content');
+    editor.focus();
+    
+    // Use insertText command for contenteditable
+    if (document.execCommand) {
+        document.execCommand('insertText', false, text);
+    } else {
+        // Fallback for browsers that don't support execCommand
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(document.createTextNode(text));
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    }
+    
+    handleContentChange();
+}
+
+// Insert tab
+function insertTab() {
+    insertAtCursor('    ');
+}
+
+// Auto-save functionality
+function autoSave() {
+    // Only update pagination info occasionally, not on every keystroke
+    clearTimeout(paginationUpdateTimeout);
+    paginationUpdateTimeout = setTimeout(() => {
+        updatePaginationInfo();
+    }, 1000); // Update pagination after 1 second of inactivity
+    
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        saveToLibrary();
+    }, 3000); // Auto-save after 3 seconds of inactivity
+}
+
+// Save chapter
+function saveChapter(isAutoSave = false) {
+    const form = document.getElementById('chapter-form');
+    const formData = new FormData(form);
+    
+    // Get current chapter ID from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapterId = urlParams.get('chapter_id');
+    
+    // Extract title from first heading in the content
+    const editor = document.getElementById('id_content');
+    const firstHeading = editor.querySelector('h1, h2, h3, h4, h5, h6');
+    if (firstHeading && firstHeading.textContent.trim()) {
+        formData.append('document_title', firstHeading.textContent.trim());
+    }
+    
+    // Add required parameters for the view
+    formData.append('action', 'save_chapter');
+    if (chapterId) {
+        formData.append('chapter_id', chapterId);
+    }
+    
+    // Update status
+    const statusEl = document.getElementById('autosave-status');
+    if (statusEl) {
+        statusEl.textContent = isAutoSave ? 'Saving...' : 'Saving...';
+    }
+    
+    return fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (statusEl) {
+                statusEl.textContent = 'Saved';
+                setTimeout(() => {
+                    statusEl.textContent = 'Enabled';
+                }, 2000);
+            }
+            
+            if (!isAutoSave) {
+                showMessage(data.message || 'Chapter saved successfully!', 'success');
+            }
+            
+            // If a new chapter was created, update the URL to include chapter_id
+            if (data.redirect_url && !chapterId) {
+                window.history.replaceState({}, '', data.redirect_url);
+            }
+            
+            return data; // Return the data for chaining
+        } else {
+            if (statusEl) {
+                statusEl.textContent = 'Error';
+            }
+            const errorMessage = 'Error saving chapter: ' + (data.error || 'Unknown error');
+            showMessage(errorMessage, 'danger');
+            throw new Error(errorMessage);
+        }
+    })
+    .catch(error => {
+        console.error('Save error:', error);
+        if (statusEl) {
+            statusEl.textContent = 'Error';
+        }
+        showMessage('Network error while saving', 'danger');
+        throw error; // Re-throw for the split function to catch
+    });
+}
+
+// Save to Library (replaces save chapter functionality)
+function saveToLibrary() {
+    return saveChapter().then(data => {
+        if (data.status === 'success') {
+            showMessage('Work saved to your library! You can make it a book from your dashboard.', 'success');
+        }
+    });
+}
+
+// Collaboration Functions
+let collaborationMode = 'private'; // 'private' or 'collaborate'
+
+function setCollaborationMode(mode) {
+    collaborationMode = mode;
+    
+    const privateBtn = document.getElementById('private-btn');
+    const collaborateBtn = document.getElementById('collaborate-btn');
+    const collaborationLink = document.getElementById('collaboration-link');
+    
+    // Update button states
+    privateBtn.classList.remove('active');
+    collaborateBtn.classList.remove('active');
+    
+    if (mode === 'private') {
+        privateBtn.classList.add('active');
+        collaborationLink.style.display = 'none';
+        showMessage('Document is now private', 'info');
+    } else if (mode === 'collaborate') {
+        collaborateBtn.classList.add('active');
+        collaborationLink.style.display = 'flex';
+        generateShareLink();
+        showMessage('Collaboration enabled! Share the link with others.', 'success');
+    }
+}
+
+function generateShareLink() {
+    // Generate a shareable link for collaboration
+    const currentUrl = window.location.href;
+    const shareUrl = currentUrl + (currentUrl.includes('?') ? '&' : '?') + 'collaborate=true&token=' + generateRandomToken();
+    
+    const shareInput = document.getElementById('share-link');
+    shareInput.value = shareUrl;
+}
+
+function generateRandomToken() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+function copyShareLink() {
+    const shareInput = document.getElementById('share-link');
+    shareInput.select();
+    shareInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        showMessage('Link copied to clipboard!', 'success');
+    } catch (err) {
+        showMessage('Failed to copy link. Please copy manually.', 'warning');
+    }
+}
+
+// Initialize collaboration mode on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setCollaborationMode('private'); // Default to private
+    
+    // Check URL for collaboration token
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('collaborate') === 'true') {
+        setCollaborationMode('collaborate');
+    }
+});
+
+// File upload handling
+function handleFileUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    showMessage('Uploading and processing file...', 'warning');
+    
+    fetch('{% url "writer:upload_file" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            setEditorContent(data.content);
+            showMessage('File uploaded and content imported successfully!', 'success');
+        } else {
+            showMessage('Error uploading file: ' + (data.error || 'Unknown error'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showMessage('Network error during file upload', 'danger');
+    });
+    
+    // Reset input
+    input.value = '';
+}
+
+// Setup drag and drop
+function setupDragAndDrop() {
+    const uploadZone = document.querySelector('.upload-zone');
+    
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            document.getElementById('file-input').files = files;
+            handleFileUpload(document.getElementById('file-input'));
+        }
+    });
+}
+
+// Show status messages
+function showMessage(message, type = 'success') {
+    const container = document.getElementById('status-messages');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-ethereal alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    container.appendChild(alert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Toggle editor theme between dark and light
+function toggleEditorTheme() {
+    const editor = document.getElementById('id_content');
+    const toggleButton = document.getElementById('theme-toggle');
+    
+    if (isLightTheme) {
+        // Switch to dark theme
+        editor.classList.add('dark-theme');
+        toggleButton.innerHTML = '<i class="fas fa-sun me-1"></i>Light Mode';
+        isLightTheme = false;
+        showMessage('Switched to dark theme', 'success');
+    } else {
+        // Switch to light theme  
+        editor.classList.remove('dark-theme');
+        toggleButton.innerHTML = '<i class="fas fa-moon me-1"></i>Dark Mode';
+        isLightTheme = true;
+        showMessage('Switched to light theme', 'success');
+    }
+    
+    // Clean any problematic styling after theme change
+    setTimeout(() => {
+        cleanEditorContent();
+    }, 50);
+    
+    // Save preference to localStorage
+    localStorage.setItem('editorTheme', isLightTheme ? 'light' : 'dark');
+}
+
+// Load theme preference from localStorage
+function loadThemePreference() {
+    const savedTheme = localStorage.getItem('editorTheme');
+    if (savedTheme === 'dark') {
+        // Apply dark theme without showing message
+        const editor = document.getElementById('id_content');
+        const toggleButton = document.getElementById('theme-toggle');
+        
+        editor.classList.add('dark-theme');
+        toggleButton.innerHTML = '<i class="fas fa-sun me-1"></i>Light Mode';
+        isLightTheme = false;
+        
+        // Clean content after theme load
+        setTimeout(() => {
+            cleanEditorContent();
+        }, 100);
+    } else {
+        // Default to light theme (WordPad style)
+        isLightTheme = true;
+    }
+}
+
+// Readability calculation functions
+function countSyllables(word) {
+    word = word.toLowerCase();
+    if (word.length <= 3) return 1;
+    
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+    word = word.replace(/^y/, '');
+    
+    const matches = word.match(/[aeiouy]{1,2}/g);
+    return matches ? matches.length : 1;
+}
+
+function isComplexWord(word) {
+    return countSyllables(word) >= 3;
+}
+
+function calculateReadabilityScore(text) {
+    if (!text || text.trim().length === 0) {
+        return {
+            fleschScore: 0,
+            gradeLevel: 0,
+            avgSentenceLength: 0,
+            avgWordLength: 0,
+            complexWords: 0,
+            readingTimeMinutes: 0
+        };
+    }
+    
+    // Clean and prepare text
+    const cleanText = text.replace(/[^\w\s.!?]/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // Count sentences (split by .!?)
+    const sentences = cleanText.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const sentenceCount = Math.max(sentences.length, 1);
+    
+    // Count words
+    const words = cleanText.split(/\s+/).filter(w => w.length > 0);
+    const wordCount = words.length;
+    
+    if (wordCount === 0) {
+        return {
+            fleschScore: 0,
+            gradeLevel: 0,
+            avgSentenceLength: 0,
+            avgWordLength: 0,
+            complexWords: 0,
+            readingTimeMinutes: 0
+        };
+    }
+    
+    // Count syllables
+    const totalSyllables = words.reduce((total, word) => total + countSyllables(word), 0);
+    
+    // Count complex words (3+ syllables)
+    const complexWordCount = words.filter(word => isComplexWord(word)).length;
+    
+    // Calculate Flesch Reading Ease Score
+    const avgSentenceLength = wordCount / sentenceCount;
+    const avgSyllablesPerWord = totalSyllables / wordCount;
+    const fleschScore = Math.max(0, Math.min(100, 
+        206.835 - (1.015 * avgSentenceLength) - (84.6 * avgSyllablesPerWord)
+    ));
+    
+    // Calculate Flesch-Kincaid Grade Level
+    const gradeLevel = Math.max(0, 
+        (0.39 * avgSentenceLength) + (11.8 * avgSyllablesPerWord) - 15.59
+    );
+    
+    // Calculate average word length
+    const totalCharacters = words.join('').length;
+    const avgWordLength = totalCharacters / wordCount;
+    
+    // Calculate reading time (assuming 200 words per minute)
+    const readingTimeMinutes = wordCount / 200;
+    
+    return {
+        fleschScore: Math.round(fleschScore),
+        gradeLevel: Math.round(gradeLevel * 10) / 10,
+        avgSentenceLength: Math.round(avgSentenceLength * 10) / 10,
+        avgWordLength: Math.round(avgWordLength * 10) / 10,
+        complexWords: Math.round((complexWordCount / wordCount) * 100),
+        readingTimeMinutes: Math.round(readingTimeMinutes * 10) / 10
+    };
+}
+
+function getScoreLevel(score) {
+    if (score >= 90) return 'excellent';
+    if (score >= 80) return 'good';
+    if (score >= 70) return 'good';
+    if (score >= 60) return 'fair';
+    if (score >= 30) return 'fair';
+    return 'poor';
+}
+
+function getScoreDescription(score) {
+    if (score >= 90) return 'Very Easy to read. Easily understood by an average 11-year-old student.';
+    if (score >= 80) return 'Easy to read. Conversational English for consumers.';
+    if (score >= 70) return 'Fairly Easy to read. Acceptable for most readers.';
+    if (score >= 60) return 'Standard. Easily understood by 13- to 15-year-old students.';
+    if (score >= 50) return 'Fairly Difficult to read. Acceptable for high school students.';
+    if (score >= 30) return 'Difficult to read. Best understood by university graduates.';
+    return 'Very Difficult to read. Best understood by graduate students.';
+}
+
+function updateReadabilityScore() {
+    const text = document.getElementById('id_content').value;
+    const metrics = calculateReadabilityScore(text);
+    
+    // Update score circle
+    const scoreElement = document.querySelector('.score-number');
+    const scoreCircle = document.querySelector('.score-circle');
+    const descriptionElement = document.getElementById('score-description-text');
+    
+    if (scoreElement) {
+        scoreElement.textContent = metrics.fleschScore;
+        
+        // Update score level class
+        const level = getScoreLevel(metrics.fleschScore);
+        scoreCircle.className = `score-circle score-${level}`;
+        scoreCircle.style.cursor = 'pointer';
+        
+        // Update description
+        if (descriptionElement) {
+            descriptionElement.textContent = getScoreDescription(metrics.fleschScore);
+        }
+    }
+    
+    // Update metrics
+    const metricElements = {
+        'grade-level': `${metrics.gradeLevel}`,
+        'avg-sentence-length': `${metrics.avgSentenceLength} words`,
+        'avg-word-length': `${metrics.avgWordLength} chars`,
+        'complex-words': `${metrics.complexWords}%`,
+        'reading-time': `${metrics.readingTimeMinutes} min`
+    };
+    
+    Object.entries(metricElements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    });
+}
+
+function toggleReadabilityDetails() {
+    const details = document.getElementById('readability-details');
+    if (details) {
+        if (details.style.display === 'none') {
+            // Calculate and update readability score before showing details
+            updateReadabilityScore();
+            details.style.display = 'block';
+        } else {
+            details.style.display = 'none';
+        }
+    }
+}
+
+// Chapter Management Functions
+let currentChapterId = null;
+let projectId = {{ project.id }};
+
+// Pagination Variables
+let currentPage = 1;
+let totalPages = 1;
+let maxWordsPerPage = 500;
+let pageBreaks = []; // Array to store page break positions
+let isUpdatingPagination = false;
+
+// Rich Text Formatting Functions
+function handleContentChange() {
+    // Sync contenteditable content to hidden textarea for form submission
+    const editor = document.getElementById('id_content');
+    const hiddenField = document.getElementById('hidden_content');
+    
+    if (editor && hiddenField) {
+        hiddenField.value = editor.innerHTML;
+    }
+    
+    // Call auto-save
+    autoSave();
+    
+    // Update chapter creation button
+    updateChapterCreationButton();
+}
+
+function handlePaste(e) {
+    // Prevent default paste behavior
+    e.preventDefault();
+    
+    // Get pasted data
+    const clipboardData = e.clipboardData || window.clipboardData;
+    let pastedText = '';
+    
+    // Try to get plain text first
+    if (clipboardData.getData) {
+        pastedText = clipboardData.getData('text/plain') || clipboardData.getData('text');
+    }
+    
+    // If we have HTML content, strip it to plain text
+    if (!pastedText && clipboardData.getData('text/html')) {
+        const htmlContent = clipboardData.getData('text/html');
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        pastedText = tempDiv.textContent || tempDiv.innerText || '';
+    }
+    
+    // Clean the pasted text - remove unwanted characters
+    pastedText = pastedText.replace(/[\u00A0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]/g, ' '); // Replace various spaces with regular space
+    pastedText = pastedText.trim(); // Remove leading/trailing whitespace
+    
+    // Insert the cleaned text at cursor position
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        
+        // Create text node with clean content
+        const textNode = document.createTextNode(pastedText);
+        range.insertNode(textNode);
+        
+        // Move cursor to end of inserted text
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+    
+    // Clean any remaining problematic styling
+    setTimeout(() => {
+        cleanEditorContent();
+        handleContentChange();
+    }, 10);
+}
+
+function getEditorContent() {
+    // Get content from contenteditable div
+    const editor = document.getElementById('id_content');
+    return editor ? editor.innerHTML : '';
+}
+
+function setEditorContent(content) {
+    // Set content in contenteditable div
+    const editor = document.getElementById('id_content');
+    const hiddenField = document.getElementById('hidden_content');
+    
+    if (editor) {
+        editor.innerHTML = content;
+        // Clean any problematic styling after setting content
+        cleanEditorContent();
+    }
+    if (hiddenField) {
+        hiddenField.value = content;
+    }
+}
+
+function cleanEditorContent() {
+    // Clean up any problematic styling in the editor
+    const editor = document.getElementById('id_content');
+    if (!editor) return;
+    
+    // Remove inline styles that might cause white/transparent text
+    const elements = editor.querySelectorAll('*');
+    elements.forEach(element => {
+        // Remove problematic inline styles
+        element.style.removeProperty('color');
+        element.style.removeProperty('background-color');
+        element.style.removeProperty('background');
+        element.style.removeProperty('opacity');
+        element.style.removeProperty('filter');
+        
+        // Remove any remaining style attribute if it's empty
+        if (!element.getAttribute('style') || element.getAttribute('style').trim() === '') {
+            element.removeAttribute('style');
+        }
+    });
+}
+
+function getSelectedText() {
+    // Get selected text from contenteditable div
+    const selection = window.getSelection();
+    return selection.toString();
+}
+
+function getSelectionRange() {
+    // Get selection range for contenteditable div
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        return selection.getRangeAt(0);
+    }
+    return null;
+}
+
+function formatText(command) {
+    const editor = document.getElementById('id_content');
+    editor.focus();
+    
+    try {
+        let success = false;
+        
+        switch(command) {
+            case 'bold':
+                success = document.execCommand('bold', false, null);
+                break;
+            case 'italic':
+                success = document.execCommand('italic', false, null);
+                break;
+            case 'underline':
+                success = document.execCommand('underline', false, null);
+                break;
+            case 'h1':
+                success = document.execCommand('formatBlock', false, '<h1>');
+                break;
+            case 'h2':
+                success = document.execCommand('formatBlock', false, '<h2>');
+                break;
+            case 'h3':
+                success = document.execCommand('formatBlock', false, '<h3>');
+                break;
+            case 'h4':
+                success = document.execCommand('formatBlock', false, '<h4>');
+                break;
+            case 'paragraph':
+                success = document.execCommand('formatBlock', false, '<p>');
+                break;
+            default:
+                return;
+        }
+        
+        if (success) {
+            // Sync content and trigger auto-save
+            handleContentChange();
+            
+            // If a heading was created, update the chapter sidebar
+            if (command.startsWith('h') && command !== 'handleContentChange') {
+                setTimeout(() => {
+                    if (document.getElementById('chapter-sidebar').classList.contains('open')) {
+                        loadChapterList();
+                    }
+                }, 100);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Formatting error:', error);
+        showMessage('Formatting not supported in this browser', 'warning');
+    }
+}
+
+function createChapterFromSelection() {
+    const selectedText = getSelectedText();
+    
+    if (!selectedText.trim()) {
+        showMessage('Please select text to create a chapter from', 'warning');
+        return;
+    }
+    
+    // Extract title from selected text (remove HTML tags if any)
+    let title = selectedText.replace(/<[^>]*>/g, '').trim();
+    
+    // If title is too long, truncate it
+    if (title.length > 100) {
+        title = title.substring(0, 100) + '...';
+    }
+    
+    // Show modal or prompt for chapter title
+    const finalTitle = prompt('Chapter Title:', title);
+    if (!finalTitle) return;
+    
+    // Create the chapter content (include the selected text)
+    const chapterContent = `<h2>${finalTitle}</h2>\n<p>${selectedText}</p>`;
+    
+    // Call the existing createSplitChapter function with the content
+    createNewChapterWithContent(finalTitle, chapterContent);
+}
+
+function createNewChapterWithContent(title, content) {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('project', {{ project.id }});
+    
+    fetch('{% url "writer:create_new_chapter" project.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Chapter created successfully!', 'success');
+            
+            // Optionally redirect to the new chapter
+            if (data.chapter_id) {
+                setTimeout(() => {
+                    window.location.href = `{% url "writer:chapter_editor" project.id %}?chapter_id=${data.chapter_id}`;
+                }, 1500);
+            }
+        } else {
+            showMessage('Error creating chapter: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error creating chapter', 'danger');
+    });
+}
+
+function updateChapterCreationButton() {
+    const createBtn = document.getElementById('create-chapter-btn');
+    const selectedText = getSelectedText();
+    const hasSelection = selectedText && selectedText.trim().length > 0;
+    
+    if (createBtn) {
+        createBtn.disabled = !hasSelection;
+        if (hasSelection) {
+            createBtn.classList.add('active');
+        } else {
+            createBtn.classList.remove('active');
+        }
+    }
+}
+
+// Add keyboard shortcuts for formatting
+function handleKeyboardShortcuts(event) {
+    if (event.ctrlKey || event.metaKey) {
+        switch(event.key.toLowerCase()) {
+            case 'b':
+                event.preventDefault();
+                formatText('bold');
+                break;
+            case 'i':
+                event.preventDefault();
+                formatText('italic');
+                break;
+            case 'u':
+                event.preventDefault();
+                formatText('underline');
+                break;
+        }
+    }
+}
+
+// Initialize chapter management
+document.addEventListener('DOMContentLoaded', function() {
+    setupDragAndDrop();
+    loadThemePreference();
+    // loadChapterList(); // Removed - no sidebar to populate
+    
+    // Get current chapter ID from URL or form
+    currentChapterId = {{ current_chapter.id|default:'null' }};
+    
+    // Focus on content area
+    const contentArea = document.getElementById('id_content');
+    if (contentArea && !contentArea.value) {
+        contentArea.focus();
+    }
+    
+    // Update pagination info
+    updatePaginationInfo();
+    
+    // Add event listeners for formatting toolbar
+    const editor = document.getElementById('id_content');
+    if (editor) {
+        // Update chapter creation button on selection change
+        editor.addEventListener('mouseup', updateChapterCreationButton);
+        editor.addEventListener('keyup', updateChapterCreationButton);
+        
+        // Add keyboard shortcuts
+        editor.addEventListener('keydown', handleKeyboardShortcuts);
+        
+        // Add paste event handler to clean pasted content
+        editor.addEventListener('paste', handlePaste);
+        
+        // Initialize content sync
+        handleContentChange();
+    }
+    
+    // Add document-level selection change listener for contenteditable
+    document.addEventListener('selectionchange', updateChapterCreationButton);
+    
+    // Add event listener for quick chapter input
+    const quickChapterInput = document.getElementById('quick-chapter-title');
+    if (quickChapterInput) {
+        quickChapterInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                createQuickChapter();
+            }
+        });
+    }
+});
+
+// Pagination Functions
+function updatePaginationInfo() {
+    if (isUpdatingPagination) return;
+    isUpdatingPagination = true;
+    
+    const editor = document.getElementById('id_content');
+    const content = getEditorContent();
+    const { pages, breaks } = splitTextIntoPages(content, maxWordsPerPage);
+    
+    pageBreaks = breaks;
+    totalPages = Math.max(1, pages.length);
+    
+    // Detect current page based on cursor position instead of forcing it
+    const cursorPos = textarea.selectionStart;
+    let detectedPage = 1;
+    for (let i = 0; i < pageBreaks.length - 1; i++) {
+        if (cursorPos >= pageBreaks[i] && cursorPos < pageBreaks[i + 1]) {
+            detectedPage = i + 1;
+            break;
+        }
+    }
+    if (cursorPos >= pageBreaks[pageBreaks.length - 1]) {
+        detectedPage = totalPages;
+    }
+    currentPage = Math.min(detectedPage, totalPages);
+    
+    // Update UI
+    document.getElementById('current-page').textContent = currentPage;
+    document.getElementById('total-pages').textContent = totalPages;
+    document.getElementById('max-words-per-page').textContent = maxWordsPerPage;
+    
+    // Update current page word count
+    if (pages.length > 0) {
+        const currentPageContent = pages[currentPage - 1] || '';
+        const words = currentPageContent.trim() ? currentPageContent.trim().split(/\s+/) : [];
+        document.getElementById('current-page-words').textContent = words.length;
+    } else {
+        document.getElementById('current-page-words').textContent = '0';
+    }
+    
+    // Update button states
+    document.getElementById('prev-page-btn').disabled = currentPage === 1;
+    document.getElementById('next-page-btn').disabled = currentPage === totalPages;
+    
+    // Update split chapter button
+    const splitBtn = document.getElementById('split-chapter-btn');
+    if (splitBtn) {
+        splitBtn.textContent = `Split at Page ${currentPage}`;
+        splitBtn.disabled = totalPages === 1;
+    }
+    
+    // Only highlight without setting cursor (don't interfere with typing)
+    highlightCurrentPage(false);
+    
+    isUpdatingPagination = false;
+}
+
+function splitTextIntoPages(text, maxWords) {
+    if (!text.trim()) {
+        return { pages: [''], breaks: [0] };
+    }
+    
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    const pages = [];
+    const breaks = [0];
+    let currentPage = '';
+    let currentWordCount = 0;
+    
+    for (let i = 0; i < sentences.length; i++) {
+        const sentence = sentences[i].trim();
+        if (!sentence) continue;
+        
+        const sentenceWords = sentence.split(/\s+/).length;
+        
+        // If adding this sentence would exceed max words, start new page
+        if (currentWordCount + sentenceWords > maxWords && currentPage.trim()) {
+            pages.push(currentPage.trim());
+            breaks.push(currentPage.length);
+            currentPage = sentence + ' ';
+            currentWordCount = sentenceWords;
+        } else {
+            currentPage += sentence + ' ';
+            currentWordCount += sentenceWords;
+        }
+    }
+    
+    // Add the last page if it has content
+    if (currentPage.trim()) {
+        pages.push(currentPage.trim());
+        breaks.push(text.length);
+    }
+    
+    return { pages: pages.length > 0 ? pages : [''], breaks };
+}
+
+function highlightCurrentPage(setCursor = false) {
+    const textarea = document.getElementById('id_content');
+    if (!textarea || pageBreaks.length === 0) return;
+    
+    // Only set cursor position if explicitly requested (during navigation)
+    if (setCursor) {
+        const startPos = currentPage > 1 ? pageBreaks[currentPage - 2] : 0;
+        
+        // Focus and scroll to current page
+        editor.focus();
+        
+        // Set cursor position in contenteditable
+        const range = document.createRange();
+        const sel = window.getSelection();
+        
+        // Find the text node and position
+        const walker = document.createTreeWalker(
+            editor,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+        
+        let currentPos = 0;
+        let targetNode = null;
+        let targetOffset = 0;
+        
+        while (walker.nextNode()) {
+            const node = walker.currentNode;
+            const nodeLength = node.textContent.length;
+            
+            if (currentPos + nodeLength >= startPos) {
+                targetNode = node;
+                targetOffset = startPos - currentPos;
+                break;
+            }
+            currentPos += nodeLength;
+        }
+        
+        if (targetNode) {
+            range.setStart(targetNode, Math.min(targetOffset, targetNode.textContent.length));
+            range.setEnd(targetNode, Math.min(targetOffset, targetNode.textContent.length));
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+        
+        // Scroll to position
+        editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        updatePaginationInfo();
+        highlightCurrentPage(true); // Set cursor when navigating
+    }
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        currentPage++;
+        updatePaginationInfo();
+        highlightCurrentPage(true); // Set cursor when navigating
+    }
+}
+
+function showSplitChapterDialog() {
+    const splitModal = new bootstrap.Modal(document.getElementById('splitChapterModal'));
+    splitModal.show();
+    
+    // Update split preview
+    updateSplitPreview();
+}
+
+function updateSplitPreview() {
+    const titleInput = document.getElementById('new-chapter-title');
+    const previewElement = document.getElementById('split-preview');
+    
+    if (titleInput.value.trim()) {
+        previewElement.innerHTML = `New chapter will be created: <strong>${titleInput.value}</strong>`;
+    } else {
+        previewElement.innerHTML = 'Enter a title for the new chapter';
+    }
+}
+
+function executeSplitChapter() {
+    const titleInput = document.getElementById('new-chapter-title');
+    const title = titleInput.value.trim();
+    
+    if (!title) {
+        showMessage('Please enter a title for the new chapter', 'warning');
+        return;
+    }
+    
+    createSplitChapter(title);
+}
+
+function createSplitChapter(title) {
+    const editor = document.getElementById('id_content');
+    const content = getEditorContent();
+    
+    // Find the position where the current page starts
+    const startPos = currentPage > 1 ? pageBreaks[currentPage - 2] : 0;
+    
+    // Split content at the current page position
+    const contentAtPage = content.substring(startPos);
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', contentAtPage);
+    formData.append('project', {{ project.id }});
+    
+    fetch('{% url "writer:create_new_chapter" project.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const splitModal = bootstrap.Modal.getInstance(document.getElementById('splitChapterModal'));
+            splitModal.hide();
+            
+            // Clear the title input
+            document.getElementById('new-chapter-title').value = '';
+            
+            showMessage('Chapter created successfully!', 'success');
+            
+            // Refresh the page to show new chapter
+            location.reload();
+        } else {
+            showMessage('Error creating chapter: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error creating chapter', 'danger');
+    });
+}
+
+function updateMaxWordsPerPage(newMax) {
+    maxWordsPerPage = parseInt(newMax) || 500;
+    if (maxWordsPerPage < 100) maxWordsPerPage = 100;
+    if (maxWordsPerPage > 2000) maxWordsPerPage = 2000;
+    
+    document.getElementById('max-words-input').value = maxWordsPerPage;
+    updatePaginationInfo();
+}
+
+function toggleChapterManagement() {
+    const content = document.getElementById('chapter-management-content');
+    const icon = document.getElementById('chapter-toggle-icon');
+    
+    if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        content.classList.add('show');
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+function loadChapterList() {
+    fetch(`/writer/projects/${projectId}/chapters/list/`)
+        .then(response => response.json())
+        .then(data => {
+            displayChapterList(data.chapters);
+            updateProjectStats(data);
+        })
+        .catch(error => {
+            console.error('Error loading chapters:', error);
+            document.getElementById('chapter-list').innerHTML = 
+                '<div class="text-danger">Error loading chapters</div>';
+        });
+}
+
+function displayChapterList(chapters) {
+    const chapterList = document.getElementById('chapter-list-items');
+    if (!chapterList) return;
+    if (chapters.length === 0) {
+        chapterList.innerHTML = '<p class="text-muted mb-0">No chapters yet. Create your first chapter!</p>';
+        return;
+    }
+    let html = '';
+    chapters.forEach((chapter, idx) => {
+        const isActive = chapter.id === currentChapterId ? 'active' : '';
+        html += `
+            <div class="chapter-item d-flex align-items-center" data-chapter-id="${chapter.id}" draggable="true">
+                <span class="chapter-drag-handle me-2" title="Drag to reorder" style="cursor: grab;">&#9776;</span>
+                <input type="number" class="form-control form-control-sm chapter-number-input me-2" value="${chapter.order + 1}" min="1" style="width: 60px;" onchange="changeChapterNumber(${chapter.id}, this.value)">
+                <button type="button" class="btn btn-sm btn-outline-light chapter-btn ${isActive}"
+                        onclick="loadChapter(${chapter.id})">
+                    ${chapter.title.length > 20 ? chapter.title.substring(0, 20) + '...' : chapter.title}
+                    <small class="text-muted">(${chapter.word_count}w)</small>
+                </button>
+                <button type="button" class="btn btn-sm btn-danger ms-1" 
+                        onclick="deleteChapter(${chapter.id})" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+    });
+    chapterList.innerHTML = html;
+    // Update current chapter title in the bar
+    const currentChapter = chapters.find(ch => ch.id === currentChapterId);
+    if (currentChapter) {
+        document.getElementById('current-chapter-title').textContent = currentChapter.title;
+    }
+    // Add Save Order button if not present
+    if (!document.getElementById('save-chapter-order-btn')) {
+        const saveBtn = document.createElement('button');
+        saveBtn.id = 'save-chapter-order-btn';
+        saveBtn.className = 'btn btn-success btn-sm mt-2';
+        saveBtn.textContent = 'Save Order';
+        saveBtn.onclick = saveManualChapterOrder;
+        chapterList.parentElement.appendChild(saveBtn);
+    }
+}
+
+function changeChapterNumber(chapterId, newOrder) {
+    // Collect all chapter numbers and send to backend
+    const chapterItems = document.querySelectorAll('.chapter-item');
+    const chapterOrders = Array.from(chapterItems).map((item, idx) => {
+        return {
+            id: parseInt(item.dataset.chapterId),
+            order: parseInt(item.querySelector('.chapter-number-input').value) - 1
+        };
+    });
+    // Optionally, sort and update UI immediately
+    chapterOrders.sort((a, b) => a.order - b.order);
+    // Save to backend
+    saveManualChapterOrder(chapterOrders);
+}
+
+function saveManualChapterOrder(chapterOrders) {
+    // If not provided, collect from UI
+    if (!chapterOrders) {
+        const chapterItems = document.querySelectorAll('.chapter-item');
+        chapterOrders = Array.from(chapterItems).map((item, idx) => {
+            return {
+                id: parseInt(item.dataset.chapterId),
+                order: parseInt(item.querySelector('.chapter-number-input').value) - 1
+            };
+        });
+    }
+    fetch(`/writer/projects/${projectId}/chapters/reorder/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+        },
+        body: JSON.stringify({ chapters: chapterOrders })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadChapterList();
+            showMessage('Chapter order updated!', 'success');
+        } else {
+            showMessage('Error updating order: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Error updating order', 'error');
+    });
+}
+
+function updateProjectStats(data) {
+    document.getElementById('total-chapters').textContent = data.total_chapters;
+    document.getElementById('project-word-count').textContent = data.project_word_count;
+    
+    // Calculate progress percentage (assuming 50000 word target)
+    const targetWords = 50000;
+    const progress = Math.min(100, (data.project_word_count / targetWords) * 100);
+    document.getElementById('progress-percentage').textContent = `${progress.toFixed(1)}%`;
+}
+
+function createNewChapter() {
+    const title = prompt('Enter chapter title:') || 'Untitled Chapter';
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`/writer/projects/${projectId}/chapters/create/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadChapterList();
+            loadChapter(data.chapter.id);
+            showMessage('New chapter created successfully!', 'success');
+        } else {
+            showMessage('Error creating chapter: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating chapter:', error);
+        showMessage('Error creating chapter', 'error');
+    });
+}
+
+function createQuickChapter() {
+    const titleInput = document.getElementById('quick-chapter-title');
+    const title = titleInput.value.trim();
+    
+    if (!title) {
+        showMessage('Please enter a chapter title', 'warning');
+        titleInput.focus();
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`/writer/projects/${projectId}/chapters/create/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadChapterList();
+            loadChapter(data.chapter.id);
+            titleInput.value = ''; // Clear the input
+            showMessage('New chapter created successfully!', 'success');
+        } else {
+            showMessage('Error creating chapter: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating chapter:', error);
+        showMessage('Error creating chapter', 'error');
+    });
+}
+
+function loadChapter(chapterId) {
+    if (chapterId === currentChapterId) return;
+    
+    // Save current chapter first
+    if (currentChapterId) {
+        saveChapter(true); // Auto-save
+    }
+    
+    // Update URL and load new chapter
+    window.location.href = `/writer/projects/${projectId}/editor/?chapter_id=${chapterId}`;
+}
+
+function deleteChapter(chapterId) {
+    if (!confirm('Are you sure you want to delete this chapter? This action cannot be undone.')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`/writer/projects/${projectId}/chapters/${chapterId}/delete/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadChapterList();
+            if (chapterId === currentChapterId) {
+                // If deleted current chapter, load first available chapter
+                window.location.href = `/writer/projects/${projectId}/editor/`;
+            }
+            showMessage('Chapter deleted successfully', 'success');
+        } else {
+            showMessage('Error deleting chapter: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting chapter:', error);
+        showMessage('Error deleting chapter', 'error');
+    });
+}
+
+function updateChapterOrder(chapterId, newOrder) {
+    const formData = new FormData();
+    formData.append('order', newOrder - 1); // Convert to 0-based indexing
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`/writer/projects/${projectId}/chapters/${chapterId}/order/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadChapterList();
+            showMessage('Chapter order updated', 'success');
+        } else {
+            showMessage('Error updating chapter order', 'error');
+            loadChapterList(); // Reload to reset the input
+        }
+    })
+    .catch(error => {
+        console.error('Error updating chapter order:', error);
+        showMessage('Error updating chapter order', 'error');
+        loadChapterList();
+    });
+}
+
+function initializeSortable() {
+    // Initialize drag-and-drop sorting for chapters
+    const chapterList = document.getElementById('chapter-list');
+    
+    // Simple drag and drop implementation
+    let draggedElement = null;
+    
+    chapterList.addEventListener('dragstart', function(e) {
+        if (e.target.closest('.chapter-drag-handle')) {
+            draggedElement = e.target.closest('.chapter-item');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+    });
+    
+    chapterList.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    });
+    
+    chapterList.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (draggedElement) {
+            const dropTarget = e.target.closest('.chapter-item');
+            if (dropTarget && dropTarget !== draggedElement) {
+                const allChapters = Array.from(chapterList.children);
+                const dragIndex = allChapters.indexOf(draggedElement);
+                const dropIndex = allChapters.indexOf(dropTarget);
+                
+                if (dragIndex < dropIndex) {
+                    dropTarget.parentNode.insertBefore(draggedElement, dropTarget.nextSibling);
+                } else {
+                    dropTarget.parentNode.insertBefore(draggedElement, dropTarget);
+                }
+                
+                // Update chapter orders on server
+                updateChapterOrders();
+            }
+        }
+    });
+    
+    // Make chapter items draggable
+    const chapterItems = chapterList.querySelectorAll('.chapter-item');
+    chapterItems.forEach(item => {
+        item.draggable = true;
+    });
+}
+
+function updateChapterOrders() {
+    const chapterItems = document.querySelectorAll('.chapter-item');
+    const chapterOrders = [];
+    
+    chapterItems.forEach((item, index) => {
+        chapterOrders.push({
+            id: parseInt(item.dataset.chapterId),
+            order: index
+        });
+    });
+    
+    fetch(`/writer/projects/${projectId}/chapters/reorder/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ chapter_orders: chapterOrders })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            loadChapterList();
+            showMessage('Chapter order updated', 'success');
+        } else {
+            showMessage('Error updating chapter order', 'error');
+            loadChapterList();
+        }
+    })
+    .catch(error => {
+        console.error('Error updating chapter orders:', error);
+        showMessage('Error updating chapter order', 'error');
+        loadChapterList();
+    });
+}
+
+// Chapter Sidebar Functions
+function toggleChapterSidebar() {
+    const sidebar = document.getElementById('chapter-sidebar');
+    const mainContent = document.getElementById('main-content');
+    const toggleBtn = document.getElementById('chapter-toggle-btn');
+    
+    sidebar.classList.toggle('open');
+    mainContent.classList.toggle('sidebar-open');
+    
+    if (sidebar.classList.contains('open')) {
+        toggleBtn.style.left = '310px';
+        loadChapterList();
+    } else {
+        toggleBtn.style.left = '10px';
+    }
+}
+
+function loadChapterList() {
+    const chapterList = document.getElementById('chapter-list');
+    
+    // For now, create chapters from headings in the document
+    const editor = document.getElementById('id_content');
+    const headings = editor.querySelectorAll('h1, h2, h3, h4');
+    
+    chapterList.innerHTML = '';
+    
+    if (headings.length === 0) {
+        chapterList.innerHTML = '<li class="no-chapters">No chapters found. Create headings to see them here.</li>';
+        return;
+    }
+    
+    headings.forEach((heading, index) => {
+        const chapterItem = createChapterItem(heading, index);
+        chapterList.appendChild(chapterItem);
+    });
+    
+    // Add drag and drop functionality
+    initializeDragDrop();
+}
+
+function createChapterItem(heading, index) {
+    const li = document.createElement('li');
+    li.className = 'chapter-item';
+    li.draggable = true;
+    li.dataset.chapterIndex = index;
+    
+    const headingText = heading.textContent || `Chapter ${index + 1}`;
+    const headingType = heading.tagName.toLowerCase();
+    
+    li.innerHTML = `
+        <div class="chapter-number-section">
+            <input type="number" class="chapter-number-input" value="${index + 1}" 
+                   onchange="reorderChapter(${index}, this.value)" 
+                   onclick="event.stopPropagation()" min="1" />
+        </div>
+        <div class="chapter-content">
+            <h4 class="chapter-title">${headingText}</h4>
+        </div>
+        <div class="chapter-actions">
+            <button class="chapter-action-btn" onclick="scrollToChapter(${index})" title="Go to chapter">
+                <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="chapter-action-btn delete" onclick="deleteChapterHeading(${index})" title="Delete chapter">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    // Add click to navigate
+    li.addEventListener('click', () => scrollToChapter(index));
+    
+    return li;
+}
+
+function scrollToChapter(index) {
+    const editor = document.getElementById('id_content');
+    const headings = editor.querySelectorAll('h1, h2, h3, h4');
+    
+    if (headings[index]) {
+        headings[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Highlight the heading briefly
+        headings[index].style.backgroundColor = '#ffffcc';
+        setTimeout(() => {
+            headings[index].style.backgroundColor = '';
+        }, 2000);
+        
+        // Update active chapter
+        document.querySelectorAll('.chapter-item').forEach(item => item.classList.remove('active'));
+        document.querySelector(`[data-chapter-index="${index}"]`).classList.add('active');
+    }
+}
+
+function deleteChapterHeading(index) {
+    if (confirm('Delete this chapter heading?')) {
+        const editor = document.getElementById('id_content');
+        const headings = editor.querySelectorAll('h1, h2, h3, h4');
+        
+        if (headings[index]) {
+            headings[index].remove();
+            handleContentChange(); // Save changes
+            loadChapterList(); // Refresh sidebar
+            showMessage('Chapter heading deleted', 'success');
+        }
+    }
+}
+
+function reorderChapter(currentIndex, newPosition) {
+    // Convert to 0-based index
+    const newIndex = parseInt(newPosition) - 1;
+    
+    if (newIndex < 0 || newIndex === currentIndex) {
+        // Reset the input to current position if invalid
+        event.target.value = currentIndex + 1;
+        return;
+    }
+    
+    const editor = document.getElementById('id_content');
+    const headings = Array.from(editor.querySelectorAll('h1, h2, h3, h4'));
+    
+    if (newIndex >= headings.length) {
+        // Reset if position is too high
+        event.target.value = currentIndex + 1;
+        showMessage('Invalid chapter position', 'error');
+        return;
+    }
+    
+    // Get the heading to move
+    const headingToMove = headings[currentIndex];
+    if (!headingToMove) return;
+    
+    // Remove the heading from current position
+    headingToMove.remove();
+    
+    // Find the new insertion point
+    const updatedHeadings = Array.from(editor.querySelectorAll('h1, h2, h3, h4'));
+    
+    if (newIndex === 0) {
+        // Insert at the beginning
+        if (updatedHeadings.length > 0) {
+            updatedHeadings[0].parentNode.insertBefore(headingToMove, updatedHeadings[0]);
+        } else {
+            editor.appendChild(headingToMove);
+        }
+    } else if (newIndex >= updatedHeadings.length) {
+        // Insert at the end
+        editor.appendChild(headingToMove);
+    } else {
+        // Insert before the heading that's now at the target position
+        const targetHeading = updatedHeadings[newIndex];
+        targetHeading.parentNode.insertBefore(headingToMove, targetHeading);
+    }
+    
+    handleContentChange(); // Save changes
+    loadChapterList(); // Refresh sidebar
+    showMessage(`Chapter moved to position ${newPosition}`, 'success');
+}
+
+function initializeDragDrop() {
+    const chapterItems = document.querySelectorAll('.chapter-item');
+    
+    chapterItems.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragend', handleDragEnd);
+    });
+}
+
+let draggedElement = null;
+
+function handleDragStart(e) {
+    draggedElement = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    
+    if (this !== draggedElement) {
+        const draggedIndex = parseInt(draggedElement.dataset.chapterIndex);
+        const targetIndex = parseInt(this.dataset.chapterIndex);
+        
+        // Reorder the headings in the editor
+        reorderChapterHeadings(draggedIndex, targetIndex);
+    }
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    draggedElement = null;
+    loadChapterList(); // Refresh the sidebar
+}
+
+function reorderChapterHeadings(fromIndex, toIndex) {
+    const editor = document.getElementById('id_content');
+    const headings = Array.from(editor.querySelectorAll('h1, h2, h3, h4'));
+    
+    if (fromIndex >= 0 && fromIndex < headings.length && toIndex >= 0 && toIndex < headings.length) {
+        const draggedHeading = headings[fromIndex];
+        const targetHeading = headings[toIndex];
+        
+        // Move the heading in the DOM
+        if (fromIndex < toIndex) {
+            targetHeading.parentNode.insertBefore(draggedHeading, targetHeading.nextSibling);
+        } else {
+            targetHeading.parentNode.insertBefore(draggedHeading, targetHeading);
+        }
+        
+        handleContentChange(); // Save changes
+        showMessage('Chapter order updated', 'success');
+    }
+}
+
+// Auto-detect new headings and update sidebar
+function setupHeadingDetection() {
+    const editor = document.getElementById('id_content');
+    let lastHeadingCount = 0;
+    
+    setInterval(() => {
+        const headings = editor.querySelectorAll('h1, h2, h3, h4');
+        if (headings.length !== lastHeadingCount) {
+            lastHeadingCount = headings.length;
+            if (document.getElementById('chapter-sidebar').classList.contains('open')) {
+                loadChapterList();
+            }
+        }
+    }, 1000);
+}
+
+// Initialize sidebar functionality
+document.addEventListener('DOMContentLoaded', function() {
+    setupHeadingDetection();
+});
+
+</script>
+</div> <!-- Close main-content -->
+{% endblock %}

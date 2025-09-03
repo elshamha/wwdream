@@ -1,0 +1,1237 @@
+{% extends 'base.html' %}
+{% block title %}Book Cover Designer - Professional Cover Creation{% endblock %}
+
+{% block content %}
+<!-- HTML2Canvas for cover export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* Reset problematic global styles */
+.cover-designer-page * {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+
+/* Main Container */
+.designer-container {
+    min-height: 100vh;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.designer-header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.designer-header h1 {
+    color: white !important;
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Main Layout */
+.designer-body {
+    flex: 1;
+    display: flex;
+    height: calc(100vh - 70px);
+}
+
+/* Left Sidebar - Templates & Upload */
+.template-sidebar {
+    width: 320px;
+    background: white;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.sidebar-section {
+    margin-bottom: 2rem;
+}
+
+.sidebar-section h3 {
+    color: #2c3e50 !important;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+/* Upload Section */
+.upload-section {
+    background: #f8f9fa;
+    border: 2px dashed #4a90e2;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.upload-section:hover {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.upload-section.dragging {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 2.5rem;
+    color: #4a90e2 !important;
+    margin-bottom: 1rem;
+}
+
+.upload-text {
+    color: #495057 !important;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.upload-button {
+    background: #4a90e2;
+    color: white !important;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.upload-button:hover {
+    background: #357abd;
+    transform: translateY(-1px);
+}
+
+/* Uploaded Images Gallery */
+.uploaded-images {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.uploaded-image-card {
+    position: relative;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    aspect-ratio: 3/4;
+}
+
+.uploaded-image-card:hover {
+    border-color: #4a90e2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.uploaded-image-card.active {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74,144,226,0.2);
+}
+
+.uploaded-image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white !important;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.uploaded-image-card:hover .remove-image-btn {
+    opacity: 1;
+}
+
+/* Template Grid */
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.template-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    text-align: center;
+}
+
+.template-card:hover {
+    border-color: #4a90e2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.template-card.active {
+    border-color: #4a90e2;
+    background: #f0f8ff;
+}
+
+.template-preview {
+    height: 120px;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.template-name {
+    color: #2c3e50 !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.template-description {
+    color: #6c757d !important;
+    font-size: 0.75rem;
+}
+
+/* Center - Cover Preview */
+.preview-container {
+    flex: 1;
+    background: #e9ecef;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-controls {
+    background: white;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.size-selector {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.size-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #495057 !important;
+}
+
+.size-btn.active {
+    background: white;
+    color: #2c3e50 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.preview-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+/* Book Cover Frame */
+.book-cover {
+    background: white;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.book-cover.kindle {
+    width: 300px;
+    height: 480px;
+}
+
+.book-cover.paperback {
+    width: 360px;
+    height: 540px;
+}
+
+.book-cover.hardcover {
+    width: 380px;
+    height: 570px;
+}
+
+/* Cover Content */
+.cover-content {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.cover-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.cover-background img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cover-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3);
+    z-index: 1;
+}
+
+.cover-text {
+    position: relative;
+    z-index: 2;
+    color: white !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.cover-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+    color: white !important;
+}
+
+.cover-subtitle {
+    font-size: 1.2rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+    color: white !important;
+}
+
+.cover-author {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-top: auto;
+    color: white !important;
+}
+
+/* Solid color backgrounds */
+.cover-solid {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Right Sidebar - Customization */
+.customization-panel {
+    width: 320px;
+    background: white;
+    border-left: 1px solid #dee2e6;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.panel-section {
+    margin-bottom: 2rem;
+}
+
+.panel-section h3 {
+    color: #2c3e50 !important;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    color: #495057 !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background: white !important;
+    color: #495057 !important;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 0.2rem rgba(74,144,226,0.25);
+}
+
+/* Color Palette */
+.color-palette {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.color-swatch {
+    width: 35px;
+    height: 35px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+}
+
+.color-swatch.active {
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 2px rgba(44,62,80,0.2);
+}
+
+/* Font Options */
+.font-options {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.font-option {
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.font-option:hover {
+    background: #f8f9fa;
+}
+
+.font-option.active {
+    border-color: #4a90e2;
+    background: #f0f8ff;
+}
+
+.font-name {
+    color: #2c3e50 !important;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.font-sample {
+    color: #6c757d !important;
+    font-size: 0.875rem;
+}
+
+/* Export Buttons */
+.export-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.export-buttons {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.btn-export {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-export-primary {
+    background: #4a90e2;
+    color: white !important;
+}
+
+.btn-export-primary:hover {
+    background: #357abd;
+    transform: translateY(-1px);
+}
+
+.btn-export-secondary {
+    background: white;
+    color: #495057 !important;
+    border: 1px solid #dee2e6;
+}
+
+.btn-export-secondary:hover {
+    background: #f8f9fa;
+}
+
+/* Loading State */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4a90e2;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .customization-panel {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .designer-body {
+        flex-direction: column;
+    }
+    
+    .template-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+    }
+}
+</style>
+
+<div class="cover-designer-page">
+    {% csrf_token %}
+    <div class="designer-container">
+        <!-- Header -->
+        <div class="designer-header">
+            <h1><i class="fas fa-image me-2"></i>Book Cover Designer</h1>
+            <div class="header-actions">
+                <button class="btn-export-secondary" onclick="saveDesign()">
+                    <i class="fas fa-save"></i> Save Design
+                </button>
+                <button class="btn-export-primary" onclick="exportCover()">
+                    <i class="fas fa-download"></i> Export Cover
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Body -->
+        <div class="designer-body">
+            <!-- Left Sidebar -->
+            <div class="template-sidebar">
+                <!-- Upload Section -->
+                <div class="sidebar-section">
+                    <h3>Upload Your Image</h3>
+                    <div class="upload-section" id="uploadDropZone">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">
+                            Drag & drop your cover image here<br>
+                            or click to browse
+                        </div>
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                        <button class="upload-button" onclick="document.getElementById('imageUpload').click()">
+                            Choose Image
+                        </button>
+                    </div>
+                    
+                    <!-- Uploaded Images Gallery -->
+                    <div class="uploaded-images" id="uploadedImages">
+                        <!-- Images will appear here -->
+                    </div>
+                </div>
+
+                <!-- Template Section -->
+                <div class="sidebar-section">
+                    <h3>Cover Templates</h3>
+                    <div class="template-grid">
+                        <div class="template-card active" onclick="selectTemplate('minimal')">
+                            <div class="template-preview" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                MINIMAL
+                            </div>
+                            <div class="template-name">Minimal</div>
+                            <div class="template-description">Clean & simple</div>
+                        </div>
+                        
+                        <div class="template-card" onclick="selectTemplate('bold')">
+                            <div class="template-preview" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                                BOLD
+                            </div>
+                            <div class="template-name">Bold</div>
+                            <div class="template-description">Eye-catching</div>
+                        </div>
+                        
+                        <div class="template-card" onclick="selectTemplate('classic')">
+                            <div class="template-preview" style="background: #2c3e50;">
+                                CLASSIC
+                            </div>
+                            <div class="template-name">Classic</div>
+                            <div class="template-description">Timeless design</div>
+                        </div>
+                        
+                        <div class="template-card" onclick="selectTemplate('modern')">
+                            <div class="template-preview" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                                MODERN
+                            </div>
+                            <div class="template-name">Modern</div>
+                            <div class="template-description">Contemporary</div>
+                        </div>
+                        
+                        <div class="template-card" onclick="selectTemplate('literary')">
+                            <div class="template-preview" style="background: #8b7355;">
+                                LITERARY
+                            </div>
+                            <div class="template-name">Literary</div>
+                            <div class="template-description">Sophisticated</div>
+                        </div>
+                        
+                        <div class="template-card" onclick="selectTemplate('thriller')">
+                            <div class="template-preview" style="background: linear-gradient(135deg, #1e1e1e, #dc143c);">
+                                THRILLER
+                            </div>
+                            <div class="template-name">Thriller</div>
+                            <div class="template-description">Dark & intense</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center - Cover Preview -->
+            <div class="preview-container">
+                <div class="preview-controls">
+                    <div class="size-selector">
+                        <button class="size-btn active" onclick="setCoverSize('kindle')">
+                            <i class="fas fa-tablet-alt me-1"></i>Kindle
+                        </button>
+                        <button class="size-btn" onclick="setCoverSize('paperback')">
+                            <i class="fas fa-book me-1"></i>Paperback
+                        </button>
+                        <button class="size-btn" onclick="setCoverSize('hardcover')">
+                            <i class="fas fa-book-open me-1"></i>Hardcover
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="preview-area">
+                    <div class="book-cover kindle" id="bookCover">
+                        <div class="cover-content cover-solid" id="coverContent">
+                            <div class="cover-background" id="coverBackground" style="display: none;">
+                                <img id="backgroundImage" src="" alt="">
+                            </div>
+                            <div class="cover-overlay" id="coverOverlay" style="display: none;"></div>
+                            <div class="cover-text">
+                                <h1 class="cover-title" id="coverTitle">Your Book Title</h1>
+                                <p class="cover-subtitle" id="coverSubtitle">A compelling subtitle</p>
+                                <p class="cover-author" id="coverAuthor">Author Name</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Customization -->
+            <div class="customization-panel">
+                <!-- Text Content -->
+                <div class="panel-section">
+                    <h3>Cover Text</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Book Title</label>
+                        <input type="text" class="form-control" id="titleInput" 
+                               value="Your Book Title" onkeyup="updateCoverText()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Subtitle (optional)</label>
+                        <input type="text" class="form-control" id="subtitleInput" 
+                               value="A compelling subtitle" onkeyup="updateCoverText()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Author Name</label>
+                        <input type="text" class="form-control" id="authorInput" 
+                               value="Author Name" onkeyup="updateCoverText()">
+                    </div>
+                </div>
+
+                <!-- Typography -->
+                <div class="panel-section">
+                    <h3>Typography</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Title Font</label>
+                        <select class="form-control" id="titleFont" onchange="updateFonts()">
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                            <option value="'Montserrat', sans-serif">Montserrat</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Lora', serif">Lora</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Merriweather', serif">Merriweather</option>
+                            <option value="'Bebas Neue', cursive">Bebas Neue</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Title Size</label>
+                        <input type="range" class="form-control" id="titleSize" 
+                               min="20" max="60" value="40" onchange="updateFonts()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Text Color</label>
+                        <input type="color" class="form-control" id="textColor" 
+                               value="#ffffff" onchange="updateTextColor()">
+                    </div>
+                </div>
+
+                <!-- Background -->
+                <div class="panel-section">
+                    <h3>Background</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Background Type</label>
+                        <select class="form-control" id="bgType" onchange="updateBackground()">
+                            <option value="gradient">Gradient</option>
+                            <option value="solid">Solid Color</option>
+                            <option value="image">Image</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="colorPicker">
+                        <label class="form-label">Background Color</label>
+                        <div class="color-palette">
+                            <div class="color-swatch active" style="background: linear-gradient(135deg, #667eea, #764ba2);" 
+                                 onclick="selectColor('gradient1')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #f093fb, #f5576c);" 
+                                 onclick="selectColor('gradient2')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #4facfe, #00f2fe);" 
+                                 onclick="selectColor('gradient3')"></div>
+                            <div class="color-swatch" style="background: #2c3e50;" 
+                                 onclick="selectColor('dark')"></div>
+                            <div class="color-swatch" style="background: #8b7355;" 
+                                 onclick="selectColor('brown')"></div>
+                            <div class="color-swatch" style="background: #dc143c;" 
+                                 onclick="selectColor('red')"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Overlay Opacity</label>
+                        <input type="range" class="form-control" id="overlayOpacity" 
+                               min="0" max="100" value="30" onchange="updateOverlay()">
+                    </div>
+                </div>
+
+                <!-- Export Section -->
+                <div class="export-section">
+                    <h3>Export Options</h3>
+                    <div class="export-buttons">
+                        <button class="btn-export-primary" onclick="downloadCover('png')">
+                            <i class="fas fa-file-image"></i> Download as PNG
+                        </button>
+                        <button class="btn-export-secondary" onclick="downloadCover('jpg')">
+                            <i class="fas fa-file-image"></i> Download as JPG
+                        </button>
+                        <button class="btn-export-secondary" onclick="downloadCover('pdf')">
+                            <i class="fas fa-file-pdf"></i> Export as PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let currentTemplate = 'minimal';
+let currentSize = 'kindle';
+let uploadedImages = [];
+let selectedImageIndex = null;
+
+// Initialize drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDragDrop();
+    initializeImageUpload();
+    loadGoogleFonts();
+});
+
+// Load Google Fonts
+function loadGoogleFonts() {
+    const fonts = [
+        'Playfair+Display:400,700',
+        'Montserrat:400,700',
+        'Roboto:400,700',
+        'Lora:400,700',
+        'Open+Sans:400,700',
+        'Merriweather:400,700',
+        'Bebas+Neue'
+    ];
+    
+    fonts.forEach(font => {
+        const link = document.createElement('link');
+        link.href = `https://fonts.googleapis.com/css2?family=${font}&display=swap`;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+    });
+}
+
+// Drag and Drop functionality
+function initializeDragDrop() {
+    const dropZone = document.getElementById('uploadDropZone');
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragging');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragging');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragging');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleImageUpload(files[0]);
+        }
+    });
+}
+
+// Image Upload
+function initializeImageUpload() {
+    const input = document.getElementById('imageUpload');
+    input.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleImageUpload(e.target.files[0]);
+        }
+    });
+}
+
+function handleImageUpload(file) {
+    if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const imageUrl = e.target.result;
+        addUploadedImage(imageUrl);
+    };
+    reader.readAsDataURL(file);
+}
+
+function addUploadedImage(imageUrl) {
+    uploadedImages.push(imageUrl);
+    const index = uploadedImages.length - 1;
+    
+    const gallery = document.getElementById('uploadedImages');
+    const card = document.createElement('div');
+    card.className = 'uploaded-image-card';
+    card.onclick = () => selectUploadedImage(index);
+    
+    card.innerHTML = `
+        <img src="${imageUrl}" alt="Uploaded cover">
+        <button class="remove-image-btn" onclick="event.stopPropagation(); removeImage(${index})">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    gallery.appendChild(card);
+    
+    // Automatically select the newly uploaded image
+    selectUploadedImage(index);
+}
+
+function selectUploadedImage(index) {
+    // Update active state
+    document.querySelectorAll('.uploaded-image-card').forEach((card, i) => {
+        if (i === index) {
+            card.classList.add('active');
+        } else {
+            card.classList.remove('active');
+        }
+    });
+    
+    // Apply image to cover
+    selectedImageIndex = index;
+    const bgImage = document.getElementById('backgroundImage');
+    const bgContainer = document.getElementById('coverBackground');
+    const overlay = document.getElementById('coverOverlay');
+    const content = document.getElementById('coverContent');
+    
+    bgImage.src = uploadedImages[index];
+    bgContainer.style.display = 'block';
+    overlay.style.display = 'block';
+    content.classList.remove('cover-solid');
+    
+    // Update background type selector
+    document.getElementById('bgType').value = 'image';
+}
+
+function removeImage(index) {
+    uploadedImages.splice(index, 1);
+    
+    // Rebuild gallery
+    const gallery = document.getElementById('uploadedImages');
+    gallery.innerHTML = '';
+    uploadedImages.forEach((url, i) => {
+        const card = document.createElement('div');
+        card.className = 'uploaded-image-card';
+        card.onclick = () => selectUploadedImage(i);
+        
+        card.innerHTML = `
+            <img src="${url}" alt="Uploaded cover">
+            <button class="remove-image-btn" onclick="event.stopPropagation(); removeImage(${i})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        gallery.appendChild(card);
+    });
+    
+    // Reset to template if no images
+    if (uploadedImages.length === 0) {
+        document.getElementById('coverBackground').style.display = 'none';
+        document.getElementById('coverOverlay').style.display = 'none';
+        document.getElementById('coverContent').classList.add('cover-solid');
+    }
+}
+
+// Template Selection
+function selectTemplate(template) {
+    currentTemplate = template;
+    
+    // Update active state
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+    
+    // Apply template styles
+    const content = document.getElementById('coverContent');
+    const backgrounds = {
+        'minimal': 'linear-gradient(135deg, #667eea, #764ba2)',
+        'bold': 'linear-gradient(135deg, #f093fb, #f5576c)',
+        'classic': '#2c3e50',
+        'modern': 'linear-gradient(135deg, #4facfe, #00f2fe)',
+        'literary': '#8b7355',
+        'thriller': 'linear-gradient(135deg, #1e1e1e, #dc143c)'
+    };
+    
+    if (!selectedImageIndex !== null) {
+        content.style.background = backgrounds[template];
+    }
+}
+
+// Cover Size
+function setCoverSize(size) {
+    currentSize = size;
+    
+    // Update active button
+    document.querySelectorAll('.size-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+    
+    // Update cover dimensions
+    const cover = document.getElementById('bookCover');
+    cover.className = `book-cover ${size}`;
+}
+
+// Text Updates
+function updateCoverText() {
+    document.getElementById('coverTitle').textContent = 
+        document.getElementById('titleInput').value || 'Your Book Title';
+    document.getElementById('coverSubtitle').textContent = 
+        document.getElementById('subtitleInput').value || '';
+    document.getElementById('coverAuthor').textContent = 
+        document.getElementById('authorInput').value || 'Author Name';
+}
+
+// Font Updates
+function updateFonts() {
+    const titleFont = document.getElementById('titleFont').value;
+    const titleSize = document.getElementById('titleSize').value;
+    
+    document.getElementById('coverTitle').style.fontFamily = titleFont;
+    document.getElementById('coverTitle').style.fontSize = `${titleSize}px`;
+}
+
+// Text Color
+function updateTextColor() {
+    const color = document.getElementById('textColor').value;
+    document.querySelectorAll('.cover-text *').forEach(el => {
+        el.style.color = color + ' !important';
+    });
+}
+
+// Background Updates
+function updateBackground() {
+    const bgType = document.getElementById('bgType').value;
+    const content = document.getElementById('coverContent');
+    const bgContainer = document.getElementById('coverBackground');
+    const overlay = document.getElementById('coverOverlay');
+    
+    if (bgType === 'image' && uploadedImages.length > 0) {
+        bgContainer.style.display = 'block';
+        overlay.style.display = 'block';
+        content.classList.remove('cover-solid');
+    } else {
+        bgContainer.style.display = 'none';
+        overlay.style.display = 'none';
+        content.classList.add('cover-solid');
+    }
+}
+
+// Color Selection
+function selectColor(color) {
+    // Update active state
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+    
+    const content = document.getElementById('coverContent');
+    const colors = {
+        'gradient1': 'linear-gradient(135deg, #667eea, #764ba2)',
+        'gradient2': 'linear-gradient(135deg, #f093fb, #f5576c)',
+        'gradient3': 'linear-gradient(135deg, #4facfe, #00f2fe)',
+        'dark': '#2c3e50',
+        'brown': '#8b7355',
+        'red': '#dc143c'
+    };
+    
+    content.style.background = colors[color];
+}
+
+// Overlay Opacity
+function updateOverlay() {
+    const opacity = document.getElementById('overlayOpacity').value / 100;
+    document.getElementById('coverOverlay').style.background = `rgba(0,0,0,${opacity})`;
+}
+
+// Export Functions
+function downloadCover(format) {
+    // Show loading
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+    
+    // Get the cover element
+    const coverElement = document.getElementById('bookCover');
+    
+    // Use html2canvas to capture the cover
+    html2canvas(coverElement, {
+        backgroundColor: null,
+        scale: 2, // High resolution
+        useCORS: true,
+        allowTaint: true
+    }).then(canvas => {
+        // Create download link
+        const link = document.createElement('a');
+        const title = document.getElementById('titleInput').value || 'book-cover';
+        const filename = `${title.toLowerCase().replace(/\s+/g, '-')}.${format}`;
+        
+        if (format === 'png') {
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+        } else if (format === 'jpg') {
+            link.download = filename;
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+        } else if (format === 'pdf') {
+            // For PDF, we'll need to send to backend
+            const imageData = canvas.toDataURL('image/png');
+            exportToPDF(imageData, filename);
+            return;
+        }
+        
+        // Trigger download
+        link.click();
+        
+        // Reset button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+    }).catch(error => {
+        console.error('Error generating cover:', error);
+        alert('Error generating cover. Please try again.');
+        
+        // Reset button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function exportToPDF(imageData, filename) {
+    // Send image data to backend for PDF generation
+    fetch('/writer/api/export-cover-pdf/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            image_data: imageData,
+            filename: filename,
+            size: currentSize
+        })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename.replace('.png', '.pdf');
+        link.click();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error('Error exporting PDF:', error);
+        alert('Error exporting PDF. Please try again.');
+    });
+}
+
+function saveDesign() {
+    // Save current design settings
+    const design = {
+        title: document.getElementById('titleInput').value,
+        subtitle: document.getElementById('subtitleInput').value,
+        author: document.getElementById('authorInput').value,
+        template: currentTemplate,
+        size: currentSize,
+        titleFont: document.getElementById('titleFont').value,
+        titleSize: document.getElementById('titleSize').value,
+        textColor: document.getElementById('textColor').value,
+        bgType: document.getElementById('bgType').value,
+        images: uploadedImages
+    };
+    
+    localStorage.setItem('coverDesign', JSON.stringify(design));
+    
+    // Show confirmation
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+    }, 2000);
+}
+
+function exportCover() {
+    downloadCover('png');
+}
+
+// Load saved design on page load
+window.addEventListener('load', function() {
+    const savedDesign = localStorage.getItem('coverDesign');
+    if (savedDesign) {
+        const design = JSON.parse(savedDesign);
+        
+        // Restore text
+        document.getElementById('titleInput').value = design.title || '';
+        document.getElementById('subtitleInput').value = design.subtitle || '';
+        document.getElementById('authorInput').value = design.author || '';
+        
+        // Restore settings
+        document.getElementById('titleFont').value = design.titleFont || "'Playfair Display', serif";
+        document.getElementById('titleSize').value = design.titleSize || '40';
+        document.getElementById('textColor').value = design.textColor || '#ffffff';
+        
+        // Restore images
+        if (design.images && design.images.length > 0) {
+            design.images.forEach(img => addUploadedImage(img));
+        }
+        
+        // Apply changes
+        updateCoverText();
+        updateFonts();
+        updateTextColor();
+    }
+});
+</script>
+{% endblock %}

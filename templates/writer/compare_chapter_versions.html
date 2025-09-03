@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Versions - {{ chapter.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-exchange-alt text-primary"></i> Compare Versions</h2>
+                    <p class="text-muted mb-1">Chapter: <strong>{{ chapter.title }}</strong></p>
+                    <p class="text-muted mb-0">Project: <strong>{{ chapter.project.title }}</strong></p>
+                </div>
+                <div>
+                    <a href="{% url 'writer:chapter_versions' chapter.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Versions
+                    </a>
+                </div>
+            </div>
+
+            <!-- Version Info -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-alt"></i> Version {{ version1.version_number }}
+                                {% if version1.is_major_version %}
+                                    <span class="badge bg-light text-dark">Major</span>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Saved:</strong> {{ version1.created_at|date:"M d, Y g:i A" }}</p>
+                            <p class="mb-1"><strong>By:</strong> {{ version1.saved_by.username }}</p>
+                            <p class="mb-1"><strong>Reason:</strong> 
+                                {% if version1.save_reason %}{{ version1.save_reason }}{% else %}<em>No reason provided</em>{% endif %}
+                            </p>
+                            <p class="mb-0"><strong>Word Count:</strong> {{ version1.word_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-alt"></i> Version {{ version2.version_number }}
+                                {% if version2.is_major_version %}
+                                    <span class="badge bg-light text-dark">Major</span>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Saved:</strong> {{ version2.created_at|date:"M d, Y g:i A" }}</p>
+                            <p class="mb-1"><strong>By:</strong> {{ version2.saved_by.username }}</p>
+                            <p class="mb-1"><strong>Reason:</strong> 
+                                {% if version2.save_reason %}{{ version2.save_reason }}{% else %}<em>No reason provided</em>{% endif %}
+                            </p>
+                            <p class="mb-0"><strong>Word Count:</strong> {{ version2.word_count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Comparison -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-columns"></i> Content Comparison
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-6 border-end">
+                            <div class="p-3">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-file-alt"></i> Version {{ version1.version_number }}
+                                    <span class="badge bg-primary ms-2">{{ version1.word_count }} words</span>
+                                </h6>
+                                <div class="content-display" style="max-height: 600px; overflow-y: auto;">
+                                    {% if version1.content %}
+                                        {{ version1.content|safe }}
+                                    {% else %}
+                                        <p class="text-muted fst-italic">No content</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3">
+                                <h6 class="text-success border-bottom pb-2 mb-3">
+                                    <i class="fas fa-file-alt"></i> Version {{ version2.version_number }}
+                                    <span class="badge bg-success ms-2">{{ version2.word_count }} words</span>
+                                </h6>
+                                <div class="content-display" style="max-height: 600px; overflow-y: auto;">
+                                    {% if version2.content %}
+                                        {{ version2.content|safe }}
+                                    {% else %}
+                                        <p class="text-muted fst-italic">No content</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="text-primary">{{ version1.word_count }}</h4>
+                                <p class="text-muted mb-0">Words in Version {{ version1.version_number }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="text-success">{{ version2.word_count }}</h4>
+                                <p class="text-muted mb-0">Words in Version {{ version2.version_number }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                {% with word_diff=version2.word_count|add:version1.word_count|add:"-"|add:version1.word_count %}
+                                    <h4 class="{% if word_diff > 0 %}text-success{% elif word_diff < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                        {% if word_diff > 0 %}+{% endif %}{{ word_diff }}
+                                    </h4>
+                                    <p class="text-muted mb-0">Word Difference</p>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="text-center mt-4 mb-4">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'writer:chapter_detail' chapter.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit Chapter
+                    </a>
+                    <a href="{% url 'writer:chapter_versions' chapter.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-history"></i> View All Versions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.content-display {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    font-family: 'Georgia', serif;
+    line-height: 1.6;
+}
+
+.content-display p {
+    margin-bottom: 1rem;
+}
+
+.content-display h1, .content-display h2, .content-display h3 {
+    color: #495057;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.border-end {
+    border-right: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .border-end {
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+    }
+}
+</style>
+{% endblock %}

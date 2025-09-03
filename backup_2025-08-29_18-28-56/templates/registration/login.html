@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Login - A Writer's Web Dream{% endblock %}
+
+{% block main_class %}auth-container{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card auth-card">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-feather-alt me-2"></i>
+                        Welcome Back
+                    </h4>
+                    <p class="mb-0 mt-2 opacity-75">Sign in to your writing sanctuary</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>Username
+                            </label>
+                            <input type="text" name="username" class="form-control" id="{{ form.username.id_for_label }}" value="{{ form.username.value|default:'' }}" required>
+                            {% if form.username.errors %}
+                            <div class="text-danger mt-1">{{ form.username.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-4">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Password
+                            </label>
+                            <input type="password" name="password" class="form-control" id="{{ form.password.id_for_label }}" required>
+                            {% if form.password.errors %}
+                            <div class="text-danger mt-1">{{ form.password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ form.non_field_errors.0 }}
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+                    </form>
+                    
+                    <!-- Demo account info removed for production -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -140,6 +140,19 @@ import random
 import os
 import mimetypes
 import logging
+# PDF generation imports - optional
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+from io import BytesIO
+from html.parser import HTMLParser
 from django.conf import settings
 from .document_parser import extract_text_from_file  # , is_google_docs_url
 import tempfile
@@ -207,7 +220,14 @@ def personal_library(request):
             'latest_project': None,
             'error_message': 'There was an issue loading your library. Please try again.'
         }
-        return render(request, 'writer/personal_library.html', context)
+
+@login_required
+def vault_of_lagrimas(request):
+    """
+    Vault of Lágrimas - An empathetic AI writing sanctuary where users can pour out their hearts,
+    share their deepest emotions, and receive understanding from an AI companion learning about humanity.
+    """
+    return render(request, 'writer/vault_of_lagrimas.html')
 
 
 # Project Views
@@ -215,7 +235,6 @@ class ProjectListView(LoginRequiredMixin, ListView):
     model = Project
     template_name = 'writer/project_list.html'
     context_object_name = 'projects'
-    paginate_by = 10
     
     def get_queryset(self):
         return Project.objects.filter(
@@ -249,9 +268,16 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
     form_class = ProjectForm
     template_name = 'writer/project_form.html'
     
+    def get_success_url(self):
+        # Redirect back to ultimate dashboard after project creation
+        return reverse('writer:ultimate_dashboard')
+    
     def form_valid(self, form):
         form.instance.author = self.request.user
         response = super().form_valid(form)
+        
+        # Add success message
+        messages.success(self.request, f'Project "{form.instance.title}" created successfully! Welcome to your ultimate dashboard.')
         
         # Add collaborators if specified
         collaborator_emails = form.cleaned_data.get('collaborator_emails')
@@ -449,7 +475,7 @@ class CharacterDetailView(LoginRequiredMixin, DetailView):
 class CharacterCreateView(LoginRequiredMixin, CreateView):
     model = Character
     form_class = CharacterForm
-    template_name = 'writer/character_form.html'
+    template_name = 'writer/character_creation_portal.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -464,19 +490,19 @@ class CharacterCreateView(LoginRequiredMixin, CreateView):
     
     def get_success_url(self):
         project_id = self.kwargs.get('project_id')
-        return reverse_lazy('writer:character_list', kwargs={'project_id': project_id})
+        return reverse_lazy('writer:character_universe', kwargs={'project_id': project_id})
 
 
 class CharacterUpdateView(LoginRequiredMixin, UpdateView):
     model = Character
     form_class = CharacterForm
-    template_name = 'writer/character_form.html'
+    template_name = 'writer/character_creation_portal.html'
     
     def get_queryset(self):
         return Character.objects.filter(project__author=self.request.user)
     
     def get_success_url(self):
-        return reverse_lazy('writer:character_list', kwargs={'project_id': self.object.project.pk})
+        return reverse_lazy('writer:character_universe', kwargs={'project_id': self.object.project.pk})
 
 
 class CharacterDeleteView(LoginRequiredMixin, DeleteView):
@@ -487,7 +513,40 @@ class CharacterDeleteView(LoginRequiredMixin, DeleteView):
         return Character.objects.filter(project__author=self.request.user)
     
     def get_success_url(self):
-        return reverse_lazy('writer:character_list', kwargs={'project_id': self.object.project.pk})
+        return reverse_lazy('writer:character_universe', kwargs={'project_id': self.object.project.pk})
+
+
+@login_required
+def character_universe(request, project_id):
+    """
+    Enhanced Character Universe View - Comic book inspired character management
+    Makes you feel like a god creating a world of people
+    """
+    project = get_object_or_404(Project, id=project_id)
+    
+    # Check permissions
+    if not (project.author == request.user or 
+            project.collaborators.filter(id=request.user.id).exists()):
+        messages.error(request, "You don't have permission to view this project's characters.")
+        return redirect('writer:dashboard')
+    
+    characters = Character.objects.filter(project=project).order_by('name')
+    
+    # Calculate universe statistics
+    protagonists_count = characters.filter(role__icontains='protagonist').count()
+    antagonists_count = characters.filter(role__icontains='antagonist').count()
+    relationships_count = characters.exclude(relationships__isnull=True).exclude(relationships__exact='').count()
+    
+    context = {
+        'project': project,
+        'characters': characters,
+        'protagonists_count': protagonists_count,
+        'antagonists_count': antagonists_count,
+        'relationships_count': relationships_count,
+        'total_characters': characters.count(),
+    }
+    
+    return render(request, 'writer/character_universe.html', context)
 
 
 # Chapter Views (Updated)
@@ -937,7 +996,6 @@ class DocumentListView(LoginRequiredMixin, ListView):
     model = Document
     template_name = 'writer/document_list.html'
     context_object_name = 'documents'
-    paginate_by = 10
     
     def get_queryset(self):
         return Document.objects.filter(author=self.request.user)
@@ -1246,7 +1304,7 @@ def update_import_content(request, pk):
 
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -1875,18 +1933,33 @@ def upload_file(request):
                     temp_file.write(chunk)
                 temp_file_path = temp_file.name
             
-            # Extract text content
-            from .document_parser import extract_text_from_file
-            content = extract_text_from_file(temp_file_path)
+            # Extract text content and identify chapters
+            from .document_parser import extract_text_and_chapters_from_file
+            result = extract_text_and_chapters_from_file(temp_file_path)
             
             # Clean up temporary file
             os.unlink(temp_file_path)
             
-            # Return just the text content for the editor
-            return JsonResponse({
+            # Return content and chapter information
+            response_data = {
                 'success': True,
-                'content': content
-            })
+                'content': result['full_text'],
+                'title': uploaded_file.name.rsplit('.', 1)[0]  # Remove extension
+            }
+            
+            # Add chapter information if detected
+            if result['chapters'] and len(result['chapters']) > 1:
+                response_data.update({
+                    'has_chapters': True,
+                    'chapters': result['chapters'],
+                    'chapter_count': result['chapter_count'],
+                    'total_words': result['total_words'],
+                    'average_confidence': result['average_confidence']
+                })
+            else:
+                response_data['has_chapters'] = False
+            
+            return JsonResponse(response_data)
             
         except Exception as e:
             return JsonResponse({
@@ -2218,6 +2291,23 @@ def get_document_collaborators_api(request, document_id):
         return JsonResponse({'error': str(e)}, status=400)
 
 @login_required
+def get_project_collaborators_api(request, project_id):
+    """Get list of collaborators for a project"""
+    try:
+        project = get_object_or_404(Project, id=project_id, author=request.user)
+        collaborators = project.collaborators.all()
+        collaborators_data = []
+        for collaborator in collaborators:
+            collaborators_data.append({
+                'id': collaborator.id,
+                'username': collaborator.username,
+                'email': collaborator.email,
+            })
+        return JsonResponse({'collaborators': collaborators_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
 def users_api(request):
     users = User.objects.all()
     data = [
@@ -2537,6 +2627,7 @@ def ultimate_library(request):
             projects_data.append(project_data)
         
         context.update({
+            'user_projects': projects_data,
             'projects': projects_data,
             'total_projects': len(projects_data),
             'total_words': sum(p['word_count'] for p in projects_data),
@@ -2580,6 +2671,67 @@ def creativity_workshop(request):
     }
     return render(request, 'writer/creativity_workshop.html', context)
 
+@login_required
+def workshop_sessions_api(request):
+    """API endpoint for managing workshop sessions"""
+    from django.http import JsonResponse
+    import json
+    
+    if request.method == 'GET':
+        # Return user's saved workshop sessions
+        # For now, return empty list since we don't have a model yet
+        return JsonResponse({
+            'sessions': [],
+            'status': 'success'
+        })
+    
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # For now, just simulate saving and return success
+            # In a real implementation, you'd save to database
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Session saved successfully',
+                'session_id': 1  # Mock session ID
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+
+@login_required
+def workshop_session_detail_api(request, session_id):
+    """API endpoint for individual workshop session"""
+    from django.http import JsonResponse
+    
+    if request.method == 'GET':
+        # Return session details
+        # Mock data for now
+        mock_session = {
+            'id': session_id,
+            'title': 'Sample Workshop Session',
+            'description': 'A sample session',
+            'character_ideas': [],
+            'plot_ideas': [],
+            'general_notes': '',
+            'created_at': '2024-01-01T00:00:00Z'
+        }
+        
+        return JsonResponse({
+            'status': 'success',
+            'session': mock_session
+        })
+
+@login_required
+def workshop_history(request):
+    """Workshop session history page"""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'writer/workshop_history.html', context)
+
 
 @login_required
 def creative_notebook(request):
@@ -2597,6 +2749,211 @@ def philosophers_corner(request):
         'user': request.user,
     }
     return render(request, 'writer/philosophers_corner.html', context)
+
+
+@login_required
+def user_profile(request, username=None):
+    """View user profile (public or own profile)"""
+    from .models import UserProfile
+    from django.shortcuts import get_object_or_404
+    
+    if username:
+        # Viewing someone else's profile
+        profile_user = get_object_or_404(User, username=username)
+    else:
+        # Viewing own profile
+        profile_user = request.user
+    
+    # Get or create profile
+    profile = UserProfile.get_or_create_for_user(profile_user)
+    
+    # Get user's projects for display
+    projects = profile_user.owned_projects.filter(is_public=True) if username else profile_user.owned_projects.all()
+    
+    context = {
+        'profile_user': profile_user,
+        'profile': profile,
+        'projects': projects[:6],  # Show only 6 recent projects
+        'is_own_profile': profile_user == request.user,
+    }
+    return render(request, 'writer/user_profile.html', context)
+
+
+@login_required
+def edit_profile(request):
+    """Edit user profile"""
+    from .models import UserProfile
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    
+    profile = UserProfile.get_or_create_for_user(request.user)
+    
+    if request.method == 'POST':
+        try:
+            # Update profile fields
+            profile.bio = request.POST.get('bio', '')
+            profile.interests = request.POST.get('interests', '')
+            profile.favorite_writers = request.POST.get('favorite_writers', '')
+            profile.favorite_quotes = request.POST.get('favorite_quotes', '')
+            profile.hopes_and_dreams = request.POST.get('hopes_and_dreams', '')
+            profile.location = request.POST.get('location', '')
+            profile.website = request.POST.get('website', '')
+            
+            # Handle profile picture upload
+            if 'profile_picture' in request.FILES:
+                profile.profile_picture = request.FILES['profile_picture']
+            
+            # Update theme and other preferences
+            profile.theme = request.POST.get('theme', profile.theme)
+            profile.font_size = request.POST.get('font_size', profile.font_size)
+            profile.writing_goal_daily = int(request.POST.get('writing_goal_daily', profile.writing_goal_daily))
+            profile.show_statistics = request.POST.get('show_statistics') == 'on'
+            profile.show_bookshelf = request.POST.get('show_bookshelf') == 'on'
+            
+            profile.save()
+            messages.success(request, 'Profile updated successfully!')
+            
+            # If this is an AJAX request, return JSON response
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                from django.http import JsonResponse
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Profile updated successfully!',
+                    'profile_picture_url': profile.profile_picture.url if profile.profile_picture else None
+                })
+            
+            return redirect('writer:user_profile')
+            
+        except Exception as e:
+            messages.error(request, f'Error updating profile: {str(e)}')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                from django.http import JsonResponse
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Error updating profile: {str(e)}'
+                })
+    
+    context = {
+        'profile': profile,
+        'user': request.user,
+    }
+    return render(request, 'writer/edit_profile.html', context)
+
+
+@login_required
+def poetry_workshop(request):
+    """Poetry Workshop - Create poems, haikus, and transform text into poetry"""
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'writer/poetry_workshop.html', context)
+
+def book_formatter(request):
+    """Professional Book Formatter - 50+ themes for beautiful book formatting"""
+    # Get user's projects for content preview
+    user_projects = []
+    if request.user.is_authenticated:
+        user_projects = Project.objects.filter(author=request.user).order_by('-updated_at')[:5]
+    
+    context = {
+        'user': request.user,
+        'user_projects': user_projects,
+    }
+    return render(request, 'writer/book_formatter.html', context)
+
+def book_formatter_new(request):
+    """New Clean Book Formatter - Settings-focused interface without preview"""
+    user_projects = []
+    if request.user.is_authenticated:
+        user_projects = Project.objects.filter(author=request.user).order_by('-updated_at')
+    
+    context = {
+        'user': request.user,
+        'user_projects': user_projects,
+    }
+    return render(request, 'writer/book_formatter_new.html', context)
+
+def cover_designer(request):
+    """Professional Cover Designer - Create stunning book covers"""
+    # Get user's projects for cover customization
+    user_projects = []
+    if request.user.is_authenticated:
+        user_projects = Project.objects.filter(author=request.user).order_by('-updated_at')[:10]
+    
+    context = {
+        'user': request.user,
+        'user_projects': user_projects,
+    }
+    return render(request, 'writer/cover_designer.html', context)
+
+@csrf_exempt
+def export_formatted_book(request):
+    """Export book with professional formatting"""
+    if request.method == 'POST':
+        import json
+        from django.http import JsonResponse
+        
+        try:
+            data = json.loads(request.body)
+            format_type = data.get('format', 'pdf')  # pdf or epub
+            theme = data.get('theme', 'heritage')
+            settings = data.get('settings', {})
+            content = data.get('content', '')
+            
+            # In a real implementation, you would:
+            # 1. Apply the selected theme and settings
+            # 2. Generate PDF using libraries like WeasyPrint or ReportLab
+            # 3. Generate EPUB using ebooklib
+            # 4. Return download URL
+            
+            # For now, return success message
+            return JsonResponse({
+                'success': True,
+                'download_url': f'/media/exports/book_{theme}_{format_type}.{format_type}',
+                'message': f'Book exported as {format_type.upper()} with {theme} theme'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def export_book_cover(request):
+    """Export book cover as high-resolution image"""
+    if request.method == 'POST':
+        import json
+        from django.http import JsonResponse
+        
+        try:
+            data = json.loads(request.body)
+            quality = data.get('quality', 'high')  # high or print
+            settings = data.get('settings', {})
+            
+            # In a real implementation, you would:
+            # 1. Use PIL or similar to generate high-res cover
+            # 2. Apply gradients, fonts, and text positioning
+            # 3. Save as PNG/JPG at specified resolution
+            # 4. Return download URL
+            
+            # For now, return success message
+            cover_name = settings.get('title', 'book_cover').replace(' ', '_')
+            return JsonResponse({
+                'success': True,
+                'download_url': f'/media/covers/{cover_name}_{quality}.png',
+                'message': f'Cover exported as {quality} quality image'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 @login_required
@@ -2627,11 +2984,42 @@ def bookshelf_dashboard(request):
 
 # Google Docs-like Editor View
 @login_required
-def google_docs_editor(request, document_id=None):
-    """Google Docs-like editor for documents"""
+def google_docs_editor(request, document_id=None, project_id=None, chapter_id=None, media_id=None):
+    """Google Docs-like editor for documents, projects, and media files"""
     document = None
+    project = None
+    current_chapter = None
+    chapters = []
+    media_file = None
     
-    if document_id:
+    # Handle project-based editing
+    if project_id:
+        project = get_object_or_404(Project, id=project_id)
+        if not (project.author == request.user or project.collaborators.filter(id=request.user.id).exists()):
+            from django.contrib import messages
+            messages.error(request, 'You do not have permission to edit this project.')
+            return redirect('writer:project_list')
+        
+        # Get chapters for this project
+        chapters = Chapter.objects.filter(project=project).order_by('order', 'created_at')
+        
+        # Get specific chapter or first chapter
+        if chapter_id:
+            current_chapter = get_object_or_404(Chapter, id=chapter_id, project=project)
+        elif chapters.exists():
+            current_chapter = chapters.first()
+        else:
+            # Create a default chapter if none exists
+            current_chapter = Chapter.objects.create(
+                project=project,
+                title="Chapter 1",
+                content="",
+                order=1
+            )
+            chapters = Chapter.objects.filter(project=project).order_by('order', 'created_at')
+    
+    # Handle document-based editing
+    elif document_id:
         document = get_object_or_404(Document, id=document_id, author=request.user)
     
     # Handle POST requests for saving
@@ -2641,18 +3029,70 @@ def google_docs_editor(request, document_id=None):
         if action == 'save_chapter' or action == 'save':
             title = request.POST.get('title', 'Untitled Document')
             content = request.POST.get('content', '')
-            chapter_id = request.POST.get('chapter_id')
+            chapter_id_param = request.POST.get('chapter_id')
             
-            # If we have a document_id, update it
-            if document:
-                document.title = title
-                document.content = content
-                document.save()
-                return JsonResponse({
-                    'status': 'success',
-                    'message': 'Document saved successfully',
-                    'document_id': document.id
-                })
+            # Handle project chapter saving
+            if project:
+                if chapter_id_param:
+                    # Update existing chapter
+                    chapter = get_object_or_404(Chapter, id=chapter_id_param, project=project)
+                    chapter.title = title
+                    chapter.content = content
+                    chapter.save()
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Chapter saved successfully',
+                        'chapter_id': chapter.id
+                    })
+                elif current_chapter:
+                    # Update current chapter
+                    current_chapter.title = title
+                    current_chapter.content = content
+                    current_chapter.save()
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Chapter saved successfully',
+                        'chapter_id': current_chapter.id
+                    })
+                else:
+                    # Create new chapter for project
+                    chapter = Chapter.objects.create(
+                        project=project,
+                        title=title,
+                        content=content,
+                        order=chapters.count() + 1
+                    )
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Chapter created successfully',
+                        'chapter_id': chapter.id
+                    })
+            
+            # Handle document saving
+            elif document:
+                # Check if this is a media file document
+                if hasattr(document, 'is_media_file') and document.is_media_file:
+                    # Update the media file's extracted text
+                    from .models import MediaFile
+                    media_file = get_object_or_404(MediaFile, id=document.media_file_id, user=request.user)
+                    media_file.title = title
+                    media_file.extracted_text = content
+                    media_file.save()
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Media file content saved successfully',
+                        'document_id': document.id
+                    })
+                else:
+                    # Regular document saving
+                    document.title = title
+                    document.content = content
+                    document.save()
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Document saved successfully',
+                        'document_id': document.id
+                    })
             else:
                 # Create a new document
                 document = Document.objects.create(
@@ -2685,9 +3125,47 @@ def google_docs_editor(request, document_id=None):
             'message': 'Invalid action'
         })
     
+    # Handle media file editing
+    if media_id:
+        from .models import MediaFile
+        media_file = get_object_or_404(MediaFile, id=media_id, user=request.user)
+        
+        # Create a temporary document-like object from the media file
+        class MediaDocument:
+            def __init__(self, media_file):
+                self.id = f"media_{media_file.id}"
+                self.title = media_file.title
+                self.content = media_file.extracted_text or ""
+                self.author = media_file.user
+                self.created_at = media_file.upload_date
+                self.updated_at = media_file.updated_at
+                self.is_media_file = True
+                self.media_file_id = media_file.id
+                self.word_count = len(self.content.split()) if self.content else 0
+        
+        document = MediaDocument(media_file)
+    
+    # Build context for template
+    import time
     context = {
         'user': request.user,
-        'document': document,
+        'document': document if document else current_chapter,
+        'project': project,
+        'current_chapter': current_chapter,
+        'all_chapters': chapters if project else [],
+        'cache_bust': str(int(time.time())),  # Cache busting timestamp
+        'is_media_file': media_id is not None,
+        'media_file': media_file,
+        'chapters': [
+            {
+                'id': ch.id,
+                'title': ch.title or f'Chapter {ch.order}',
+                'order': ch.order,
+                'word_count': ch.word_count,
+                'updated_at': ch.updated_at.isoformat() if ch.updated_at else None
+            }
+            for ch in chapters
+        ] if project else []
     }
     return render(request, 'writer/google_docs_editor.html', context)
 
@@ -2801,6 +3279,383 @@ def toggle_bookshelf_visibility(request):
             return JsonResponse({'success': False, 'error': 'Project not found'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'})
+
+@csrf_exempt
+@login_required
+def detect_chapters_from_text(request):
+    """
+    Django backend function to detect chapters from document text using regex patterns
+    """
+    if request.method == 'POST':
+        try:
+            import json
+            import re
+            
+            data = json.loads(request.body)
+            text = data.get('text', '')
+            
+            if not text or len(text.strip()) < 100:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Text too short for chapter detection'
+                })
+            
+            # Django backend chapter detection function
+            def detect_chapters(document_text):
+                chapters = []
+                
+                # Define regex patterns for chapter detection
+                patterns = [
+                    # Pattern 1: "Chapter X" or "CHAPTER X" with optional title
+                    {
+                        'regex': r'(?:^|\n)\s*(CHAPTER|Chapter|chapter)\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)(?:[:\-\s]+([^\n]+))?\s*(?=\n)',
+                        'weight': 10,
+                        'type': 'chapter'
+                    },
+                    # Pattern 2: Markdown headers (# Chapter Title)
+                    {
+                        'regex': r'(?:^|\n)(#{1,3})\s+([^\n]+)\s*(?=\n)',
+                        'weight': 8,
+                        'type': 'markdown'
+                    },
+                    # Pattern 3: HTML headings
+                    {
+                        'regex': r'<(h[1-3])[^>]*>([^<]+)</\1>',
+                        'weight': 9,
+                        'type': 'html'
+                    },
+                    # Pattern 4: Numbered sections (1. Title, 2. Title)
+                    {
+                        'regex': r'(?:^|\n)\s*(\d+)[\.):]\s+([A-Z][^\n]{5,80})\s*(?=\n)',
+                        'weight': 6,
+                        'type': 'numbered'
+                    },
+                    # Pattern 5: All caps titles (standalone lines)
+                    {
+                        'regex': r'(?:^|\n)\s*([A-Z][A-Z\s]{8,50})\s*(?=\n)',
+                        'weight': 5,
+                        'type': 'caps'
+                    },
+                    # Pattern 6: Part/Section markers
+                    {
+                        'regex': r'(?:^|\n)\s*(PART|Part|part|SECTION|Section|section)\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five)(?:[:\-\s]+([^\n]+))?\s*(?=\n)',
+                        'weight': 7,
+                        'type': 'section'
+                    }
+                ]
+                
+                matches = []
+                
+                # Find all matches
+                for pattern_info in patterns:
+                    for match in re.finditer(pattern_info['regex'], document_text, re.MULTILINE | re.IGNORECASE):
+                        start_pos = match.start()
+                        end_pos = match.end()
+                        
+                        # Extract title based on pattern type
+                        title = extract_title_from_match(match, pattern_info['type'])
+                        
+                        matches.append({
+                            'start': start_pos,
+                            'end': end_pos,
+                            'title': title,
+                            'weight': pattern_info['weight'],
+                            'type': pattern_info['type'],
+                            'text': match.group(0).strip()
+                        })
+                
+                # Sort matches by position
+                matches.sort(key=lambda x: x['start'])
+                
+                # Filter overlapping matches (keep highest weight)
+                filtered_matches = []
+                for match in matches:
+                    # Check for overlaps
+                    overlapping = [m for m in filtered_matches if abs(m['start'] - match['start']) < 100]
+                    
+                    if not overlapping:
+                        filtered_matches.append(match)
+                    elif match['weight'] > max(overlapping, key=lambda x: x['weight'])['weight']:
+                        # Remove overlapping matches with lower weight
+                        for overlap in overlapping:
+                            filtered_matches.remove(overlap)
+                        filtered_matches.append(match)
+                
+                # Create chapter objects
+                for i, match in enumerate(filtered_matches):
+                    start_pos = match['start']
+                    next_match = filtered_matches[i + 1] if i + 1 < len(filtered_matches) else None
+                    end_pos = next_match['start'] if next_match else len(document_text)
+                    
+                    # Extract chapter content
+                    chapter_content = document_text[start_pos:end_pos].strip()
+                    
+                    # Remove the title from content if it appears at the beginning
+                    title_text = match['text']
+                    if chapter_content.startswith(title_text):
+                        chapter_content = chapter_content[len(title_text):].strip()
+                    
+                    word_count = len(chapter_content.split()) if chapter_content else 0
+                    
+                    # Skip very short chapters
+                    if word_count < 20:
+                        continue
+                    
+                    chapters.append({
+                        'id': f'chapter_{i + 1}',
+                        'title': match['title'],
+                        'content': chapter_content,
+                        'word_count': word_count,
+                        'start_position': start_pos,
+                        'end_position': end_pos,
+                        'confidence': calculate_confidence_score(match, chapter_content),
+                        'type': match['type'],
+                        'order': i + 1
+                    })
+                
+                return chapters
+            
+            def extract_title_from_match(match, pattern_type):
+                """Extract clean title from regex match based on pattern type"""
+                if pattern_type == 'chapter':
+                    number = match.group(2)
+                    subtitle = match.group(3) if len(match.groups()) > 2 and match.group(3) else None
+                    if subtitle:
+                        return f"Chapter {number}: {subtitle.strip()}"
+                    return f"Chapter {number}"
+                    
+                elif pattern_type == 'markdown':
+                    return match.group(2).strip()
+                    
+                elif pattern_type == 'html':
+                    return match.group(2).strip()
+                    
+                elif pattern_type == 'numbered':
+                    number = match.group(1)
+                    title = match.group(2).strip()
+                    return title
+                    
+                elif pattern_type == 'caps':
+                    title = match.group(1).strip()
+                    # Convert to title case
+                    return ' '.join(word.capitalize() for word in title.split())
+                    
+                elif pattern_type == 'section':
+                    section_type = match.group(1).title()
+                    number = match.group(2)
+                    subtitle = match.group(3) if len(match.groups()) > 2 and match.group(3) else None
+                    if subtitle:
+                        return f"{section_type} {number}: {subtitle.strip()}"
+                    return f"{section_type} {number}"
+                    
+                return "Untitled Chapter"
+            
+            def calculate_confidence_score(match, content):
+                """Calculate confidence score based on various factors"""
+                base_score = {
+                    'chapter': 0.95,
+                    'html': 0.9,
+                    'markdown': 0.85,
+                    'section': 0.8,
+                    'numbered': 0.7,
+                    'caps': 0.6
+                }.get(match['type'], 0.5)
+                
+                # Adjust based on content length
+                word_count = len(content.split())
+                if word_count > 500:
+                    base_score += 0.1
+                elif word_count < 100:
+                    base_score -= 0.2
+                
+                # Adjust based on title quality
+                title_length = len(match['title'])
+                if 5 <= title_length <= 50:
+                    base_score += 0.05
+                elif title_length < 5:
+                    base_score -= 0.1
+                
+                return max(0.1, min(1.0, base_score))
+            
+            # Detect chapters
+            detected_chapters = detect_chapters(text)
+            
+            return JsonResponse({
+                'success': True,
+                'chapters': detected_chapters,
+                'chapter_count': len(detected_chapters),
+                'total_words': sum(ch['word_count'] for ch in detected_chapters),
+                'average_confidence': sum(ch['confidence'] for ch in detected_chapters) / len(detected_chapters) if detected_chapters else 0
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error detecting chapters: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'})
+
+@csrf_exempt
+@login_required
+def create_chapters_from_document(request):
+    """
+    Create chapters automatically from an uploaded document
+    """
+    if request.method == 'POST':
+        try:
+            uploaded_file = request.FILES.get('file')
+            project_id = request.POST.get('project_id')
+            
+            if not uploaded_file:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No file provided'
+                }, status=400)
+            
+            if not project_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No project ID provided'
+                }, status=400)
+            
+            # Verify project ownership
+            try:
+                project = Project.objects.get(id=project_id, author=request.user)
+            except Project.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Project not found or access denied'
+                }, status=404)
+            
+            # Create temporary file
+            import tempfile
+            import os
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_file:
+                for chunk in uploaded_file.chunks():
+                    temp_file.write(chunk)
+                temp_file_path = temp_file.name
+            
+            try:
+                # Extract text and identify chapters
+                from .document_parser import extract_text_and_chapters_from_file
+                result = extract_text_and_chapters_from_file(temp_file_path)
+                
+                if not result['chapters']:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'No chapters could be identified in this document'
+                    })
+                
+                # Create chapters in the project
+                created_chapters = []
+                
+                for chapter_data in result['chapters']:
+                    chapter = Chapter.objects.create(
+                        title=chapter_data['title'],
+                        content=chapter_data['content'],
+                        project=project,
+                        order=chapter_data['order'],
+                        author=request.user
+                    )
+                    
+                    created_chapters.append({
+                        'id': chapter.id,
+                        'title': chapter.title,
+                        'order': chapter.order,
+                        'word_count': chapter_data['word_count'],
+                        'confidence': chapter_data['confidence'],
+                        'detected_method': chapter_data['detected_method']
+                    })
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Successfully created {len(created_chapters)} chapters',
+                    'chapters': created_chapters,
+                    'total_words': result['total_words'],
+                    'average_confidence': result['average_confidence'],
+                    'project_id': project.id,
+                    'project_title': project.title
+                })
+                
+            finally:
+                # Clean up temporary file
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error processing document: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'})
+
+@csrf_exempt
+@login_required  
+def analyze_document_chapters(request):
+    """
+    Analyze an uploaded document for chapter structure without creating chapters
+    """
+    if request.method == 'POST':
+        try:
+            uploaded_file = request.FILES.get('file')
+            
+            if not uploaded_file:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No file provided'
+                }, status=400)
+            
+            # Create temporary file
+            import tempfile
+            import os
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_file:
+                for chunk in uploaded_file.chunks():
+                    temp_file.write(chunk)
+                temp_file_path = temp_file.name
+            
+            try:
+                # Extract text and identify chapters
+                from .document_parser import extract_text_and_chapters_from_file
+                result = extract_text_and_chapters_from_file(temp_file_path)
+                
+                # Prepare response with chapter preview
+                chapter_preview = []
+                for chapter in result['chapters']:
+                    preview_content = chapter['content'][:200] + '...' if len(chapter['content']) > 200 else chapter['content']
+                    chapter_preview.append({
+                        'title': chapter['title'],
+                        'word_count': chapter['word_count'],
+                        'confidence': chapter['confidence'],
+                        'detected_method': chapter['detected_method'],
+                        'preview': preview_content.strip()
+                    })
+                
+                return JsonResponse({
+                    'success': True,
+                    'filename': uploaded_file.name,
+                    'total_words': result['total_words'],
+                    'chapter_count': result['chapter_count'],
+                    'average_confidence': result['average_confidence'],
+                    'chapters': chapter_preview,
+                    'has_multiple_chapters': result['chapter_count'] > 1
+                })
+                
+            finally:
+                # Clean up temporary file
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error analyzing document: {str(e)}'
+            }, status=500)
     
     return JsonResponse({'success': False, 'error': 'POST method required'})
 
@@ -2939,4 +3794,2516 @@ def api_register(request):
                 'error': str(e)
             }, status=500)
     
-    return JsonResponse({'error': 'Method not allowed'}, status=405)
+@login_required
+def upload_to_editor(request):
+    """Handle file upload to the document editor"""
+    if request.method == 'POST':
+        try:
+            uploaded_file = request.FILES.get('file')
+            if not uploaded_file:
+                return JsonResponse({'success': False, 'message': 'No file provided'}, status=400)
+            
+            # Get file extension
+            file_name = uploaded_file.name
+            file_ext = file_name.split('.')[-1].lower()
+            
+            # Initialize content and title
+            content = ""
+            title = file_name.rsplit('.', 1)[0]  # Remove extension for title
+            
+            # Handle different file types
+            if file_ext in ['txt', 'text']:
+                # Plain text file
+                content = uploaded_file.read().decode('utf-8', errors='ignore')
+                
+            elif file_ext in ['doc', 'docx']:
+                # Microsoft Word documents
+                try:
+                    import docx
+                    from io import BytesIO
+                    doc = docx.Document(BytesIO(uploaded_file.read()))
+                    paragraphs = []
+                    for para in doc.paragraphs:
+                        if para.text.strip():
+                            paragraphs.append(para.text)
+                    content = '\n\n'.join(paragraphs)
+                except ImportError:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': 'Word document support not available. Please install python-docx.'
+                    }, status=500)
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': f'Error reading Word document: {str(e)}'
+                    }, status=500)
+                    
+            elif file_ext == 'pdf':
+                # PDF files
+                try:
+                    import PyPDF2
+                    from io import BytesIO
+                    pdf_reader = PyPDF2.PdfReader(BytesIO(uploaded_file.read()))
+                    pages_text = []
+                    for page in pdf_reader.pages:
+                        text = page.extract_text()
+                        if text:
+                            pages_text.append(text)
+                    content = '\n\n'.join(pages_text)
+                except ImportError:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': 'PDF support not available. Please install PyPDF2.'
+                    }, status=500)
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': f'Error reading PDF: {str(e)}'
+                    }, status=500)
+                    
+            elif file_ext == 'rtf':
+                # RTF files
+                try:
+                    from striprtf.striprtf import rtf_to_text
+                    content = rtf_to_text(uploaded_file.read().decode('utf-8', errors='ignore'))
+                except ImportError:
+                    # Fallback: just read as text and try to clean it up
+                    raw_content = uploaded_file.read().decode('utf-8', errors='ignore')
+                    # Basic RTF stripping (very basic)
+                    import re
+                    content = re.sub(r'\\[a-z]+\d?\s?', '', raw_content)
+                    content = re.sub(r'[{}]', '', content)
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': f'Error reading RTF: {str(e)}'
+                    }, status=500)
+                    
+            elif file_ext == 'odt':
+                # OpenDocument Text files
+                try:
+                    from odf import text, teletype
+                    from odf.opendocument import load
+                    from io import BytesIO
+                    doc = load(BytesIO(uploaded_file.read()))
+                    paragraphs = doc.getElementsByType(text.P)
+                    content = '\n\n'.join([teletype.extractText(p) for p in paragraphs])
+                except ImportError:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': 'ODT support not available. Please install odfpy.'
+                    }, status=500)
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': f'Error reading ODT: {str(e)}'
+                    }, status=500)
+            else:
+                return JsonResponse({
+                    'success': False, 
+                    'message': f'Unsupported file type: {file_ext}'
+                }, status=400)
+            
+            # Clean up the content
+            content = content.strip()
+            
+            # Return the processed content
+            return JsonResponse({
+                'success': True,
+                'title': title,
+                'content': content,
+                'message': 'File uploaded successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False, 
+                'message': f'Upload error: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'message': 'POST request required'}, status=405)
+
+
+# ============ MEDIA LIBRARY VIEWS ============
+
+@login_required
+def media_library(request):
+    """Media library view for multiple file types"""
+    from .models import MediaFile
+    
+    # Get user's media files
+    media_files = MediaFile.objects.filter(user=request.user).order_by('-upload_date')
+    
+    # Filter by type if requested
+    file_type = request.GET.get('type')
+    if file_type and file_type in ['image', 'video', 'audio']:
+        media_files = media_files.filter(file_type=file_type)
+    
+    # Search functionality
+    search = request.GET.get('search')
+    if search:
+        media_files = media_files.filter(title__icontains=search)
+    
+    # Get statistics (only for allowed file types)
+    stats = {
+        'total_files': MediaFile.objects.filter(user=request.user, file_type__in=['image', 'video', 'audio']).count(),
+        'images': MediaFile.objects.filter(user=request.user, file_type='image').count(),
+        'videos': MediaFile.objects.filter(user=request.user, file_type='video').count(),
+        'audio': MediaFile.objects.filter(user=request.user, file_type='audio').count(),
+        'total_size': sum(MediaFile.objects.filter(user=request.user, file_type__in=['image', 'video', 'audio']).values_list('file_size', flat=True) or [0])
+    }
+    
+    # Convert total size to human readable
+    size = stats['total_size']
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size < 1024:
+            stats['total_size_human'] = f"{size:.1f} {unit}"
+            break
+        size /= 1024
+    else:
+        stats['total_size_human'] = f"{size:.1f} TB"
+    
+    context = {
+        'media_files': media_files,
+        'stats': stats,
+        'total_files': stats['total_files'],
+        'image_count': stats['images'],
+        'video_count': stats['videos'],
+        'audio_count': stats['audio'],
+        'current_filter': file_type,
+        'search_query': search,
+    }
+    
+    return render(request, 'writer/media_library.html', context)
+
+
+@csrf_exempt
+@login_required
+def media_upload(request):
+    """Handle media file upload"""
+    if request.method == 'POST':
+        from .models import MediaFile
+        import json
+        
+        try:
+            # Handle both 'files' (multiple) and 'file' (single) upload
+            uploaded_files = request.FILES.getlist('files') or [request.FILES.get('file')]
+            uploaded_files = [f for f in uploaded_files if f is not None]  # Remove None values
+            project_id = request.POST.get('project')
+            
+            if not uploaded_files:
+                return JsonResponse({'success': False, 'error': 'No files provided'}, status=400)
+            
+            uploaded_file_info = []
+            project = None
+            
+            if project_id:
+                try:
+                    project = Project.objects.get(id=project_id, author=request.user)
+                except Project.DoesNotExist:
+                    project = None
+            
+            for uploaded_file in uploaded_files:
+                try:
+                    # Get file extension
+                    file_extension = uploaded_file.name.split('.')[-1].lower() if '.' in uploaded_file.name else ''
+                    
+                    # Define allowed file types (only images, audio, video)
+                    allowed_extensions = {
+                        # Image formats
+                        'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'ico',
+                        # Video formats  
+                        'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v', '3gp',
+                        # Audio formats
+                        'mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma', 'opus'
+                    }
+                    
+                    # Check if file type is allowed
+                    if file_extension not in allowed_extensions:
+                        return JsonResponse({
+                            'success': False, 
+                            'error': f'File type "{file_extension}" not allowed. Only images, audio, and video files are supported.'
+                        }, status=400)
+                    
+                    # Create media file
+                    media_file = MediaFile.objects.create(
+                        title=uploaded_file.name.rsplit('.', 1)[0],
+                        user=request.user,
+                        project=project,
+                        file=uploaded_file,
+                        description=f"Uploaded from media library"
+                    )
+                    
+                    # No text extraction needed for media files (images, audio, video)
+                    
+                    uploaded_file_info.append({
+                        'id': media_file.id,
+                        'title': media_file.title,
+                        'file_type': media_file.file_type,
+                        'file_format': media_file.file_format,
+                        'file_size': media_file.file_size_human,
+                        'thumbnail_url': media_file.thumbnail_url,
+                        'upload_date': media_file.upload_date.strftime('%Y-%m-%d %H:%M')
+                    })
+                    
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False, 
+                        'error': f'Failed to upload {uploaded_file.name}: {str(e)}'
+                    }, status=500)
+            
+            # For single file upload, return 'file' instead of 'files' array for JS compatibility
+            response_data = {
+                'success': True,
+                'message': f'{len(uploaded_file_info)} file(s) uploaded successfully',
+                'files': uploaded_file_info
+            }
+            
+            # Add 'file' key for single file uploads (JS expects this)
+            if len(uploaded_file_info) == 1:
+                response_data['file'] = uploaded_file_info[0]
+            
+            return JsonResponse(response_data)
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Upload failed: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'}, status=405)
+
+
+def extract_document_content(uploaded_file, file_format):
+    """Extract text content from various document formats"""
+    content = ""
+    
+    try:
+        # Save current position and reset to beginning
+        original_position = uploaded_file.tell()
+        uploaded_file.seek(0)
+        
+        if file_format in ['txt', 'text']:
+            content = uploaded_file.read().decode('utf-8', errors='ignore')
+            
+        elif file_format in ['doc', 'docx']:
+            try:
+                import docx
+                from io import BytesIO
+                doc = docx.Document(BytesIO(uploaded_file.read()))
+                paragraphs = []
+                for para in doc.paragraphs:
+                    if para.text.strip():
+                        paragraphs.append(para.text)
+                content = '\n\n'.join(paragraphs)
+            except ImportError:
+                content = "Word document content extraction requires python-docx"
+                
+        elif file_format == 'pdf':
+            try:
+                import PyPDF2
+                from io import BytesIO
+                pdf_reader = PyPDF2.PdfReader(BytesIO(uploaded_file.read()))
+                pages_text = []
+                for page in pdf_reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        pages_text.append(text)
+                content = '\n\n'.join(pages_text)
+            except ImportError:
+                content = "PDF content extraction requires PyPDF2"
+                
+        elif file_format == 'rtf':
+            try:
+                from striprtf.striprtf import rtf_to_text
+                content = rtf_to_text(uploaded_file.read().decode('utf-8', errors='ignore'))
+            except ImportError:
+                raw_content = uploaded_file.read().decode('utf-8', errors='ignore')
+                import re
+                content = re.sub(r'\\[a-z]+\d?\s?', '', raw_content)
+                content = re.sub(r'[{}]', '', content)
+                
+        elif file_format == 'odt':
+            try:
+                from odf import text, teletype
+                from odf.opendocument import load
+                from io import BytesIO
+                doc = load(BytesIO(uploaded_file.read()))
+                paragraphs = doc.getElementsByType(text.P)
+                content = '\n\n'.join([teletype.extractText(p) for p in paragraphs])
+            except ImportError:
+                content = "ODT content extraction requires odfpy"
+                
+        elif file_format in ['html', 'htm']:
+            try:
+                from bs4 import BeautifulSoup
+                html_content = uploaded_file.read().decode('utf-8', errors='ignore')
+                soup = BeautifulSoup(html_content, 'html.parser')
+                content = soup.get_text(separator='\n\n')
+            except ImportError:
+                content = "HTML content extraction requires beautifulsoup4"
+                
+    except Exception as e:
+        content = f"Content extraction failed: {str(e)}"
+    finally:
+        # Restore original file position
+        try:
+            uploaded_file.seek(original_position)
+        except:
+            uploaded_file.seek(0)
+    
+    return content.strip()
+
+
+@login_required
+def media_detail(request, media_id):
+    """View media file details"""
+    from .models import MediaFile
+    
+    media_file = get_object_or_404(MediaFile, id=media_id, user=request.user)
+    
+    context = {
+        'media_file': media_file,
+    }
+    
+    return render(request, 'writer/media_detail.html', context)
+
+
+@login_required
+def media_delete(request, media_id):
+    """Delete media file"""
+    from .models import MediaFile
+    
+    if request.method == 'POST':
+        media_file = get_object_or_404(MediaFile, id=media_id, user=request.user)
+        
+        try:
+            # Delete the file from storage
+            if media_file.file:
+                media_file.file.delete()
+            
+            # Delete the database record
+            media_file.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'File deleted successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Delete failed: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'POST method required'}, status=405)
+
+
+@login_required
+def media_view(request, media_id):
+    """View media file in browser"""
+    from .models import MediaFile
+    from django.http import HttpResponse, Http404
+    import os
+    import mimetypes
+    
+    media_file = get_object_or_404(MediaFile, id=media_id, user=request.user)
+    
+    try:
+        if not media_file.file or not os.path.exists(media_file.file.path):
+            raise Http404("File not found")
+        
+        # Get the MIME type
+        content_type, _ = mimetypes.guess_type(media_file.file.path)
+        if not content_type:
+            # Default content types based on file type
+            if media_file.file_type == 'image':
+                content_type = 'image/jpeg'
+            elif media_file.file_type == 'video':
+                content_type = 'video/mp4'
+            elif media_file.file_type == 'audio':
+                content_type = 'audio/mpeg'
+            elif media_file.file_format == 'pdf':
+                content_type = 'application/pdf'
+            else:
+                content_type = 'application/octet-stream'
+        
+        with open(media_file.file.path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type=content_type)
+            # For inline viewing instead of download
+            response['Content-Disposition'] = f'inline; filename="{media_file.title}.{media_file.file_format}"'
+            return response
+            
+    except Exception as e:
+        raise Http404(f"File view failed: {str(e)}")
+
+
+@login_required
+def media_download(request, media_id):
+    """Download media file"""
+    from .models import MediaFile
+    from django.http import HttpResponse, Http404
+    import os
+    
+    media_file = get_object_or_404(MediaFile, id=media_id, user=request.user)
+    
+    try:
+        if not media_file.file or not os.path.exists(media_file.file.path):
+            raise Http404("File not found")
+        
+        with open(media_file.file.path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{media_file.title}.{media_file.file_format}"'
+            return response
+            
+    except Exception as e:
+        raise Http404(f"File download failed: {str(e)}")
+
+
+@login_required
+def media_update(request, media_id):
+    """Update media file details - handles both GET (show form) and POST (save changes)"""
+    from .models import MediaFile
+    import json
+    
+    media_file = get_object_or_404(MediaFile, id=media_id, user=request.user)
+    
+    if request.method == 'POST':
+        # Handle both JSON API requests and form submissions
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                
+                # Update fields from JSON
+                if 'title' in data:
+                    media_file.title = data['title']
+                if 'description' in data:
+                    media_file.description = data['description']
+                if 'tags' in data:
+                    media_file.tags = data['tags']
+                if 'project' in data:
+                    project_id = data['project']
+                    if project_id:
+                        try:
+                            project = Project.objects.get(id=project_id, author=request.user)
+                            media_file.project = project
+                        except Project.DoesNotExist:
+                            pass
+                    else:
+                        media_file.project = None
+                
+                media_file.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'File updated successfully'
+                })
+                
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Update failed: {str(e)}'
+                }, status=500)
+        else:
+            # Handle regular form submission
+            try:
+                media_file.title = request.POST.get('title', media_file.title)
+                media_file.description = request.POST.get('description', media_file.description)
+                
+                # Handle tags (convert comma-separated string to list)
+                tags_string = request.POST.get('tags', '')
+                if tags_string:
+                    media_file.tags = [tag.strip() for tag in tags_string.split(',') if tag.strip()]
+                else:
+                    media_file.tags = []
+                
+                # Handle project assignment
+                project_id = request.POST.get('project')
+                if project_id:
+                    try:
+                        project = Project.objects.get(id=project_id, author=request.user)
+                        media_file.project = project
+                    except Project.DoesNotExist:
+                        pass
+                else:
+                    media_file.project = None
+                
+                media_file.save()
+                messages.success(request, 'Media file updated successfully!')
+                return redirect('writer:media_detail', media_id=media_file.id)
+                
+            except Exception as e:
+                messages.error(request, f'Failed to update media file: {str(e)}')
+    
+    # GET request - show edit form
+    user_projects = Project.objects.filter(author=request.user).order_by('title')
+    
+    context = {
+        'media_file': media_file,
+        'projects': user_projects,
+        'tags_string': ', '.join(media_file.tags) if media_file.tags else '',
+    }
+    return render(request, 'writer/media_edit.html', context)
+
+
+# User Registration Views
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.urls import reverse
+from django import forms
+from django.contrib.auth.models import User
+
+class CustomUserCreationForm(UserCreationForm):
+    """Custom user creation form with email field"""
+    email = forms.EmailField(required=True, help_text="We'll never share your email with anyone else.")
+    
+    class Meta:
+        model = User
+        fields = ("username", "email", "password1", "password2")
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"]
+        if commit:
+            user.save()
+        return user
+
+def signup(request):
+    """User registration view"""
+    if request.user.is_authenticated:
+        return redirect('writer:dashboard')
+    
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Log the user in immediately after registration
+            login(request, user)
+            messages.success(request, f'Welcome to Writer\'s Web Dream, {user.username}! Your account has been created successfully.')
+            return redirect('writer:dashboard')
+    else:
+        form = CustomUserCreationForm()
+    
+    return render(request, 'registration/signup.html', {'form': form})
+
+
+class MLStripper(HTMLParser):
+    """HTML tag stripper for converting HTML content to plain text"""
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = []
+    
+    def handle_data(self, d):
+        self.text.append(d)
+    
+    def get_data(self):
+        return ''.join(self.text)
+
+
+def strip_html_tags(html):
+    """Remove HTML tags from content"""
+    if not html:
+        return ""
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+
+@login_required
+def export_project_pdf(request, pk):
+    """Export entire project as PDF"""
+    project = get_object_or_404(Project, pk=pk)
+    
+    # Check permissions
+    if project.author != request.user and request.user not in project.collaborators.all():
+        messages.error(request, "You don't have permission to export this project.")
+        return redirect('writer:project_detail', pk=pk)
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, 
+                           rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    # Container for the 'Flowable' objects
+    elements = []
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='BookTitle',
+                             parent=styles['Heading1'],
+                             fontSize=24,
+                             alignment=TA_CENTER,
+                             spaceAfter=30))
+    styles.add(ParagraphStyle(name='ChapterTitle',
+                             parent=styles['Heading2'],
+                             fontSize=18,
+                             spaceAfter=12))
+    styles.add(ParagraphStyle(name='ChapterContent',
+                             parent=styles['Normal'],
+                             fontSize=12,
+                             alignment=TA_JUSTIFY,
+                             spaceAfter=12))
+    
+    # Add title page
+    elements.append(Paragraph(project.title, styles['BookTitle']))
+    elements.append(Spacer(1, 0.2*inch))
+    elements.append(Paragraph(f"by {project.author.get_full_name() or project.author.username}", styles['Title']))
+    elements.append(Spacer(1, 0.5*inch))
+    
+    if project.description:
+        elements.append(Paragraph(strip_html_tags(project.description), styles['Normal']))
+    
+    elements.append(PageBreak())
+    
+    # Add chapters
+    chapters = project.chapters.all().order_by('order')
+    has_content = False
+    
+    if not chapters.exists():
+        # No chapters - add placeholder
+        elements.append(Paragraph("This project doesn't have any chapters yet.", styles['Normal']))
+        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Paragraph("Add chapters to your project to see content in the export.", styles['Normal']))
+    else:
+        for chapter in chapters:
+            # Chapter title
+            elements.append(Paragraph(chapter.title, styles['ChapterTitle']))
+            elements.append(Spacer(1, 0.2*inch))
+            
+            # Chapter content
+            if chapter.content:
+                # Convert HTML content to plain text
+                plain_content = strip_html_tags(chapter.content)
+                # Split into paragraphs
+                paragraphs = plain_content.split('\n')
+                chapter_has_content = False
+                for para in paragraphs:
+                    if para.strip():
+                        elements.append(Paragraph(para, styles['ChapterContent']))
+                        elements.append(Spacer(1, 0.1*inch))
+                        has_content = True
+                        chapter_has_content = True
+                
+                if not chapter_has_content:
+                    elements.append(Paragraph("(This chapter is empty)", styles['Italic']))
+                    elements.append(Spacer(1, 0.2*inch))
+            else:
+                elements.append(Paragraph("(This chapter is empty)", styles['Italic']))
+                elements.append(Spacer(1, 0.2*inch))
+            
+            elements.append(PageBreak())
+    
+    if not has_content and chapters.exists():
+        # Project has chapters but no content
+        elements.append(Spacer(1, 0.5*inch))
+        elements.append(Paragraph("Note: This project contains empty chapters. Add content to your chapters to see it in the export.", styles['Italic']))
+    
+    # Build PDF
+    doc.build(elements)
+    
+    # FileResponse sets the Content-Disposition header
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{project.title}.pdf"'
+    
+    return response
+
+
+@login_required
+def export_chapter_pdf(request, pk):
+    """Export single chapter as PDF"""
+    chapter = get_object_or_404(Chapter, pk=pk)
+    project = chapter.project
+    
+    # Check permissions
+    if project.author != request.user and request.user not in project.collaborators.all():
+        messages.error(request, "You don't have permission to export this chapter.")
+        return redirect('writer:project_detail', pk=project.pk)
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                           rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='ChapterTitle',
+                             parent=styles['Heading1'],
+                             fontSize=20,
+                             alignment=TA_CENTER,
+                             spaceAfter=30))
+    styles.add(ParagraphStyle(name='ChapterContent',
+                             parent=styles['Normal'],
+                             fontSize=12,
+                             alignment=TA_JUSTIFY,
+                             spaceAfter=12))
+    
+    # Add chapter title
+    elements.append(Paragraph(chapter.title, styles['ChapterTitle']))
+    elements.append(Paragraph(f"from {project.title}", styles['Italic']))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Add chapter content
+    if chapter.content:
+        plain_content = strip_html_tags(chapter.content)
+        paragraphs = plain_content.split('\n')
+        for para in paragraphs:
+            if para.strip():
+                elements.append(Paragraph(para, styles['ChapterContent']))
+                elements.append(Spacer(1, 0.1*inch))
+    
+    # Build PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{project.title} - {chapter.title}.pdf"'
+    
+    return response
+
+
+@login_required
+def export_document_pdf(request, pk):
+    """Export document as PDF"""
+    document = get_object_or_404(Document, pk=pk)
+    
+    # Check permissions
+    if document.author != request.user and request.user not in document.shared_with.all():
+        messages.error(request, "You don't have permission to export this document.")
+        return redirect('writer:document_list')
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                           rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='DocTitle',
+                             parent=styles['Heading1'],
+                             fontSize=20,
+                             alignment=TA_CENTER,
+                             spaceAfter=30))
+    styles.add(ParagraphStyle(name='DocContent',
+                             parent=styles['Normal'],
+                             fontSize=12,
+                             alignment=TA_JUSTIFY,
+                             spaceAfter=12))
+    
+    # Add document title
+    elements.append(Paragraph(document.title, styles['DocTitle']))
+    elements.append(Paragraph(f"by {document.author.get_full_name() or document.author.username}", styles['Italic']))
+    elements.append(Spacer(1, 0.3*inch))
+    
+    # Add document content
+    if document.content:
+        plain_content = strip_html_tags(document.content)
+        paragraphs = plain_content.split('\n')
+        for para in paragraphs:
+            if para.strip():
+                elements.append(Paragraph(para, styles['DocContent']))
+                elements.append(Spacer(1, 0.1*inch))
+    
+    # Build PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{document.title}.pdf"'
+    
+    return response
+
+
+@login_required
+@csrf_exempt
+def export_cover_pdf(request):
+    """Export book cover as PDF from canvas image data"""
+    if request.method == 'POST':
+        try:
+            import json
+            import base64
+            from io import BytesIO
+            from PIL import Image
+            from reportlab.lib.pagesizes import letter
+            from reportlab.platypus import SimpleDocTemplate, Image as RLImage
+            from reportlab.lib.units import inch
+            
+            data = json.loads(request.body)
+            image_data = data.get('image_data')
+            filename = data.get('filename', 'book-cover.pdf')
+            size = data.get('size', 'kindle')
+            
+            if not image_data:
+                return JsonResponse({'error': 'No image data provided'}, status=400)
+            
+            # Remove data URL prefix
+            if ',' in image_data:
+                image_data = image_data.split(',')[1]
+            
+            # Decode base64 image
+            image_bytes = base64.b64decode(image_data)
+            image_buffer = BytesIO(image_bytes)
+            
+            # Open with PIL to get dimensions
+            pil_image = Image.open(image_buffer)
+            img_width, img_height = pil_image.size
+            
+            # Create PDF buffer
+            pdf_buffer = BytesIO()
+            
+            # Calculate PDF dimensions based on cover size
+            if size == 'kindle':
+                page_width, page_height = 6*inch, 9*inch
+            elif size == 'paperback':
+                page_width, page_height = 6*inch, 9*inch  
+            else:  # hardcover
+                page_width, page_height = 6.5*inch, 9.5*inch
+            
+            # Create PDF document with custom page size
+            doc = SimpleDocTemplate(
+                pdf_buffer,
+                pagesize=(page_width, page_height),
+                rightMargin=0, leftMargin=0,
+                topMargin=0, bottomMargin=0
+            )
+            
+            # Reset image buffer position
+            image_buffer.seek(0)
+            
+            # Create ReportLab image
+            rl_image = RLImage(image_buffer, width=page_width, height=page_height)
+            
+            # Build PDF with single image page
+            doc.build([rl_image])
+            
+            # Return PDF response
+            pdf_buffer.seek(0)
+            response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+            return response
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'POST request required'}, status=405)
+
+
+@login_required
+def export_project_epub(request, pk):
+    """Export entire project as EPUB"""
+    project = get_object_or_404(Project, pk=pk)
+    
+    # Check permissions
+    if project.author != request.user and request.user not in project.collaborators.all():
+        messages.error(request, "You don't have permission to export this project.")
+        return redirect('writer:project_detail', pk=pk)
+    
+    try:
+        from ebooklib import epub
+        import io
+        import re
+        
+        # Create EPUB book
+        book = epub.EpubBook()
+        book.set_identifier(f'project-{project.id}')
+        book.set_title(project.title)
+        book.set_language('en')
+        book.add_author(project.author.get_full_name() or project.author.username)
+        
+        if project.description:
+            book.add_metadata('DC', 'description', strip_html_tags(project.description))
+        
+        if project.genre:
+            book.add_metadata('DC', 'subject', project.genre)
+        
+        # Add CSS styles
+        style = """
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            text-align: center;
+            margin: 40px 0 30px 0;
+            page-break-before: always;
+        }
+        h2 {
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 30px 0 20px 0;
+        }
+        p {
+            text-indent: 1.5em;
+            margin: 0 0 1em 0;
+            text-align: justify;
+        }
+        p.first-paragraph {
+            text-indent: 0;
+        }
+        .scene-break {
+            text-align: center;
+            margin: 2em 0;
+            font-size: 14pt;
+        }
+        """
+        
+        nav_css = epub.EpubItem(uid="nav_css", file_name="style/nav.css", media_type="text/css", content=style)
+        book.add_item(nav_css)
+        
+        # Get chapters ordered by their sequence
+        chapters = project.chapters.all().order_by('order')
+        
+        epub_chapters = []
+        spine_items = ['nav']
+        
+        # Add title page
+        title_page = epub.EpubHtml(
+            title='Title Page',
+            file_name='title.xhtml',
+            lang='en'
+        )
+        
+        title_content = f"""
+        <html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+            <title>{project.title}</title>
+            <link rel="stylesheet" type="text/css" href="style/nav.css"/>
+        </head>
+        <body>
+            <div style="text-align: center; margin-top: 30%; page-break-after: always;">
+                <h1 style="font-size: 36pt; margin-bottom: 30px;">{project.title}</h1>
+                {"<h2>" + strip_html_tags(project.description) + "</h2>" if project.description else ""}
+                <h3 style="margin-top: 60px;">by {project.author.get_full_name() or project.author.username}</h3>
+            </div>
+        </body>
+        </html>
+        """
+        
+        title_page.content = title_content
+        book.add_item(title_page)
+        spine_items.append(title_page)
+        
+        # Check if project has any chapters
+        if not chapters.exists():
+            # Add a placeholder chapter for empty projects
+            placeholder_content = f"""
+            <html xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+                <title>Empty Project</title>
+                <link rel="stylesheet" type="text/css" href="style/nav.css"/>
+            </head>
+            <body>
+                <h1>Getting Started</h1>
+                <p class="first-paragraph">This project doesn't have any chapters yet.</p>
+                <p>To add content to your book:</p>
+                <ol>
+                    <li>Go to your project page</li>
+                    <li>Click "Write Now" or "Create First Chapter"</li>
+                    <li>Start writing your story</li>
+                    <li>Export again to see your content</li>
+                </ol>
+            </body>
+            </html>
+            """
+            
+            placeholder_chapter = epub.EpubHtml(
+                title='Getting Started',
+                file_name='placeholder.xhtml',
+                lang='en'
+            )
+            placeholder_chapter.content = placeholder_content
+            book.add_item(placeholder_chapter)
+            spine_items.append(placeholder_chapter)
+            epub_chapters = [(epub.Link('placeholder.xhtml', 'Getting Started', 'placeholder'))]
+        else:
+            # Add each chapter
+            has_content = False
+        for i, chapter in enumerate(chapters, 1):
+            # Clean and process chapter content
+            if chapter.content:
+                content = strip_html_tags(chapter.content)
+                # Check if content is just empty HTML tags
+                content_stripped = re.sub(r'<[^>]*>', '', content).strip()
+                if not content_stripped:
+                    content = ""
+            else:
+                content = ""
+                
+            # Split content into paragraphs
+            paragraphs = content.split('\n') if content else []
+            processed_paragraphs = []
+            chapter_has_content = False
+            
+            for j, para in enumerate(paragraphs):
+                para = para.strip()
+                if para:
+                    # Mark first paragraph of chapter
+                    if j == 0:
+                        processed_paragraphs.append(f'<p class="first-paragraph">{para}</p>')
+                    # Handle scene breaks (lines with just * or # symbols)
+                    elif re.match(r'^[\*#\-\s]+$', para):
+                        processed_paragraphs.append(f'<div class="scene-break">{para}</div>')
+                    else:
+                        processed_paragraphs.append(f'<p>{para}</p>')
+                    chapter_has_content = True
+            
+            # If chapter is empty, add placeholder
+            if not chapter_has_content:
+                processed_paragraphs.append('<p><em>(This chapter is empty)</em></p>')
+            else:
+                has_content = True
+            
+            chapter_content = f"""
+            <html xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+                <title>{chapter.title}</title>
+                <link rel="stylesheet" type="text/css" href="style/nav.css"/>
+            </head>
+            <body>
+                <h1>{chapter.title}</h1>
+                {"".join(processed_paragraphs)}
+            </body>
+            </html>
+            """
+            
+            epub_chapter = epub.EpubHtml(
+                title=chapter.title,
+                file_name=f'chapter_{i}.xhtml',
+                lang='en'
+            )
+            epub_chapter.content = chapter_content
+            epub_chapter.add_item(nav_css)
+            
+            book.add_item(epub_chapter)
+            epub_chapters.append(epub_chapter)
+            spine_items.append(epub_chapter)
+        
+        # Add table of contents
+        book.toc = [(epub.Section('Chapters'), epub_chapters)]
+        
+        # Add navigation files
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        
+        # Set spine (reading order)
+        book.spine = spine_items
+        
+        # Generate EPUB file
+        epub_buffer = io.BytesIO()
+        epub.write_epub(epub_buffer, book)
+        
+        # Return as download
+        epub_buffer.seek(0)
+        response = HttpResponse(epub_buffer.read(), content_type='application/epub+zip')
+        filename = f"{project.title.replace(' ', '_')}.epub"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except ImportError:
+        messages.error(request, "EPUB export not available. Please contact administrator.")
+        return redirect('writer:project_detail', pk=pk)
+    except Exception as e:
+        messages.error(request, f"Error generating EPUB: {str(e)}")
+        return redirect('writer:project_detail', pk=pk)
+
+
+@login_required 
+def export_chapter_epub(request, pk):
+    """Export single chapter as EPUB"""
+    chapter = get_object_or_404(Chapter, pk=pk)
+    project = chapter.project
+    
+    # Check permissions
+    if project.author != request.user and request.user not in project.collaborators.all():
+        messages.error(request, "You don't have permission to export this chapter.")
+        return redirect('writer:project_detail', pk=project.pk)
+    
+    try:
+        from ebooklib import epub
+        import io
+        
+        # Create EPUB book
+        book = epub.EpubBook()
+        book.set_identifier(f'chapter-{chapter.id}')
+        book.set_title(f"{project.title}: {chapter.title}")
+        book.set_language('en')
+        book.add_author(project.author.get_full_name() or project.author.username)
+        
+        # Add CSS styles
+        style = """
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            text-align: center;
+            margin: 40px 0 30px 0;
+        }
+        p {
+            text-indent: 1.5em;
+            margin: 0 0 1em 0;
+            text-align: justify;
+        }
+        p.first-paragraph {
+            text-indent: 0;
+        }
+        """
+        
+        nav_css = epub.EpubItem(uid="nav_css", file_name="style/nav.css", media_type="text/css", content=style)
+        book.add_item(nav_css)
+        
+        # Process chapter content
+        content = strip_html_tags(chapter.content) if chapter.content else ""
+        paragraphs = content.split('\n')
+        processed_paragraphs = []
+        
+        for i, para in enumerate(paragraphs):
+            para = para.strip()
+            if para:
+                if i == 0:
+                    processed_paragraphs.append(f'<p class="first-paragraph">{para}</p>')
+                else:
+                    processed_paragraphs.append(f'<p>{para}</p>')
+        
+        chapter_content = f"""
+        <html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+            <title>{chapter.title}</title>
+            <link rel="stylesheet" type="text/css" href="style/nav.css"/>
+        </head>
+        <body>
+            <h1>{chapter.title}</h1>
+            <p style="text-align: center; font-style: italic; margin-bottom: 30px;">from {project.title}</p>
+            {"".join(processed_paragraphs)}
+        </body>
+        </html>
+        """
+        
+        epub_chapter = epub.EpubHtml(
+            title=chapter.title,
+            file_name='chapter.xhtml',
+            lang='en'
+        )
+        epub_chapter.content = chapter_content
+        epub_chapter.add_item(nav_css)
+        
+        book.add_item(epub_chapter)
+        book.spine = ['nav', epub_chapter]
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        
+        # Generate EPUB
+        epub_buffer = io.BytesIO()
+        epub.write_epub(epub_buffer, book)
+        
+        epub_buffer.seek(0)
+        response = HttpResponse(epub_buffer.read(), content_type='application/epub+zip')
+        filename = f"{project.title}_{chapter.title}".replace(' ', '_') + '.epub'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except ImportError:
+        messages.error(request, "EPUB export not available. Please contact administrator.")
+        return redirect('writer:project_detail', pk=project.pk)
+    except Exception as e:
+        messages.error(request, f"Error generating EPUB: {str(e)}")
+        return redirect('writer:project_detail', pk=project.pk)
+
+
+@login_required
+def export_document_epub_view(request, pk):
+    """Export document as EPUB (view version)"""
+    document = get_object_or_404(Document, pk=pk)
+    
+    # Check permissions
+    if document.author != request.user and request.user not in document.shared_with.all():
+        messages.error(request, "You don't have permission to export this document.")
+        return redirect('writer:document_list')
+    
+    try:
+        from ebooklib import epub
+        import io
+        
+        # Create EPUB book
+        book = epub.EpubBook()
+        book.set_identifier(f'document-{document.id}')
+        book.set_title(document.title)
+        book.set_language('en')
+        book.add_author(document.author.get_full_name() or document.author.username)
+        
+        # Add CSS
+        style = """
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            text-align: center;
+            margin: 40px 0 30px 0;
+        }
+        p {
+            text-indent: 1.5em;
+            margin: 0 0 1em 0;
+            text-align: justify;
+        }
+        p.first-paragraph {
+            text-indent: 0;
+        }
+        """
+        
+        nav_css = epub.EpubItem(uid="nav_css", file_name="style/nav.css", media_type="text/css", content=style)
+        book.add_item(nav_css)
+        
+        # Process document content
+        content = strip_html_tags(document.content) if document.content else ""
+        paragraphs = content.split('\n')
+        processed_paragraphs = []
+        
+        for i, para in enumerate(paragraphs):
+            para = para.strip()
+            if para:
+                if i == 0:
+                    processed_paragraphs.append(f'<p class="first-paragraph">{para}</p>')
+                else:
+                    processed_paragraphs.append(f'<p>{para}</p>')
+        
+        doc_content = f"""
+        <html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+            <title>{document.title}</title>
+            <link rel="stylesheet" type="text/css" href="style/nav.css"/>
+        </head>
+        <body>
+            <h1>{document.title}</h1>
+            <p style="text-align: center; font-style: italic; margin-bottom: 30px;">by {document.author.get_full_name() or document.author.username}</p>
+            {"".join(processed_paragraphs)}
+        </body>
+        </html>
+        """
+        
+        epub_doc = epub.EpubHtml(
+            title=document.title,
+            file_name='document.xhtml',
+            lang='en'
+        )
+        epub_doc.content = doc_content
+        epub_doc.add_item(nav_css)
+        
+        book.add_item(epub_doc)
+        book.spine = ['nav', epub_doc]
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        
+        # Generate EPUB
+        epub_buffer = io.BytesIO()
+        epub.write_epub(epub_buffer, book)
+        
+        epub_buffer.seek(0)
+        response = HttpResponse(epub_buffer.read(), content_type='application/epub+zip')
+        filename = f"{document.title}".replace(' ', '_') + '.epub'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except ImportError:
+        messages.error(request, "EPUB export not available. Please contact administrator.")
+        return redirect('writer:document_list')
+    except Exception as e:
+        messages.error(request, f"Error generating EPUB: {str(e)}")
+        return redirect('writer:document_list')
+
+
+# ================================
+# VERSION CONTROL VIEWS
+# ================================
+
+from .models import DocumentVersion, ChapterVersion, VersionControlSettings
+
+def create_document_version(document, user, save_reason=None, is_major=False):
+    """Helper function to create a new document version"""
+    try:
+        # Get the latest version number
+        latest_version = DocumentVersion.objects.filter(document=document).first()
+        version_number = (latest_version.version_number + 1) if latest_version else 1
+        
+        # Create new version
+        version = DocumentVersion.objects.create(
+            document=document,
+            version_number=version_number,
+            title=document.title,
+            content=document.content or '',
+            saved_by=user,
+            save_reason=save_reason,
+            is_major_version=is_major
+        )
+        
+        # Clean up old versions if needed
+        settings = VersionControlSettings.get_or_create_for_user(user)
+        if settings.max_versions_to_keep > 0:
+            old_versions = DocumentVersion.objects.filter(
+                document=document
+            )[settings.max_versions_to_keep:]
+            
+            for old_version in old_versions:
+                if not old_version.is_major_version and not old_version.is_published_version:
+                    old_version.delete()
+        
+        return version
+    except Exception as e:
+        print(f"Error creating document version: {e}")
+        return None
+
+def create_chapter_version(chapter, user, save_reason=None, is_major=False):
+    """Helper function to create a new chapter version"""
+    try:
+        # Get the latest version number
+        latest_version = ChapterVersion.objects.filter(chapter=chapter).first()
+        version_number = (latest_version.version_number + 1) if latest_version else 1
+        
+        # Create new version
+        version = ChapterVersion.objects.create(
+            chapter=chapter,
+            version_number=version_number,
+            title=chapter.title,
+            content=chapter.content or '',
+            saved_by=user,
+            save_reason=save_reason,
+            is_major_version=is_major
+        )
+        
+        # Clean up old versions if needed
+        settings = VersionControlSettings.get_or_create_for_user(user)
+        if settings.max_versions_to_keep > 0:
+            old_versions = ChapterVersion.objects.filter(
+                chapter=chapter
+            )[settings.max_versions_to_keep:]
+            
+            for old_version in old_versions:
+                if not old_version.is_major_version and not old_version.is_published_version:
+                    old_version.delete()
+        
+        return version
+    except Exception as e:
+        print(f"Error creating chapter version: {e}")
+        return None
+
+@login_required
+def document_versions(request, document_id):
+    """View all versions of a document"""
+    document = get_object_or_404(Document, id=document_id, author=request.user)
+    versions = DocumentVersion.objects.filter(document=document).order_by('-version_number')
+    
+    # Return JSON for AJAX requests
+    if request.headers.get('Content-Type') == 'application/json' or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or 'json' in request.headers.get('Accept', ''):
+        versions_data = [{
+            'id': version.id,
+            'version_name': version.version_name,
+            'created_at': version.created_at.isoformat(),
+            'version_number': version.version_number
+        } for version in versions]
+        
+        return JsonResponse({
+            'success': True,
+            'versions': versions_data
+        })
+    
+    context = {
+        'document': document,
+        'versions': versions,
+        'current_version_number': versions.first().version_number if versions else 0
+    }
+    return render(request, 'writer/document_versions.html', context)
+
+@login_required
+def chapter_versions(request, chapter_id):
+    """View all versions of a chapter"""
+    chapter = get_object_or_404(Chapter, id=chapter_id)
+    
+    # Check permissions
+    if chapter.project.author != request.user and request.user not in chapter.project.collaborators.all():
+        if request.headers.get('Content-Type') == 'application/json' or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or 'json' in request.headers.get('Accept', ''):
+            return JsonResponse({'success': False, 'error': 'Permission denied'})
+        messages.error(request, "You don't have permission to view this chapter's versions.")
+        return redirect('writer:project_list')
+    
+    versions = ChapterVersion.objects.filter(chapter=chapter).order_by('-version_number')
+    
+    # Return JSON for AJAX requests
+    if request.headers.get('Content-Type') == 'application/json' or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' or 'json' in request.headers.get('Accept', ''):
+        versions_data = [{
+            'id': version.id,
+            'version_name': version.version_name,
+            'created_at': version.created_at.isoformat(),
+            'version_number': version.version_number
+        } for version in versions]
+        
+        return JsonResponse({
+            'success': True,
+            'versions': versions_data
+        })
+    
+    context = {
+        'chapter': chapter,
+        'versions': versions,
+        'current_version_number': versions.first().version_number if versions else 0
+    }
+    return render(request, 'writer/chapter_versions.html', context)
+
+@login_required
+def save_document_version(request, document_id):
+    """Manually save a version of a document"""
+    if request.method == 'POST':
+        document = get_object_or_404(Document, id=document_id, author=request.user)
+        save_reason = request.POST.get('save_reason', '')
+        is_major = request.POST.get('is_major') == 'on'
+        
+        version = create_document_version(document, request.user, save_reason, is_major)
+        
+        if version:
+            messages.success(request, f'Version {version.version_number} saved successfully.')
+        else:
+            messages.error(request, 'Failed to save version.')
+        
+        return redirect('writer:document_versions', document_id=document_id)
+    
+    return redirect('writer:document_detail', pk=document_id)
+
+@login_required  
+def save_chapter_version(request, chapter_id):
+    """Manually save a version of a chapter"""
+    if request.method == 'POST':
+        chapter = get_object_or_404(Chapter, id=chapter_id)
+        
+        # Check permissions
+        if chapter.project.author != request.user and request.user not in chapter.project.collaborators.all():
+            messages.error(request, "You don't have permission to save this chapter.")
+            return redirect('writer:project_list')
+        
+        save_reason = request.POST.get('save_reason', '')
+        is_major = request.POST.get('is_major') == 'on'
+        
+        version = create_chapter_version(chapter, request.user, save_reason, is_major)
+        
+        if version:
+            messages.success(request, f'Version {version.version_number} saved successfully.')
+        else:
+            messages.error(request, 'Failed to save version.')
+        
+        return redirect('writer:chapter_versions', chapter_id=chapter_id)
+    
+    return redirect('writer:chapter_detail', pk=chapter_id)
+
+@login_required
+def restore_document_version(request, document_id, version_id):
+    """Restore a document to a specific version"""
+    if request.method == 'POST':
+        document = get_object_or_404(Document, id=document_id, author=request.user)
+        version = get_object_or_404(DocumentVersion, id=version_id, document=document)
+        
+        # Create a backup of current version first
+        create_document_version(document, request.user, f"Backup before restoring to version {version.version_number}")
+        
+        # Restore the content
+        document.title = version.title
+        document.content = version.content
+        document.save()
+        
+        # Create a new version to mark the restoration
+        restore_version = create_document_version(
+            document, request.user, 
+            f"Restored to version {version.version_number}", 
+            is_major=True
+        )
+        
+        messages.success(request, f'Document restored to version {version.version_number}.')
+        return redirect('writer:document_detail', pk=document_id)
+    
+    return redirect('writer:document_versions', document_id=document_id)
+
+@login_required
+def restore_chapter_version(request, chapter_id, version_id):
+    """Restore a chapter to a specific version"""
+    if request.method == 'POST':
+        chapter = get_object_or_404(Chapter, id=chapter_id)
+        version = get_object_or_404(ChapterVersion, id=version_id, chapter=chapter)
+        
+        # Check permissions
+        if chapter.project.author != request.user and request.user not in chapter.project.collaborators.all():
+            messages.error(request, "You don't have permission to restore this chapter.")
+            return redirect('writer:project_list')
+        
+        # Create a backup of current version first
+        create_chapter_version(chapter, request.user, f"Backup before restoring to version {version.version_number}")
+        
+        # Restore the content
+        chapter.title = version.title
+        chapter.content = version.content
+        chapter.save()
+        
+        # Create a new version to mark the restoration
+        restore_version = create_chapter_version(
+            chapter, request.user, 
+            f"Restored to version {version.version_number}", 
+            is_major=True
+        )
+        
+        messages.success(request, f'Chapter restored to version {version.version_number}.')
+        return redirect('writer:chapter_detail', pk=chapter_id)
+    
+    return redirect('writer:chapter_versions', chapter_id=chapter_id)
+
+@login_required
+def compare_document_versions(request, document_id, version1_id, version2_id):
+    """Compare two versions of a document"""
+    document = get_object_or_404(Document, id=document_id, author=request.user)
+    version1 = get_object_or_404(DocumentVersion, id=version1_id, document=document)
+    version2 = get_object_or_404(DocumentVersion, id=version2_id, document=document)
+    
+    context = {
+        'document': document,
+        'version1': version1,
+        'version2': version2,
+    }
+    return render(request, 'writer/compare_document_versions.html', context)
+
+@login_required
+def compare_chapter_versions(request, chapter_id, version1_id, version2_id):
+    """Compare two versions of a chapter"""
+    chapter = get_object_or_404(Chapter, id=chapter_id)
+    
+    # Check permissions
+    if chapter.project.author != request.user and request.user not in chapter.project.collaborators.all():
+        messages.error(request, "You don't have permission to view this chapter.")
+        return redirect('writer:project_list')
+    
+    version1 = get_object_or_404(ChapterVersion, id=version1_id, chapter=chapter)
+    version2 = get_object_or_404(ChapterVersion, id=version2_id, chapter=chapter)
+    
+    context = {
+        'chapter': chapter,
+        'version1': version1,
+        'version2': version2,
+    }
+    return render(request, 'writer/compare_chapter_versions.html', context)
+
+@login_required
+def version_control_settings(request):
+    """Manage version control settings"""
+    settings = VersionControlSettings.get_or_create_for_user(request.user)
+    
+    if request.method == 'POST':
+        settings.auto_save_enabled = request.POST.get('auto_save_enabled') == 'on'
+        settings.auto_save_interval = int(request.POST.get('auto_save_interval', 10))
+        settings.max_versions_to_keep = int(request.POST.get('max_versions_to_keep', 50))
+        settings.notify_on_version_save = request.POST.get('notify_on_version_save') == 'on'
+        settings.require_save_reason = request.POST.get('require_save_reason') == 'on'
+        settings.save()
+        
+        messages.success(request, 'Version control settings updated successfully.')
+        return redirect('writer:version_control_settings')
+    
+    context = {'settings': settings}
+    return render(request, 'writer/version_control_settings.html', context)
+
+@csrf_exempt
+@login_required
+def auto_save_version_api(request):
+    """API endpoint for auto-saving versions"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            content_type = data.get('type')  # 'document' or 'chapter'
+            content_id = data.get('id')
+            save_reason = data.get('reason', 'Auto-save')
+            
+            if content_type == 'document':
+                document = get_object_or_404(Document, id=content_id, author=request.user)
+                version = create_document_version(document, request.user, save_reason)
+                
+                if version:
+                    return JsonResponse({
+                        'success': True,
+                        'version_number': version.version_number,
+                        'message': f'Auto-saved as version {version.version_number}'
+                    })
+            
+            elif content_type == 'chapter':
+                chapter = get_object_or_404(Chapter, id=content_id)
+                
+                # Check permissions
+                if chapter.project.author != request.user and request.user not in chapter.project.collaborators.all():
+                    return JsonResponse({'success': False, 'error': 'Permission denied'})
+                
+                version = create_chapter_version(chapter, request.user, save_reason)
+                
+                if version:
+                    return JsonResponse({
+                        'success': True,
+                        'version_number': version.version_number,
+                        'message': f'Auto-saved as version {version.version_number}'
+                    })
+            
+            return JsonResponse({'success': False, 'error': 'Failed to create version'})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def delete_document_version(request, document_id, version_id):
+    """Delete a specific document version"""
+    if request.method == 'POST':
+        document = get_object_or_404(Document, id=document_id, author=request.user)
+        version = get_object_or_404(DocumentVersion, id=version_id, document=document)
+        
+        # Don't allow deletion of published or major versions
+        if version.is_published_version or version.is_major_version:
+            messages.error(request, 'Cannot delete published or major versions.')
+        else:
+            version_number = version.version_number
+            version.delete()
+            messages.success(request, f'Version {version_number} deleted.')
+        
+        return redirect('writer:document_versions', document_id=document_id)
+    
+    return redirect('writer:document_versions', document_id=document_id)
+
+@login_required  
+def delete_chapter_version(request, chapter_id, version_id):
+    """Delete a specific chapter version"""
+    if request.method == 'POST':
+        chapter = get_object_or_404(Chapter, id=chapter_id)
+        version = get_object_or_404(ChapterVersion, id=version_id, chapter=chapter)
+        
+        # Check permissions
+        if chapter.project.author != request.user and request.user not in chapter.project.collaborators.all():
+            messages.error(request, "You don't have permission to delete this version.")
+            return redirect('writer:project_list')
+        
+        # Don't allow deletion of published or major versions
+        if version.is_published_version or version.is_major_version:
+            messages.error(request, 'Cannot delete published or major versions.')
+        else:
+            version_number = version.version_number
+            version.delete()
+            messages.success(request, f'Version {version_number} deleted.')
+        
+        return redirect('writer:chapter_versions', chapter_id=chapter_id)
+    
+    return redirect('writer:chapter_versions', chapter_id=chapter_id)
+
+
+# Chapter Auto-Detection Functions
+def detect_chapters_from_text(text):
+    """
+    Detect chapters from text using common patterns:
+    - Lines starting with "Chapter", "CHAPTER", "#" (Markdown)
+    - Numbered headings (e.g., "Chapter 1", "Chapter 2")
+    - HTML heading tags (<h1>, <h2>, etc.)
+    """
+    if not text:
+        return []
+    
+    chapters = []
+    lines = text.split('\n')
+    current_chapter = None
+    current_content = []
+    chapter_number = 0
+    
+    # Regex patterns for chapter detection
+    chapter_patterns = [
+        # Standard chapter formats
+        r'^\s*Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)\s*:?\s*(.*)$',
+        r'^\s*CHAPTER\s+(\d+|[IVXLCDM]+|ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN)\s*:?\s*(.*)$',
+        # Markdown headers
+        r'^\s*#{1,3}\s+(.+)$',
+        # Numbered sections
+        r'^\s*(\d+)\.\s+(.+)$',
+        # HTML headers
+        r'<h[1-3][^>]*>(.*?)</h[1-3]>',
+        # Alternative chapter formats
+        r'^\s*(Part|PART)\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five)\s*:?\s*(.*)$',
+        r'^\s*-+\s*Chapter\s+(.+?)\s*-+$',
+        r'^\s*=+\s*Chapter\s+(.+?)\s*=+$',
+    ]
+    
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line:
+            if current_content:
+                current_content.append('')
+            continue
+            
+        is_chapter_header = False
+        chapter_title = None
+        
+        # Check each pattern
+        for pattern in chapter_patterns:
+            match = re.match(pattern, line, re.IGNORECASE)
+            if match:
+                is_chapter_header = True
+                # Extract title from different match groups
+                if len(match.groups()) >= 2:
+                    chapter_title = match.group(2).strip() if match.group(2) else f"Chapter {match.group(1)}"
+                elif len(match.groups()) == 1:
+                    chapter_title = match.group(1).strip()
+                else:
+                    chapter_title = line.strip()
+                break
+        
+        # Special handling for simple chapter numbers or roman numerals
+        if not is_chapter_header:
+            # Check for standalone chapter indicators
+            if re.match(r'^\s*\d+\s*$', line) and len(line.strip()) <= 3:
+                is_chapter_header = True
+                chapter_title = f"Chapter {line.strip()}"
+            elif re.match(r'^\s*[IVXLCDM]+\s*$', line):
+                is_chapter_header = True
+                chapter_title = f"Chapter {line.strip()}"
+        
+        if is_chapter_header:
+            # Save previous chapter if it exists
+            if current_chapter is not None and current_content:
+                chapters.append({
+                    'number': current_chapter['number'],
+                    'title': current_chapter['title'],
+                    'content': '\n'.join(current_content).strip(),
+                    'start_line': current_chapter['start_line'],
+                    'end_line': i - 1
+                })
+            
+            # Start new chapter
+            chapter_number += 1
+            current_chapter = {
+                'number': chapter_number,
+                'title': chapter_title or f"Chapter {chapter_number}",
+                'start_line': i
+            }
+            current_content = []
+        else:
+            # Add content to current chapter
+            if current_content or line:  # Don't add leading empty lines
+                current_content.append(line)
+    
+    # Add the last chapter
+    if current_chapter is not None and current_content:
+        chapters.append({
+            'number': current_chapter['number'],
+            'title': current_chapter['title'],
+            'content': '\n'.join(current_content).strip(),
+            'start_line': current_chapter['start_line'],
+            'end_line': len(lines) - 1
+        })
+    
+    # If no chapters were detected, treat the entire text as one chapter
+    if not chapters and text.strip():
+        chapters.append({
+            'number': 1,
+            'title': 'Chapter 1',
+            'content': text.strip(),
+            'start_line': 0,
+            'end_line': len(lines) - 1
+        })
+    
+    return chapters
+
+
+@csrf_exempt
+@login_required
+def detect_chapters_api(request):
+    """API endpoint for chapter detection"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            text = data.get('text', '')
+            project_id = data.get('project_id')
+            
+            if not text:
+                return JsonResponse({'success': False, 'error': 'No text provided'})
+            
+            # Detect chapters
+            chapters = detect_chapters_from_text(text)
+            
+            return JsonResponse({
+                'success': True,
+                'chapters': chapters,
+                'total_chapters': len(chapters)
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+
+# ============================================================================
+# CLASSICS LIBRARY VIEWS - Public Domain Books Feature
+# ============================================================================
+
+@login_required
+def classics_library(request):
+    """Main classics library view - displays public domain books"""
+    from .models import ClassicBook, BorrowedBook
+    
+    # Get user's borrowed books for status tracking
+    user_borrowed_books = set(
+        BorrowedBook.objects.filter(user=request.user)
+        .values_list('book_id', flat=True)
+    )
+    
+    # Get featured and recent books for initial display
+    featured_books = ClassicBook.objects.filter(is_featured=True, is_active=True)[:12]
+    recent_books = ClassicBook.objects.filter(is_active=True).order_by('-created_at')[:12]
+    
+    # Get statistics
+    total_books = ClassicBook.objects.filter(is_active=True).count()
+    total_authors = ClassicBook.objects.filter(is_active=True).values('author').distinct().count()
+    user_borrowed_count = BorrowedBook.objects.filter(user=request.user).count()
+    
+    context = {
+        'featured_books': featured_books,
+        'recent_books': recent_books,
+        'total_books': total_books,
+        'total_authors': total_authors,
+        'user_borrowed_count': user_borrowed_count,
+        'user_borrowed_books': user_borrowed_books,
+    }
+    
+    return render(request, 'writer/classics_library.html', context)
+
+
+@csrf_exempt
+def classics_search_api(request):
+    """API endpoint for searching classic books"""
+    if request.method == 'GET':
+        from .models import ClassicBook
+        from django.db.models import Q
+        
+        # Get search parameters
+        query = request.GET.get('query', '').strip()
+        genre = request.GET.get('genre', '')
+        language = request.GET.get('language', '')
+        era = request.GET.get('era', '')
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 24))
+        
+        # Start with active books
+        books = ClassicBook.objects.filter(is_active=True)
+        
+        # Apply search query
+        if query:
+            books = books.filter(
+                Q(title__icontains=query) |
+                Q(author__icontains=query) |
+                Q(description__icontains=query) |
+                Q(subjects__icontains=query)
+            )
+        
+        # Apply filters
+        if genre:
+            books = books.filter(genre=genre)
+        if language:
+            books = books.filter(language=language)
+        if era:
+            books = books.filter(era=era)
+        
+        # Order by rating and download count
+        books = books.order_by('-is_featured', '-rating', '-download_count')
+        
+        # Get user's borrowed books (only if authenticated)
+        from .models import BorrowedBook
+        user_borrowed_books = set()
+        if request.user.is_authenticated:
+            user_borrowed_books = set(
+                BorrowedBook.objects.filter(user=request.user)
+                .values_list('book_id', flat=True)
+            )
+        
+        # Pagination
+        total_count = books.count()
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        books_page = books[start_index:end_index]
+        
+        # Serialize books
+        books_data = []
+        for book in books_page:
+            books_data.append({
+                'id': book.id,
+                'title': book.title,
+                'author': book.author,
+                'genre': book.genre,
+                'language': book.language,
+                'era': book.era,
+                'publication_year': book.publication_year,
+                'description': book.description,
+                'page_count': book.page_count,
+                'rating': float(book.rating) if book.rating else 0,
+                'download_count': book.download_count,
+                'cover_image_url': book.cover_image_url,
+                'available_formats': book.available_formats,
+                'is_borrowed': book.id in user_borrowed_books,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'books': books_data,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total_count': total_count,
+                'total_pages': (total_count + per_page - 1) // per_page,
+            }
+        })
+    
+    return JsonResponse({'error': 'GET method required'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def borrow_classic_book(request, book_id):
+    """API endpoint to borrow a classic book"""
+    if request.method == 'POST':
+        from .models import ClassicBook, BorrowedBook
+        
+        try:
+            book = get_object_or_404(ClassicBook, id=book_id, is_active=True)
+            
+            # Check if already borrowed
+            borrowed_book, created = BorrowedBook.objects.get_or_create(
+                user=request.user,
+                book=book,
+                defaults={
+                    'reading_progress': 0,
+                    'current_page': 1,
+                    'reading_status': 'not_started'
+                }
+            )
+            
+            if created:
+                # Increment download count
+                book.download_count += 1
+                book.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'"{book.title}" has been added to your library!',
+                    'book_id': book.id,
+                    'borrowed_at': borrowed_book.borrowed_at.isoformat()
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'"{book.title}" is already in your library.',
+                    'book_id': book.id
+                })
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def return_classic_book(request, book_id):
+    """API endpoint to return a borrowed classic book"""
+    if request.method == 'POST':
+        from .models import ClassicBook, BorrowedBook
+        
+        try:
+            book = get_object_or_404(ClassicBook, id=book_id)
+            borrowed_book = get_object_or_404(BorrowedBook, user=request.user, book=book)
+            
+            book_title = book.title
+            borrowed_book.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'"{book_title}" has been returned.',
+                'book_id': book.id
+            })
+            
+        except BorrowedBook.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Book is not in your library.'
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def read_classic_book(request, book_id):
+    """API endpoint to start reading a classic book"""
+    if request.method == 'POST':
+        from .models import ClassicBook, BorrowedBook
+        import json
+        
+        try:
+            book = get_object_or_404(ClassicBook, id=book_id, is_active=True)
+            
+            # Check if book is borrowed
+            try:
+                borrowed_book = BorrowedBook.objects.get(user=request.user, book=book)
+            except BorrowedBook.DoesNotExist:
+                # Auto-borrow if not already borrowed
+                borrowed_book = BorrowedBook.objects.create(
+                    user=request.user,
+                    book=book,
+                    reading_progress=0,
+                    current_page=1,
+                    reading_status='reading'
+                )
+                book.download_count += 1
+                book.save()
+            
+            # Update reading status
+            if borrowed_book.reading_status == 'not_started':
+                borrowed_book.reading_status = 'reading'
+                borrowed_book.save()
+            
+            # Get reading data
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                if 'progress' in data:
+                    borrowed_book.reading_progress = min(100, max(0, int(data['progress'])))
+                if 'page' in data:
+                    borrowed_book.current_page = max(1, int(data['page']))
+                borrowed_book.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Opening "{book.title}" for reading...',
+                'book': {
+                    'id': book.id,
+                    'title': book.title,
+                    'author': book.author,
+                    'available_formats': book.available_formats,
+                    'primary_download_url': book.primary_download_url,
+                    'epub_url': book.epub_url,
+                    'pdf_url': book.pdf_url,
+                    'txt_url': book.txt_url,
+                    'html_url': book.html_url,
+                },
+                'reading_progress': borrowed_book.reading_progress,
+                'current_page': borrowed_book.current_page,
+                'reading_status': borrowed_book.reading_status
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def create_chapters_from_detection(request):
+    """Create actual chapter objects from detected chapters"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            project_id = data.get('project_id')
+            chapters_data = data.get('chapters', [])
+            
+            if not project_id:
+                return JsonResponse({'success': False, 'error': 'No project ID provided'})
+            
+            if not chapters_data:
+                return JsonResponse({'success': False, 'error': 'No chapters data provided'})
+            
+            # Get the project
+            project = get_object_or_404(Project, id=project_id, author=request.user)
+            
+            created_chapters = []
+            
+            with transaction.atomic():
+                # Delete existing chapters if requested
+                if data.get('replace_existing', False):
+                    Chapter.objects.filter(project=project).delete()
+                
+                # Create new chapters
+                for chapter_data in chapters_data:
+                    chapter = Chapter.objects.create(
+                        title=chapter_data.get('title', f"Chapter {chapter_data.get('number', 1)}"),
+                        content=chapter_data.get('content', ''),
+                        project=project,
+                        order=chapter_data.get('number', 1),
+                        word_count=len(chapter_data.get('content', '').split())
+                    )
+                    created_chapters.append({
+                        'id': chapter.id,
+                        'title': chapter.title,
+                        'order': chapter.order,
+                        'word_count': chapter.word_count
+                    })
+            
+            return JsonResponse({
+                'success': True,
+                'chapters': created_chapters,
+                'total_created': len(created_chapters)
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'})
+
+
+# ============================================================================
+# CLASSICS LIBRARY VIEWS - Public Domain Books Feature
+# ============================================================================
+
+@login_required
+def classics_library(request):
+    """Main classics library view - displays public domain books"""
+    from .models import ClassicBook, BorrowedBook
+    
+    # Get user's borrowed books for status tracking
+    user_borrowed_books = set(
+        BorrowedBook.objects.filter(user=request.user)
+        .values_list('book_id', flat=True)
+    )
+    
+    # Get featured and recent books for initial display
+    featured_books = ClassicBook.objects.filter(is_featured=True, is_active=True)[:12]
+    recent_books = ClassicBook.objects.filter(is_active=True).order_by('-created_at')[:12]
+    
+    # Get statistics
+    total_books = ClassicBook.objects.filter(is_active=True).count()
+    total_authors = ClassicBook.objects.filter(is_active=True).values('author').distinct().count()
+    user_borrowed_count = BorrowedBook.objects.filter(user=request.user).count()
+    
+    context = {
+        'featured_books': featured_books,
+        'recent_books': recent_books,
+        'total_books': total_books,
+        'total_authors': total_authors,
+        'user_borrowed_count': user_borrowed_count,
+        'user_borrowed_books': user_borrowed_books,
+    }
+    
+    return render(request, 'writer/classics_library.html', context)
+
+
+@csrf_exempt
+def classics_search_api(request):
+    """API endpoint for searching classic books"""
+    if request.method == 'GET':
+        from .models import ClassicBook
+        from django.db.models import Q
+        
+        # Get search parameters
+        query = request.GET.get('query', '').strip()
+        genre = request.GET.get('genre', '')
+        language = request.GET.get('language', '')
+        era = request.GET.get('era', '')
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 24))
+        
+        # Start with active books
+        books = ClassicBook.objects.filter(is_active=True)
+        
+        # Apply search query
+        if query:
+            books = books.filter(
+                Q(title__icontains=query) |
+                Q(author__icontains=query) |
+                Q(description__icontains=query) |
+                Q(subjects__icontains=query)
+            )
+        
+        # Apply filters
+        if genre:
+            books = books.filter(genre=genre)
+        if language:
+            books = books.filter(language=language)
+        if era:
+            books = books.filter(era=era)
+        
+        # Order by rating and download count
+        books = books.order_by('-is_featured', '-rating', '-download_count')
+        
+        # Get user's borrowed books (only if authenticated)
+        from .models import BorrowedBook
+        user_borrowed_books = set()
+        if request.user.is_authenticated:
+            user_borrowed_books = set(
+                BorrowedBook.objects.filter(user=request.user)
+                .values_list('book_id', flat=True)
+            )
+        
+        # Pagination
+        total_count = books.count()
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        books_page = books[start_index:end_index]
+        
+        # Serialize books
+        books_data = []
+        for book in books_page:
+            books_data.append({
+                'id': book.id,
+                'title': book.title,
+                'author': book.author,
+                'genre': book.genre,
+                'language': book.language,
+                'era': book.era,
+                'publication_year': book.publication_year,
+                'description': book.description,
+                'page_count': book.page_count,
+                'rating': float(book.rating) if book.rating else 0,
+                'download_count': book.download_count,
+                'cover_image_url': book.cover_image_url,
+                'available_formats': book.available_formats,
+                'is_borrowed': book.id in user_borrowed_books,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'books': books_data,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total_count': total_count,
+                'total_pages': (total_count + per_page - 1) // per_page,
+            }
+        })
+    
+    return JsonResponse({'error': 'GET method required'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def borrow_classic_book(request, book_id):
+    """API endpoint to borrow a classic book"""
+    if request.method == 'POST':
+        from .models import ClassicBook, BorrowedBook
+        
+        try:
+            book = get_object_or_404(ClassicBook, id=book_id, is_active=True)
+            
+            # Check if already borrowed
+            borrowed_book, created = BorrowedBook.objects.get_or_create(
+                user=request.user,
+                book=book,
+                defaults={
+                    'reading_progress': 0,
+                    'current_page': 1,
+                    'reading_status': 'not_started'
+                }
+            )
+            
+            if created:
+                # Increment download count
+                book.download_count += 1
+                book.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'"{book.title}" has been added to your library!',
+                    'book_id': book.id,
+                    'borrowed_at': borrowed_book.borrowed_at.isoformat()
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'"{book.title}" is already in your library.',
+                    'book_id': book.id
+                })
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def return_classic_book(request, book_id):
+    """API endpoint to return a borrowed classic book"""
+    if request.method == 'POST':
+        from .models import ClassicBook, BorrowedBook
+        
+        try:
+            book = get_object_or_404(ClassicBook, id=book_id)
+            borrowed_book = get_object_or_404(BorrowedBook, user=request.user, book=book)
+            
+            book_title = book.title
+            borrowed_book.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'"{book_title}" has been returned.',
+                'book_id': book.id
+            })
+            
+        except BorrowedBook.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Book is not in your library.'
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+@csrf_exempt
+@login_required
+def read_classic_book(request, book_id):
+    """API endpoint to start reading a classic book"""
+    if request.method == 'POST':
+        from .models import ClassicBook, BorrowedBook
+        import json
+        
+        try:
+            book = get_object_or_404(ClassicBook, id=book_id, is_active=True)
+            
+            # Check if book is borrowed
+            try:
+                borrowed_book = BorrowedBook.objects.get(user=request.user, book=book)
+            except BorrowedBook.DoesNotExist:
+                # Auto-borrow if not already borrowed
+                borrowed_book = BorrowedBook.objects.create(
+                    user=request.user,
+                    book=book,
+                    reading_progress=0,
+                    current_page=1,
+                    reading_status='reading'
+                )
+                book.download_count += 1
+                book.save()
+            
+            # Update reading status
+            if borrowed_book.reading_status == 'not_started':
+                borrowed_book.reading_status = 'reading'
+                borrowed_book.save()
+            
+            # Get reading data
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                if 'progress' in data:
+                    borrowed_book.reading_progress = min(100, max(0, int(data['progress'])))
+                if 'page' in data:
+                    borrowed_book.current_page = max(1, int(data['page']))
+                borrowed_book.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Opening "{book.title}" for reading...',
+                'book': {
+                    'id': book.id,
+                    'title': book.title,
+                    'author': book.author,
+                    'available_formats': book.available_formats,
+                    'primary_download_url': book.primary_download_url,
+                    'epub_url': book.epub_url,
+                    'pdf_url': book.pdf_url,
+                    'txt_url': book.txt_url,
+                    'html_url': book.html_url,
+                },
+                'reading_progress': borrowed_book.reading_progress,
+                'current_page': borrowed_book.current_page,
+                'reading_status': borrowed_book.reading_status
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'error': 'POST method required'}, status=405)
+
+
+
+@csrf_exempt
+def fetch_book_content(request):
+    """API endpoint to fetch book content from external URLs"""
+    if request.method == "POST":
+        import json
+        import requests
+        
+        try:
+            data = json.loads(request.body)
+            url = data.get("url")
+            title = data.get("title", "Unknown")
+            
+            if not url:
+                return JsonResponse({"success": False, "error": "No URL provided"})
+            
+            # Fetch content from the URL
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            
+            # Get the text content
+            content = response.text
+            
+            # For HTML content, try to extract just the text
+            if "html" in url.lower() or "htm" in url.lower():
+                # Simple HTML tag removal (in production, use BeautifulSoup)
+                import re
+                # Remove script and style elements
+                content = re.sub(r"<script[^>]*>.*?</script>", "", content, flags=re.DOTALL)
+                content = re.sub(r"<style[^>]*>.*?</style>", "", content, flags=re.DOTALL)
+                # Remove HTML tags
+                content = re.sub(r"<[^>]+>", "", content)
+                # Clean up whitespace
+                content = re.sub(r"\s+", " ", content)
+            
+            # Limit content size to prevent huge responses
+            max_length = 500000  # 500KB of text
+            if len(content) > max_length:
+                content = content[:max_length] + "\n\n... [Content truncated due to size]"
+            
+            return JsonResponse({
+                "success": True,
+                "content": content,
+                "title": title
+            })
+            
+        except requests.RequestException as e:
+            return JsonResponse({
+                "success": False,
+                "error": f"Failed to fetch content: {str(e)}"
+            })
+        except Exception as e:
+            return JsonResponse({
+                "success": False,
+                "error": str(e)
+            })
+    
+    return JsonResponse({"error": "POST method required"}, status=405)

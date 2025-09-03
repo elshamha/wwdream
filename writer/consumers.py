@@ -26,33 +26,215 @@ class ThemeConsumer(AsyncWebsocketConsumer):
             'theme': event['theme']
         }))
 class IdeaBoardConsumer(AsyncWebsocketConsumer):
+    active_users = {}  # Track active users in the room
+    board_state = {'nodes': [], 'connections': []}  # Shared board state
+    
     async def connect(self):
         self.room_group_name = 'ideaboard_room'
+        self.user = self.scope['user'].username if self.scope['user'].is_authenticated else f'Guest_{self.channel_name[-6:]}'
+        self.user_color = self.generate_user_color()
+        
+        # Add to active users
+        self.active_users[self.channel_name] = {
+            'username': self.user,
+            'color': self.user_color,
+            'cursor': {'x': 0, 'y': 0}
+        }
+        
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        # Expect: {"idea": "...", "user": "...", "action": "add" or "vote"}
+        
+        # Send initial board state to new user
+        await self.send(text_data=json.dumps({
+            'type': 'init',
+            'board_state': self.board_state,
+            'active_users': list(self.active_users.values()),
+            'your_info': {'username': self.user, 'color': self.user_color}
+        }))
+        
+        # Notify others of new user
         await self.channel_layer.group_send(
             self.room_group_name,
             {
-                'type': 'ideaboard_update',
-                'idea': data.get('idea', ''),
-                'user': data.get('user', 'Anonymous'),
-                'action': data.get('action', 'add')
+                'type': 'user_joined',
+                'username': self.user,
+                'color': self.user_color
             }
         )
 
-    async def ideaboard_update(self, event):
+    async def disconnect(self, close_code):
+        # Remove from active users
+        if self.channel_name in self.active_users:
+            del self.active_users[self.channel_name]
+        
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        
+        # Notify others that user left
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'user_left',
+                'username': self.user
+            }
+        )
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        action = data.get('action')
+        
+        if action == 'add_node':
+            # Add new node to board
+            node = data.get('node')
+            node['created_by'] = self.user
+            self.board_state['nodes'].append(node)
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'node_added',
+                    'node': node,
+                    'user': self.user
+                }
+            )
+            
+        elif action == 'update_node':
+            # Update existing node
+            node_id = data.get('node_id')
+            updates = data.get('updates')
+            
+            for node in self.board_state['nodes']:
+                if node.get('id') == node_id:
+                    node.update(updates)
+                    break
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'node_updated',
+                    'node_id': node_id,
+                    'updates': updates,
+                    'user': self.user
+                }
+            )
+            
+        elif action == 'delete_node':
+            # Delete node from board
+            node_id = data.get('node_id')
+            self.board_state['nodes'] = [n for n in self.board_state['nodes'] if n.get('id') != node_id]
+            self.board_state['connections'] = [c for c in self.board_state['connections'] 
+                                              if c.get('from') != node_id and c.get('to') != node_id]
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'node_deleted',
+                    'node_id': node_id,
+                    'user': self.user
+                }
+            )
+            
+        elif action == 'add_connection':
+            # Add connection between nodes
+            connection = data.get('connection')
+            self.board_state['connections'].append(connection)
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'connection_added',
+                    'connection': connection,
+                    'user': self.user
+                }
+            )
+            
+        elif action == 'cursor_move':
+            # Update user cursor position
+            cursor = data.get('cursor')
+            if self.channel_name in self.active_users:
+                self.active_users[self.channel_name]['cursor'] = cursor
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'cursor_moved',
+                    'username': self.user,
+                    'cursor': cursor
+                }
+            )
+            
+        elif action == 'clear_board':
+            # Clear the entire board
+            self.board_state = {'nodes': [], 'connections': []}
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'board_cleared',
+                    'user': self.user
+                }
+            )
+
+    async def node_added(self, event):
         await self.send(text_data=json.dumps({
-            'idea': event['idea'],
-            'user': event['user'],
-            'action': event['action']
+            'type': 'node_added',
+            'node': event['node'],
+            'user': event['user']
         }))
+    
+    async def node_updated(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'node_updated',
+            'node_id': event['node_id'],
+            'updates': event['updates'],
+            'user': event['user']
+        }))
+    
+    async def node_deleted(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'node_deleted',
+            'node_id': event['node_id'],
+            'user': event['user']
+        }))
+    
+    async def connection_added(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'connection_added',
+            'connection': event['connection'],
+            'user': event['user']
+        }))
+    
+    async def cursor_moved(self, event):
+        if event['username'] != self.user:  # Don't send own cursor back
+            await self.send(text_data=json.dumps({
+                'type': 'cursor_moved',
+                'username': event['username'],
+                'cursor': event['cursor']
+            }))
+    
+    async def user_joined(self, event):
+        if event['username'] != self.user:  # Don't notify self
+            await self.send(text_data=json.dumps({
+                'type': 'user_joined',
+                'username': event['username'],
+                'color': event['color']
+            }))
+    
+    async def user_left(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'user_left',
+            'username': event['username']
+        }))
+    
+    async def board_cleared(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'board_cleared',
+            'user': event['user']
+        }))
+    
+    def generate_user_color(self):
+        import random
+        colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#FFD93D', '#6BCB77', '#4D96FF']
+        return random.choice(colors)
 class TimerConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = 'timer_room'

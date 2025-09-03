@@ -1,0 +1,1336 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Writer's Web Dream{% endblock %}
+
+{% block content %}
+
+<div class="container mb-4">
+    <div class="quick-actions">
+        <h2 style="color: #ffffff; text-align: center; margin-bottom: 1rem; font-size: 1.3rem; font-weight: 500;">✨ Writing Platform</h2>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
+            <a href="{% url 'writer:ultimate_editor' %}" class="action-button primary">
+                <i class="fas fa-feather-alt"></i> Ultimate Editor
+            </a>
+            <a href="{% url 'writer:ultimate_dashboard' %}" class="action-button">
+                <i class="fas fa-tachometer-alt"></i> Ultimate Dashboard
+            </a>
+            <a href="{% url 'writer:ultimate_library' %}" class="action-button">
+                <i class="fas fa-books"></i> Ultimate Library
+            </a>
+            <a href="{% url 'writer:my_library' %}" class="action-button">
+                <i class="fas fa-bookmark"></i> My Library
+            </a>
+            <a href="{% url 'writer:ultimate_workshop' %}" class="action-button">
+                <i class="fas fa-magic"></i> Workshop
+            </a>
+            <a href="{% url 'writer:creative_notebook' %}" class="action-button">
+                <i class="fas fa-network-wired"></i> Creative Notebook
+            </a>
+        </div>
+        <div style="text-align: center;">
+            <p style="color: rgba(255,255,255,0.7); font-size: 0.75rem; margin: 0;">
+                🖋️ Craft • 📚 Organize • ✨ Create
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Dashboard Modern Styling */
+body {
+    min-height: 100vh;
+}
+
+body, body:not(.dark-mode) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+body.dark-mode {
+    background: linear-gradient(135deg, #232946 0%, #121629 100%);
+}
+
+/* Hero Welcome Section */
+.dashboard-hero {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+    padding: 60px 0;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 3rem;
+    border-radius: 25px;
+}
+
+.dashboard-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    text-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.6),
+        0 2px 0 rgba(0, 0, 0, 0.2),
+        0 3px 0 rgba(0, 0, 0, 0.15),
+        0 4px 0 rgba(0, 0, 0, 0.1),
+        0 5px 8px rgba(0, 0, 0, 0.3),
+        0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+}
+
+/* Glass Morphism Cards */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 15px 45px rgba(0, 0, 0, 0.15),
+        0 8px 25px rgba(0, 0, 0, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Writing Stats Styling */
+.stat-item {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.stat-icon {
+    font-size: 1.1rem;
+    width: 20px;
+}
+
+.stat-value {
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-subtitle {
+    line-height: 1.2;
+}
+
+.inspiration-quote blockquote {
+    border: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Progress Bar Animation */
+.progress-fill-custom {
+    animation: progressGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes progressGlow {
+    0% { box-shadow: 0 0 5px rgba(56, 239, 125, 0.3); }
+    100% { box-shadow: 0 0 15px rgba(56, 239, 125, 0.6); }
+}
+
+/* Stats Cards */
+.stat-card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+    z-index: 1;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    position: relative;
+    z-index: 2;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    position: relative;
+    z-index: 2;
+}
+
+/* Quick Actions */
+.quick-actions {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    text-align: center;
+}
+
+.action-button {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 10px 18px;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-weight: 500;
+    margin: 0.3rem;
+    display: inline-block;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    font-size: 0.85rem;
+}
+
+.action-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.3s ease;
+}
+
+.action-button:hover::before {
+    left: 100%;
+}
+
+.action-button:hover {
+    transform: translateY(-2px) scale(1.05);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    color: #ffffff
+}
+
+.action-button.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.action-button.primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%);
+}
+
+/* Project & Document Cards */
+.content-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.content-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.card-header-modern {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px 20px 0 0;
+    padding: 1.5rem;
+}
+
+.card-header-modern h6 {
+    color: #ffffff;
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.project-item, .document-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.project-item:hover, .document-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(5px);
+}
+
+.project-item:last-child, .document-item:last-child {
+    border-bottom: none;
+}
+
+.item-title {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.item-title:hover {
+    color: #4fd1c7;
+}
+
+.item-meta {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 8px 12px;
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+    color: #ffffff;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.empty-state i {
+    margin-bottom: 1rem;
+    color: #ffd93d;
+    filter: drop-shadow(0 4px 8px rgba(255, 217, 61, 0.3));
+}
+
+.empty-state h6 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+/* Color variations for stats */
+.stat-primary { color: #4fd1c7 !important; }
+.stat-success { color: #38ef7d !important; }
+.stat-warning { color: #ffd93d !important; }
+.stat-info { color: #74b9ff !important; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .dashboard-hero {
+        padding: 40px 0;
+        margin-bottom: 2rem;
+    }
+    
+    .action-button {
+        display: block;
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Override all text colors for contrast */
+* {
+    color: #ffffff !important;
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Smooth animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.hero-content {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Book shelf entrance animation */
+@keyframes bookSlideIn {
+    0% {
+        transform: translateX(-100px) rotateY(-45deg);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) rotateY(0deg);
+        opacity: 1;
+    }
+}
+
+.book {
+    animation: bookSlideIn 0.6s ease-out;
+}
+
+.book:nth-child(1) { animation-delay: 0.1s; }
+.book:nth-child(2) { animation-delay: 0.2s; }
+.book:nth-child(3) { animation-delay: 0.3s; }
+.book:nth-child(4) { animation-delay: 0.4s; }
+.book:nth-child(5) { animation-delay: 0.5s; }
+.book:nth-child(6) { animation-delay: 0.6s; }
+.book:nth-child(7) { animation-delay: 0.7s; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Admin Tools Styling */
+.admin-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.admin-tool-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    color: #ffffff !important;
+    text-align: center;
+}
+
+.admin-tool-button i {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #4fd1c7 !important;
+    transition: all 0.3s ease;
+}
+
+.admin-tool-button span {
+    font-size: 12px;
+    font-weight: 500;
+    color: #ffffff !important;
+}
+
+.admin-tool-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(79, 209, 199, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(79, 209, 199, 0.2);
+    text-decoration: none;
+}
+
+/* Bookshelf Styling - Modern Ethereal Design */
+.bookshelf-container {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 25px;
+    margin: 20px 0;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.bookshelf {
+    padding: 20px;
+    background: linear-gradient(135deg, 
+        rgba(102, 126, 234, 0.1) 0%, 
+        rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 15px;
+    min-height: 220px;
+    position: relative;
+    width: 100%;
+    max-width: none;
+    margin-bottom: 15px;
+}
+
+.bookshelf:last-child {
+    margin-bottom: 0;
+}
+
+.bookshelf-books {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.bookshelf::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0.2) 100%);
+    border-radius: 0 0 15px 15px;
+}
+
+.book, .book-slot {
+    min-width: 110px;
+    max-width: 140px;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: bottom center;
+}
+
+.book {
+    cursor: pointer;
+    position: relative;
+}
+
+.book-slot.empty {
+    min-height: 180px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px 12px 6px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+}
+
+.book-slot.empty::before {
+    content: '+';
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: bold;
+}
+
+.book:hover {
+    transform: translateY(-8px) scale(1.05);
+    filter: brightness(1.1);
+    z-index: 10;
+}
+
+.book:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1000;
+    font-weight: 400;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.book-spine {
+    background: linear-gradient(135deg, 
+        var(--book-color-1, #667eea) 0%, 
+        var(--book-color-2, #764ba2) 50%,
+        var(--book-color-1, #667eea) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px 16px 8px 8px;
+    padding: 22px 16px;
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.2),
+        inset 0 1px 3px rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    }
+    background: linear-gradient(120deg, 
+        var(--book-color-1, #667eea) 0%, 
+        var(--book-color-2, #764ba2) 60%,
+        #fff 100%);
+    border: 1.5px solid #b8b8b8;
+    border-radius: 16px 16px 8px 8px;
+    padding: 22px 16px;
+    box-shadow: 0 10px 32px rgba(0,0,0,0.22),
+        0 1.5px 6px rgba(0,0,0,0.08),
+        inset 0 0 18px 2px rgba(255,255,255,0.12),
+        inset 0 0 8px 0 rgba(0,0,0,0.10);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+    /* Add spine shadow */
+    box-shadow: 0 10px 32px rgba(0,0,0,0.22),
+        0 1.5px 6px rgba(0,0,0,0.08),
+        inset 0 0 18px 2px rgba(255,255,255,0.12),
+        inset 0 0 8px 0 rgba(0,0,0,0.10),
+        8px 0 18px -8px rgba(0,0,0,0.18);
+    /* Subtle highlight */
+    position: relative;
+}
+
+.book-spine::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 4px;
+    right: 4px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 1px;
+    }
+
+.book-spine::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 2px;
+    right: 2px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+
+.book-title {
+    /* writing-mode: vertical-rl; */
+    /* text-orientation: mixed; */
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    line-height: 1.3;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-word;
+    font-family: 'Lora', serif;
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.05) 100%);
+    border-radius: 2px;
+    opacity: 0.5;
+}
+/* Modern Color Variations */
+.book:nth-child(odd) {
+    --book-color-1: #667eea;
+    --book-color-2: #764ba2;
+}
+
+.book:nth-child(even) {
+    --book-color-1: #4facfe;
+    --book-color-2: #00f2fe;
+}
+
+.book:nth-child(3n) {
+    --book-color-1: #fa709a;
+    --book-color-2: #fee140;
+}
+
+.book:nth-child(4n) {
+    --book-color-1: #134e5e;
+    --book-color-2: #71b280;
+}
+
+.book:nth-child(5n) {
+    --book-color-1: #8e2de2;
+    --book-color-2: #4a00e0;
+}
+
+.book:nth-child(6n) {
+    --book-color-1: #00c9ff;
+    --book-color-2: #92fe9d;
+}
+
+/* Book Heights for Variety */
+.book:nth-child(2n) .book-spine {
+    height: 220px;
+}
+
+.book:nth-child(3n) .book-spine {
+    height: 240px;
+}
+
+.book:nth-child(4n) .book-spine {
+    height: 200px;
+}
+
+.book:nth-child(5n) .book-spine {
+    height: 260px;
+}
+
+.book .book-spine {
+    height: 230px;
+}
+
+/* Pop-out Book Effect */
+.book-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(25px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 25px;
+    width: 320px;
+    height: 450px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    opacity: 0;
+}
+
+.book-popup.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.book-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.book-popup-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.book-cover {
+    width: 100%;
+    height: 280px;
+    background: linear-gradient(135deg, 
+        var(--book-color-1, #667eea) 0%, 
+        var(--book-color-2, #764ba2) 100%);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+}
+
+.book-cover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+        linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+}
+
+.book-cover-title {
+    position: relative;
+    z-index: 2;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 500;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    padding: 2px 1px;
+    font-family: 'Lora', serif;
+    line-height: 1.0;
+    letter-spacing: 0.3px;
+    hyphens: auto;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.book-popup-content {
+    color: #333 !important;
+    line-height: 1.5;
+}
+
+.book-popup h6 {
+    color: #333 !important;
+    font-size: 16px;
+    margin-bottom: 12px;
+    font-weight: bold;
+}
+
+.book-popup-summary {
+    color: #555 !important;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.book-popup-stats {
+    padding: 12px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 10px;
+    font-size: 11px;
+    color: #666 !important;
+}
+
+.book-popup-actions {
+    margin-top: 15px;
+    text-align: center;
+}
+
+/* Close button */
+.book-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.book-popup-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.admin-tool-button:hover i {
+    transform: scale(1.1);
+    text-shadow: 0 0 10px rgba(79, 209, 199, 0.5);
+}
+
+.admin-tool-button:hover span {
+    color: #ffffff !important;
+}
+</style>
+
+<div class="container-lg">
+    <!-- Hero Welcome Section -->
+    <div class="dashboard-hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+            <p class="hero-subtitle">Ready to create something amazing today?</p>
+            <div class="mt-4">
+                <a href="{% url 'writer:project_list' %}" class="action-button primary">
+                    <i class="fas fa-folder-open me-2"></i>My Writing Projects
+                </a>
+                <a href="{% url 'writer:personal_library' %}" class="action-button secondary ms-2">
+                    <i class="fas fa-book-open me-2"></i>My Library
+                </a>
+                <!-- Import Document link removed -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Sections -->
+    <div class="row">
+        <!-- Main Content - Left Side -->
+        <div class="col-lg-8 mb-4">
+            <!-- Personal Library Section -->
+            <div class="glass-card content-card mb-4">
+                <div class="card-header-modern">
+                    <h6 style="color: #ffffff !important;">
+                        <i class="fas fa-feather-alt me-2 ethereal-icon-glow"></i>My Book Collection
+                        <span style="font-size: 0.8rem; opacity: 0.8; margin-left: 10px;">📚 {{ user_projects|length }} book{{ user_projects|length|pluralize }} written</span>
+                    </h6>
+                    {# View All link removed #}
+                </div>
+                <div class="card-body">
+                    <!-- Multi-Shelf Bookshelf -->
+                    {% if user_projects %}
+                    <div class="bookshelf-container">
+                        {% for shelf_projects in shelves %}
+                        <div class="bookshelf mb-4">
+                            <div class="bookshelf-books">
+                                {% for project in shelf_projects %}
+                                <a class="book" href="{% url 'writer:ultimate_editor' %}?project={{ project.pk }}" style="text-decoration: none;" title="Continue writing: {{ project.title }}">
+                                    <div class="book-spine">
+                                        <div class="book-cover-title">
+                                                {% if project.cover_text %}
+                                                    {{ project.cover_text|truncatewords:2 }}
+                                                {% else %}
+                                                    {{ project.title|truncatechars:15 }}
+                                                {% endif %}
+                                        </div>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                                <!-- Fill remaining slots with empty books if less than 7 -->
+                                {% for i in "1234567"|make_list %}
+                                    {% if forloop.counter0 >= shelf_projects|length %}
+                                    <div class="book empty-book">
+                                        <div class="book-spine empty-spine"></div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <!-- Bookshelf base -->
+                            <div class="bookshelf-base"></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if not user_projects %}
+                    <div class="empty-library-state">
+                        <i class="fas fa-quill-pen ethereal-icon-glow mb-3" style="font-size: 3rem; color: #ffd93d; opacity: 0.8;"></i>
+                        <h6 style="color: #ffffff; opacity: 0.9;">Your first book awaits...</h6>
+                        <p style="color: #ffffff; opacity: 0.7; font-size: 0.9rem; margin-bottom: 1.5rem;">Every great author started with a single page. Begin crafting your literary masterpiece today.</p>
+                        <a href="{% url 'writer:ultimate_editor' %}" class="action-button primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; font-size: 0.9rem;">
+                            <i class="fas fa-feather-alt"></i>
+                            Start Writing Your First Book
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Right Side -->
+        <div class="col-lg-4">
+            <!-- Writing Progress & Stats -->
+            <div class="glass-card content-card mb-4">
+                <div class="card-header-modern">
+                    <h6 style="color: #ffffff !important;">
+                        <i class="fas fa-chart-line me-2 ethereal-icon-glow"></i>Your Writing Journey
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="writing-stats">
+                        <div class="stat-item mb-3">
+                            <div class="stat-header">
+                                <i class="fas fa-feather-alt stat-icon" style="color: #4fd1c7;"></i>
+                                <span style="color: #ffffff; font-weight: 500;">Total Words Written</span>
+                            </div>
+                            <div class="stat-value" style="color: #4fd1c7; font-size: 1.8rem; font-weight: 700;">
+                                {{ total_words|default:0|floatformat:0 }}
+                            </div>
+                            <div class="stat-subtitle" style="color: rgba(255,255,255,0.7); font-size: 0.8rem;">
+                                {% if total_words > 50000 %}📚 Novel-length achieved!{% elif total_words > 10000 %}📖 Novella in progress{% elif total_words > 1000 %}📝 Story developing{% else %}✨ Every word counts{% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item mb-3">
+                            <div class="stat-header">
+                                <i class="fas fa-books stat-icon" style="color: #ffd93d;"></i>
+                                <span style="color: #ffffff; font-weight: 500;">Books in Progress</span>
+                            </div>
+                            <div class="stat-value" style="color: #ffd93d; font-size: 1.8rem; font-weight: 700;">
+                                {{ user_projects|length }}
+                            </div>
+                            <div class="stat-subtitle" style="color: rgba(255,255,255,0.7); font-size: 0.8rem;">
+                                {% if user_projects|length >= 5 %}🎯 Prolific author{% elif user_projects|length >= 3 %}📚 Multi-project writer{% elif user_projects|length >= 1 %}🌟 Author in the making{% else %}🖋️ Ready to begin{% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item mb-3">
+                            <div class="stat-header">
+                                <i class="fas fa-clock stat-icon" style="color: #74b9ff;"></i>
+                                <span style="color: #ffffff; font-weight: 500;">Writing Streak</span>
+                            </div>
+                            <div class="stat-value" style="color: #74b9ff; font-size: 1.8rem; font-weight: 700;">
+                                7 days
+                            </div>
+                            <div class="stat-subtitle" style="color: rgba(255,255,255,0.7); font-size: 0.8rem;">
+                                🔥 Keep the momentum going!
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <div class="stat-header">
+                                <i class="fas fa-target stat-icon" style="color: #38ef7d;"></i>
+                                <span style="color: #ffffff; font-weight: 500;">Today's Goal</span>
+                            </div>
+                            <div class="progress-bar-custom" style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px;">
+                                <div class="progress-fill-custom" style="background: linear-gradient(90deg, #38ef7d, #4fd1c7); height: 100%; width: 65%; transition: width 0.3s ease;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                                <span style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">650 / 1000 words</span>
+                                <span style="color: #38ef7d; font-size: 0.75rem; font-weight: 600;">65%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="{% url 'writer:ultimate_editor' %}" class="action-button primary" style="font-size: 0.85rem; padding: 10px 20px;">
+                            <i class="fas fa-plus"></i> Continue Writing
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Inspiration -->
+            <div class="glass-card content-card mb-4">
+                <div class="card-header-modern">
+                    <h6 style="color: #ffffff !important;">
+                        <i class="fas fa-lightbulb me-2 ethereal-icon-glow"></i>Writer's Inspiration
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="inspiration-quote" style="text-align: center; padding: 15px;">
+                        <blockquote style="color: #ffffff; font-style: italic; font-size: 0.9rem; margin-bottom: 10px; opacity: 0.9;">
+                            "The first draft of anything is shit. But you have to write that first draft to get to the good stuff."
+                        </blockquote>
+                        <cite style="color: rgba(255,255,255,0.7); font-size: 0.8rem;">— Ernest Hemingway</cite>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <a href="{% url 'writer:ultimate_workshop' %}" class="action-button" style="font-size: 0.8rem; padding: 8px 16px;">
+                            <i class="fas fa-magic"></i> Writing Workshop
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Tools -->
+            {% if user.is_staff %}
+            <div class="glass-card content-card mb-4">
+                <div class="card-header-modern">
+                    <h6 style="color: #ffffff !important;"><i class="fas fa-cog me-2"></i>Admin Tools</h6>
+                </div>
+                <div class="card-body">
+                    <div class="admin-tools-grid">
+                        <a href="/admin/" class="admin-tool-button" target="_blank" title="Django Admin Panel">
+                            <i class="fas fa-database"></i>
+                            <span>Admin Panel</span>
+                        </a>
+                        <a href="/admin/writer/project/" class="admin-tool-button" target="_blank" title="Manage Projects">
+                            <i class="fas fa-folder-open"></i>
+                            <span>Projects</span>
+                        </a>
+                        <a href="/admin/auth/user/" class="admin-tool-button" target="_blank" title="Manage Users">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                        <!-- Imports link removed from Admin Tools -->
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<!-- Book Popup Overlay -->
+<div class="book-popup-overlay" id="bookPopupOverlay" onclick="closeBookPopup()"></div>
+
+<!-- Book Popup -->
+<div class="book-popup" id="bookPopup">
+    <button class="book-popup-close" onclick="closeBookPopup()">&times;</button>
+    <div class="book-cover" id="bookPopupCover">
+        <div class="book-cover-title" id="bookPopupTitle">Project Title</div>
+    </div>
+    <div class="book-popup-content">
+        <h6 id="bookPopupHeading">Project Details</h6>
+        <div class="book-popup-summary" id="bookPopupSummary">
+            <i class="fas fa-spinner fa-spin"></i> Generating preview...
+        </div>
+        <div class="book-popup-stats" id="bookPopupStats">
+            <div><strong>Words:</strong> <span id="popupWords">0</span></div>
+            <div><strong>Genre:</strong> <span id="popupGenre">Fiction</span></div>
+            <div><strong>Created:</strong> <span id="popupDate">-</span></div>
+        </div>
+        <div class="book-popup-actions">
+            <a href="#" id="bookPopupEditLink" class="btn btn-sm" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; text-decoration: none; padding: 8px 16px; border-radius: 8px;">
+                <i class="fas fa-edit me-1"></i>Open Editor
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth hover effects to glass cards
+    document.querySelectorAll('.glass-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Add click animations to buttons
+    document.querySelectorAll('.action-button, .action-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+    
+    // Add parallax effect to hero section
+    window.addEventListener('scroll', function() {
+        const hero = document.querySelector('.dashboard-hero');
+        const scrolled = window.pageYOffset;
+        const rate = scrolled * -0.5;
+        
+        if (hero) {
+            hero.style.transform = `translateY(${rate}px)`;
+        }
+    });
+    
+    // Animate stats on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'float 3s ease-in-out infinite';
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('.stat-card').forEach(card => {
+        observer.observe(card);
+    });
+});
+
+// Bookshelf Pop-out functionality
+function popBook(bookElement, projectId) {
+    // Get project data
+    const projectTitle = bookElement.querySelector('.book-title').textContent;
+    const bookSpine = bookElement.querySelector('.book-spine');
+    const computedStyle = getComputedStyle(bookElement);
+    const bookColor1 = computedStyle.getPropertyValue('--book-color-1') || '#667eea';
+    const bookColor2 = computedStyle.getPropertyValue('--book-color-2') || '#764ba2';
+    
+    // Set popup content
+    document.getElementById('bookPopupTitle').textContent = projectTitle;
+    document.getElementById('bookPopupHeading').textContent = projectTitle;
+    
+    // Set cover colors to match book spine
+    const bookCover = document.getElementById('bookPopupCover');
+    bookCover.style.background = `linear-gradient(135deg, ${bookColor1} 0%, ${bookColor2} 100%)`;
+    
+    // Get project stats (you might want to pass these from Django template)
+    const projectData = getProjectData(projectId);
+    document.getElementById('popupWords').textContent = projectData.words;
+    document.getElementById('popupGenre').textContent = projectData.genre;
+    document.getElementById('popupDate').textContent = projectData.date;
+    
+    // Update edit link
+    document.getElementById('bookPopupEditLink').href = `/writer/projects/${projectId}/editor/`;
+    
+    // Show popup
+    document.getElementById('bookPopupOverlay').classList.add('show');
+    document.getElementById('bookPopup').classList.add('show');
+    
+    // Generate summary
+    generateBookSummary(projectId);
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBookPopup() {
+    document.getElementById('bookPopupOverlay').classList.remove('show');
+    document.getElementById('bookPopup').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function getProjectData(projectId) {
+    // This would ideally come from the Django template or an AJAX call
+    // For now, using the data that's visible in the template
+    const bookElement = document.querySelector(`[data-project-id="${projectId}"]`);
+    const projectRow = bookElement.closest('.project-item');
+    
+    return {
+        words: '1,250', // You can get this from template data
+        genre: 'Fiction',
+        date: 'Aug 8, 2025'
+    };
+}
+
+function generateBookSummary(projectId) {
+    const summaryElement = document.getElementById('bookPopupSummary');
+    
+    // Show loading state
+    summaryElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating preview...';
+    
+    // Simulate AI summary generation
+    setTimeout(() => {
+        const summaries = [
+            "A captivating narrative that explores the depths of human emotion through compelling characters and intricate storytelling. This work seamlessly blends literary excellence with accessible prose, creating an immersive reading experience that challenges and entertains.",
+            "An innovative exploration of contemporary themes that resonates with modern readers. The author's masterful character development and engaging plot structure create a rich, multi-layered story that unfolds with precision and grace.",
+            "A thought-provoking work that examines the complexities of human relationships against a backdrop of extraordinary circumstances. The narrative flows with remarkable clarity while maintaining depth and emotional resonance throughout.",
+            "A powerful story that combines elements of drama and insight to create something truly memorable. The author's skillful use of language and attention to detail brings each scene to vivid life, keeping readers invested from beginning to end.",
+            "An engaging work that demonstrates exceptional storytelling craft. Through careful pacing and rich character development, this piece creates an authentic world that feels both familiar and refreshingly original."
+        ];
+        
+        // Get a consistent summary based on project ID
+        const summaryIndex = parseInt(projectId) % summaries.length;
+        const summary = summaries[summaryIndex];
+        
+        summaryElement.innerHTML = summary;
+    }, 2000);
+}
+
+// Close popup with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeBookPopup();
+    }
+});
+
+// Organize books into multiple shelves (max 7 per shelf)
+function organizeBookshelves() {
+    const bookshelfContainer = document.querySelector('.bookshelf-container');
+    const originalBookshelf = document.getElementById('bookshelf');
+    
+    if (!originalBookshelf) return;
+    
+    const books = Array.from(originalBookshelf.querySelectorAll('.book'));
+    
+    // If 7 or fewer books, keep single shelf
+    if (books.length <= 7) return;
+    
+    // Clear the container
+    bookshelfContainer.innerHTML = '';
+    
+    // Create shelves with max 7 books each
+    let shelfNumber = 1;
+    for (let i = 0; i < books.length; i += 7) {
+        const shelf = document.createElement('div');
+        shelf.className = 'bookshelf';
+        shelf.id = `bookshelf-${shelfNumber}`;
+        
+        // Add books to this shelf
+        const shelfBooks = books.slice(i, i + 7);
+        shelfBooks.forEach(book => shelf.appendChild(book));
+        
+        bookshelfContainer.appendChild(shelf);
+        shelfNumber++;
+    }
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', function() {
+    organizeBookshelves();
+});
+
+// Old functions to remove
+function flipBook(bookElement, projectId) {
+    // This function is no longer used
+}
+
+function generateBookSummary_old(projectId) {
+    // This function is no longer used
+}
+</script>
+{% endblock %}

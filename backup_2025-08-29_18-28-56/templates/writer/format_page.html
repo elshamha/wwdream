@@ -1,0 +1,493 @@
+{% extends 'base.html' %}
+{% block title %}Format & Export - Writer's Web Dream{% endblock %}
+
+{% block content %}
+<style>
+/* Format Page Styling */
+.format-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.format-section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.format-section:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.export-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.export-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.export-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.preview-panel {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 1.5rem;
+    height: 400px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.preview-content {
+    background: white;
+    color: #333;
+    padding: 2rem;
+    border-radius: 10px;
+    min-height: 350px;
+    font-family: 'Times New Roman', serif;
+    line-height: 1.6;
+}
+
+.format-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.control-group {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.control-group select,
+.control-group input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem;
+    color: #ffffff;
+}
+
+.image-upload-section {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.image-item {
+    position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.image-item img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.btn-ethereal {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 24px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-ethereal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    margin: 3rem 0;
+}
+</style>
+
+<div class="format-container">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 style="color: #ffffff; font-size: 2.5rem; margin-bottom: 1rem;">
+            <i class="fas fa-paint-brush me-3"></i>Format & Export
+        </h1>
+        <p style="color: rgba(255,255,255,0.8); font-size: 1.1rem;">
+            Style your writing and export in professional formats
+        </p>
+    </div>
+
+    <!-- Format Controls -->
+    <div class="format-section">
+        <h3 style="color: #ffffff; margin-bottom: 1.5rem;">
+            <i class="fas fa-sliders-h me-2"></i>Formatting Options
+        </h3>
+        <div class="format-controls">
+            <div class="control-group">
+                <label>Font Family</label>
+                <select id="fontFamily" onchange="updatePreview()">
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Lora">Lora (Google Font)</option>
+                    <option value="Merriweather">Merriweather</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Font Size</label>
+                <select id="fontSize" onchange="updatePreview()">
+                    <option value="11pt">11pt</option>
+                    <option value="12pt" selected>12pt</option>
+                    <option value="14pt">14pt</option>
+                    <option value="16pt">16pt</option>
+                    <option value="18pt">18pt</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Line Spacing</label>
+                <select id="lineSpacing" onchange="updatePreview()">
+                    <option value="1.0">Single</option>
+                    <option value="1.15">1.15</option>
+                    <option value="1.5">1.5</option>
+                    <option value="2.0" selected>Double</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Paragraph Spacing</label>
+                <select id="paragraphSpacing" onchange="updatePreview()">
+                    <option value="0">None</option>
+                    <option value="6pt">6pt</option>
+                    <option value="12pt" selected>12pt</option>
+                    <option value="18pt">18pt</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Page Size</label>
+                <select id="pageSize">
+                    <option value="a4">A4</option>
+                    <option value="letter" selected>Letter</option>
+                    <option value="legal">Legal</option>
+                    <option value="a5">A5</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Margins</label>
+                <select id="margins">
+                    <option value="narrow">Narrow (0.5")</option>
+                    <option value="normal" selected>Normal (1")</option>
+                    <option value="wide">Wide (1.5")</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="format-section">
+        <h3 style="color: #ffffff; margin-bottom: 1.5rem;">
+            <i class="fas fa-eye me-2"></i>Live Preview
+        </h3>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="preview-panel">
+                    <div class="preview-content" id="previewContent">
+                        <h1>Sample Chapter Title</h1>
+                        <p>This is a sample paragraph to show how your formatted text will look. You can see the font family, size, line spacing, and paragraph spacing in action.</p>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+                        <h2>Subheading Example</h2>
+                        <p>This shows how subheadings will appear in your formatted document. The spacing and typography create a professional appearance suitable for publishing.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- Image Upload Section -->
+                <div class="image-upload-section">
+                    <h5 style="color: #ffffff; margin-bottom: 1rem;">
+                        <i class="fas fa-images me-2"></i>Add Images
+                    </h5>
+                    <div class="mb-3">
+                        <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;" onchange="handleImageUpload(event)">
+                        <button class="btn-ethereal" onclick="document.getElementById('imageUpload').click()">
+                            <i class="fas fa-upload me-2"></i>Upload Images
+                        </button>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label style="color: #ffffff;">Add to Chapter:</label>
+                        <select id="chapterSelect" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 0.5rem; color: #ffffff;">
+                            <option value="">Select a chapter...</option>
+                            <!-- Chapters will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="image-grid" id="imageGrid">
+                        <!-- Uploaded images will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Export Section -->
+    <div class="format-section">
+        <h3 style="color: #ffffff; margin-bottom: 1.5rem;">
+            <i class="fas fa-download me-2"></i>Export Options
+        </h3>
+        
+        <div class="mb-3">
+            <label style="color: #ffffff; font-weight: 600;">Select Project to Export:</label>
+            <select id="projectSelect" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 0.75rem; color: #ffffff; margin-top: 0.5rem;">
+                <option value="">Choose a project...</option>
+                {% for project in user_projects %}
+                <option value="{{ project.id }}">{{ project.title }} ({{ project.chapter_count }} chapters)</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="export-grid">
+            <div class="export-card" onclick="exportProject('pdf')">
+                <div class="export-icon" style="color: #dc3545;">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <h5 style="color: #ffffff;">PDF</h5>
+                <p style="color: rgba(255,255,255,0.7);">Professional documents, perfect for printing and sharing</p>
+            </div>
+            
+            <div class="export-card" onclick="exportProject('epub')">
+                <div class="export-icon" style="color: #6f42c1;">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h5 style="color: #ffffff;">EPUB</h5>
+                <p style="color: rgba(255,255,255,0.7);">E-book format for Kindle, Apple Books, and more</p>
+            </div>
+            
+            <div class="export-card" onclick="exportProject('docx')">
+                <div class="export-icon" style="color: #0d6efd;">
+                    <i class="fas fa-file-word"></i>
+                </div>
+                <h5 style="color: #ffffff;">Word Document</h5>
+                <p style="color: rgba(255,255,255,0.7);">Microsoft Word format for further editing</p>
+            </div>
+            
+            <div class="export-card" onclick="exportProject('gdoc')">
+                <div class="export-icon" style="color: #34a853;">
+                    <i class="fab fa-google-drive"></i>
+                </div>
+                <h5 style="color: #ffffff;">Google Docs</h5>
+                <p style="color: rgba(255,255,255,0.7);">HTML format ready for Google Docs import</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let uploadedImages = [];
+
+// Update preview based on formatting options
+function updatePreview() {
+    const preview = document.getElementById('previewContent');
+    const fontFamily = document.getElementById('fontFamily').value;
+    const fontSize = document.getElementById('fontSize').value;
+    const lineSpacing = document.getElementById('lineSpacing').value;
+    const paragraphSpacing = document.getElementById('paragraphSpacing').value;
+    
+    // Apply default styling
+    preview.style.cssText = `
+        background: #ffffff;
+        color: #2c3e50;
+        font-family: ${fontFamily};
+        font-size: ${fontSize};
+        line-height: ${lineSpacing};
+        padding: 2rem;
+        border-radius: 10px;
+        min-height: 350px;
+    `;
+    
+    // Apply paragraph spacing
+    const paragraphs = preview.querySelectorAll('p');
+    paragraphs.forEach(p => {
+        p.style.marginBottom = paragraphSpacing;
+    });
+}
+
+// Image upload handling
+function handleImageUpload(event) {
+    const files = event.target.files;
+    const imageGrid = document.getElementById('imageGrid');
+    
+    for (let file of files) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <p style="color: #ffffff; font-size: 0.8rem; margin: 0;">${file.name}</p>
+                    <button class="btn btn-sm btn-danger mt-1" onclick="removeImage(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                imageGrid.appendChild(imageItem);
+                
+                // Store image data
+                uploadedImages.push({
+                    name: file.name,
+                    data: e.target.result,
+                    chapter: document.getElementById('chapterSelect').value
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    showNotification('Images uploaded successfully!', 'success');
+}
+
+// Remove image
+function removeImage(button) {
+    const imageItem = button.closest('.image-item');
+    const imageName = imageItem.querySelector('p').textContent;
+    
+    // Remove from uploaded images array
+    uploadedImages = uploadedImages.filter(img => img.name !== imageName);
+    
+    // Remove from DOM
+    imageItem.remove();
+    
+    showNotification('Image removed', 'info');
+}
+
+// Export project
+function exportProject(format) {
+    const projectId = document.getElementById('projectSelect').value;
+    
+    if (!projectId) {
+        showNotification('Please select a project to export', 'warning');
+        return;
+    }
+    
+    // Show loading
+    showNotification(`Preparing ${format.toUpperCase()} export...`, 'info');
+    
+    // Redirect to export URL
+    window.location.href = `/writer/export/${projectId}/${format}/`;
+}
+
+// Populate chapters for image assignment
+function populateChapters() {
+    const projectSelect = document.getElementById('projectSelect');
+    const chapterSelect = document.getElementById('chapterSelect');
+    
+    if (projectSelect.value) {
+        // This would typically fetch chapters via AJAX
+        // For now, we'll just show a placeholder
+        chapterSelect.innerHTML = `
+            <option value="">Select a chapter...</option>
+            <option value="1">Chapter 1</option>
+            <option value="2">Chapter 2</option>
+            <option value="3">Chapter 3</option>
+        `;
+    } else {
+        chapterSelect.innerHTML = '<option value="">Select a project first...</option>';
+    }
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; backdrop-filter: blur(15px); border-radius: 15px;';
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <span>${message}</span>
+            <button type="button" class="btn-close ms-2" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }
+    }, 4000);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize preview
+    updatePreview();
+    
+    // Add event listener for project selection
+    document.getElementById('projectSelect').addEventListener('change', populateChapters);
+});
+</script>
+{% endblock %}

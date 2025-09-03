@@ -28,27 +28,12 @@
     <div class="container library-content">
         <!-- Quick Start Section -->
         <section class="quick-start-section">
-            {% if latest_project %}
-                <div class="continue-writing">
-                    <div class="continue-card">
-                        <div class="continue-icon">✍️</div>
-                        <div class="continue-text">
-                            <h3>Continue Writing</h3>
-                            <p>{{ latest_project.title }}</p>
-                        </div>
-                        <a href="{% url 'writer:modern_editor' %}?project={{ latest_project.id }}" class="continue-btn">
-                            Continue →
-                        </a>
-                    </div>
-                </div>
-            {% else %}
-                <div class="get-started">
-                    <div class="get-started-icon">🚀</div>
-                    <h3>Ready to start writing?</h3>
-                    <p>Create your first project and begin your writing journey</p>
-                    <a href="{% url 'writer:project_create' %}" class="btn btn-primary">Create First Project</a>
-                </div>
-            {% endif %}
+            <div class="get-started">
+                <div class="get-started-icon">🚀</div>
+                <h3>Ready to start writing?</h3>
+                <p>Create your first project and begin your writing journey</p>
+                <a href="{% url 'writer:project_create' %}" class="btn btn-primary">Create First Project</a>
+            </div>
         </section>
 
         <!-- Projects Grid -->
@@ -85,8 +70,8 @@
                                     <li><a href="{% url 'writer:modern_editor' %}?project={{ project.id }}">
                                         <i class="fas fa-edit"></i> Open in Editor
                                     </a></li>
-                                    <li><a href="{% url 'writer:project_detail' project.id %}">
-                                        <i class="fas fa-info-circle"></i> View Details
+                                    <li><a href="{% url 'writer:ultimate_dashboard' %}">
+                                        <i class="fas fa-crown"></i> Ultimate Dashboard
                                     </a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a href="{% url 'writer:project_update' project.id %}">
@@ -278,48 +263,10 @@
     margin-bottom: 3rem;
 }
 
-.continue-writing {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    padding: 2rem;
-    color: white;
-}
 
-.continue-card {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
 
-.continue-icon {
-    font-size: 3rem;
-}
 
-.continue-text h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1.5rem;
-}
 
-.continue-text p {
-    margin: 0;
-    opacity: 0.9;
-}
-
-.continue-btn {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 500;
-    margin-left: auto;
-    transition: all 0.2s ease;
-}
-
-.continue-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    color: white;
-}
 
 .get-started {
     text-align: center;
@@ -671,16 +618,6 @@
         align-items: stretch;
     }
     
-    .continue-card {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-    
-    .continue-btn {
-        margin: 0;
-        align-self: center;
-    }
     
     .projects-grid {
         grid-template-columns: 1fr;

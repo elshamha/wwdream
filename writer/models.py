@@ -360,6 +360,52 @@ class UserProfile(models.Model):
     ])
     show_statistics = models.BooleanField(default=True)
     show_bookshelf = models.BooleanField(default=True)
+    
+    # New profile fields
+    profile_picture = models.ImageField(
+        upload_to='profile_pictures/', 
+        null=True, 
+        blank=True,
+        help_text="Upload a profile picture"
+    )
+    bio = models.TextField(
+        max_length=500, 
+        blank=True, 
+        null=True,
+        help_text="Tell us about yourself"
+    )
+    interests = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Your writing interests (e.g., fantasy, sci-fi, romance, mystery)"
+    )
+    favorite_writers = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Authors who inspire you"
+    )
+    favorite_quotes = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Quotes that motivate your writing"
+    )
+    hopes_and_dreams = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Your writing goals and aspirations"
+    )
+    location = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Where you're writing from"
+    )
+    website = models.URLField(
+        blank=True, 
+        null=True,
+        help_text="Your personal website or blog"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -500,3 +546,442 @@ class WorkshopSession(models.Model):
         from django.utils import timezone
         from datetime import timedelta
         return self.created_at >= timezone.now() - timedelta(days=7)
+
+
+class MediaFile(models.Model):
+    """Media files storage for multiple file types"""
+    FILE_TYPES = [
+        ('document', 'Document'),
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('audio', 'Audio'),
+        ('other', 'Other'),
+    ]
+    
+    DOCUMENT_FORMATS = [
+        ('pdf', 'PDF'),
+        ('docx', 'Word Document'),
+        ('doc', 'Word Document (Legacy)'),
+        ('txt', 'Text File'),
+        ('rtf', 'Rich Text Format'),
+        ('odt', 'OpenDocument Text'),
+        ('html', 'HTML File'),
+        ('md', 'Markdown'),
+    ]
+    
+    IMAGE_FORMATS = [
+        ('jpg', 'JPEG Image'),
+        ('jpeg', 'JPEG Image'),
+        ('png', 'PNG Image'),
+        ('gif', 'GIF Image'),
+        ('webp', 'WebP Image'),
+        ('svg', 'SVG Image'),
+        ('bmp', 'Bitmap Image'),
+    ]
+    
+    VIDEO_FORMATS = [
+        ('mp4', 'MP4 Video'),
+        ('avi', 'AVI Video'),
+        ('mov', 'QuickTime Video'),
+        ('wmv', 'Windows Media Video'),
+        ('flv', 'Flash Video'),
+        ('webm', 'WebM Video'),
+        ('mkv', 'Matroska Video'),
+    ]
+    
+    AUDIO_FORMATS = [
+        ('mp3', 'MP3 Audio'),
+        ('wav', 'WAV Audio'),
+        ('flac', 'FLAC Audio'),
+        ('aac', 'AAC Audio'),
+        ('ogg', 'OGG Audio'),
+        ('m4a', 'M4A Audio'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='media_files')
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='media_files')
+    file = models.FileField(upload_to='media_library/')
+    file_type = models.CharField(max_length=10, choices=FILE_TYPES)
+    file_format = models.CharField(max_length=10, blank=True, null=True)
+    file_size = models.BigIntegerField(default=0, help_text="File size in bytes")
+    duration = models.DurationField(null=True, blank=True, help_text="Duration for video/audio files")
+    dimensions = models.JSONField(null=True, blank=True, help_text="Width/height for images/videos")
+    extracted_text = models.TextField(blank=True, null=True, help_text="Extracted text content from documents")
+    metadata = models.JSONField(default=dict, help_text="Additional file metadata")
+    tags = models.JSONField(default=list, help_text="User-defined tags")
+    description = models.TextField(blank=True, null=True)
+    is_public = models.BooleanField(default=False)
+    upload_date = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-upload_date']
+        
+    def __str__(self):
+        return f"{self.title} ({self.get_file_type_display()})"
+    
+    def save(self, *args, **kwargs):
+        if self.file:
+            self.file_size = self.file.size
+            file_extension = self.file.name.split('.')[-1].lower()
+            self.file_format = file_extension
+            
+            # Determine file type based on extension
+            if file_extension in ['pdf', 'docx', 'doc', 'txt', 'rtf', 'odt', 'html', 'md']:
+                self.file_type = 'document'
+            elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp']:
+                self.file_type = 'image'
+            elif file_extension in ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv']:
+                self.file_type = 'video'
+            elif file_extension in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a']:
+                self.file_type = 'audio'
+            else:
+                self.file_type = 'other'
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def file_size_human(self):
+        """Human readable file size"""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024:
+                return f"{size:.1f} {unit}"
+            size /= 1024
+        return f"{size:.1f} TB"
+    
+    @property
+    def is_viewable_in_browser(self):
+        """Check if file can be viewed directly in browser"""
+        viewable_formats = ['pdf', 'txt', 'html', 'md', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'mp3', 'wav']
+        return self.file_format in viewable_formats
+    
+    @property
+    def thumbnail_url(self):
+        """Get thumbnail URL for images and videos"""
+        if self.file_type == 'image':
+            return self.file.url
+        elif self.file_type == 'video':
+            return '/static/images/video-thumbnail.png'
+        elif self.file_type == 'audio':
+            return '/static/images/audio-thumbnail.png'
+        elif self.file_type == 'document':
+            return '/static/images/document-thumbnail.png'
+        else:
+            return '/static/images/file-thumbnail.png'
+
+
+class DocumentVersion(models.Model):
+    """Version control for documents - stores historical versions"""
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='versions')
+    version_number = models.IntegerField(default=1)
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    saved_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='document_versions_saved')
+    save_reason = models.CharField(max_length=100, blank=True, null=True, help_text="Reason for saving this version")
+    created_at = models.DateTimeField(auto_now_add=True)
+    word_count = models.IntegerField(default=0)
+    is_major_version = models.BooleanField(default=False, help_text="Mark important versions")
+    is_published_version = models.BooleanField(default=False, help_text="Version that was published")
+    
+    class Meta:
+        ordering = ['-version_number']
+        unique_together = ['document', 'version_number']
+    
+    def __str__(self):
+        return f"{self.document.title} - Version {self.version_number}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate word count
+        if self.content:
+            import re
+            text = re.sub(r'<[^>]+>', '', self.content)  # Remove HTML tags
+            self.word_count = len(text.split())
+        super().save(*args, **kwargs)
+    
+    @property
+    def changes_summary(self):
+        """Compare with previous version to show changes"""
+        previous_version = DocumentVersion.objects.filter(
+            document=self.document,
+            version_number__lt=self.version_number
+        ).first()
+        
+        if not previous_version:
+            return "Initial version"
+        
+        # Simple change detection
+        old_word_count = previous_version.word_count
+        new_word_count = self.word_count
+        word_diff = new_word_count - old_word_count
+        
+        if word_diff > 0:
+            return f"+{word_diff} words added"
+        elif word_diff < 0:
+            return f"{word_diff} words removed"
+        else:
+            return "Content modified"
+
+
+class ChapterVersion(models.Model):
+    """Version control for chapters - stores historical versions"""
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='versions')
+    version_number = models.IntegerField(default=1)
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    saved_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chapter_versions_saved')
+    save_reason = models.CharField(max_length=100, blank=True, null=True, help_text="Reason for saving this version")
+    created_at = models.DateTimeField(auto_now_add=True)
+    word_count = models.IntegerField(default=0)
+    is_major_version = models.BooleanField(default=False, help_text="Mark important versions")
+    is_published_version = models.BooleanField(default=False, help_text="Version that was published")
+    
+    class Meta:
+        ordering = ['-version_number']
+        unique_together = ['chapter', 'version_number']
+    
+    def __str__(self):
+        return f"{self.chapter.title} - Version {self.version_number}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate word count
+        if self.content:
+            import re
+            text = re.sub(r'<[^>]+>', '', self.content)  # Remove HTML tags
+            self.word_count = len(text.split())
+        super().save(*args, **kwargs)
+    
+    @property
+    def changes_summary(self):
+        """Compare with previous version to show changes"""
+        previous_version = ChapterVersion.objects.filter(
+            chapter=self.chapter,
+            version_number__lt=self.version_number
+        ).first()
+        
+        if not previous_version:
+            return "Initial version"
+        
+        # Simple change detection
+        old_word_count = previous_version.word_count
+        new_word_count = self.word_count
+        word_diff = new_word_count - old_word_count
+        
+        if word_diff > 0:
+            return f"+{word_diff} words added"
+        elif word_diff < 0:
+            return f"{word_diff} words removed"
+        else:
+            return "Content modified"
+
+
+class VersionControlSettings(models.Model):
+    """User preferences for version control"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='version_settings')
+    auto_save_enabled = models.BooleanField(default=True, help_text="Automatically create versions on save")
+    auto_save_interval = models.IntegerField(default=10, help_text="Minutes between auto-saves")
+    max_versions_to_keep = models.IntegerField(default=50, help_text="Maximum versions to keep per document")
+    notify_on_version_save = models.BooleanField(default=True, help_text="Show notifications when versions are saved")
+    require_save_reason = models.BooleanField(default=False, help_text="Require reason when manually saving versions")
+    
+    def __str__(self):
+        return f"Version Settings for {self.user.username}"
+    
+    @classmethod
+    def get_or_create_for_user(cls, user):
+        """Get or create version settings for the given user"""
+        settings, created = cls.objects.get_or_create(user=user)
+        return settings
+
+
+class ClassicBook(models.Model):
+    """Public domain books available in the classics library"""
+    GENRE_CHOICES = [
+        ('fiction', 'Fiction'),
+        ('non-fiction', 'Non-Fiction'),
+        ('poetry', 'Poetry'),
+        ('drama', 'Drama'),
+        ('philosophy', 'Philosophy'),
+        ('history', 'History'),
+        ('science', 'Science'),
+        ('biography', 'Biography'),
+        ('romance', 'Romance'),
+        ('mystery', 'Mystery'),
+        ('adventure', 'Adventure'),
+        ('fantasy', 'Fantasy'),
+        ('horror', 'Horror'),
+        ('children', 'Children\'s Literature'),
+    ]
+    
+    LANGUAGE_CHOICES = [
+        ('english', 'English'),
+        ('french', 'French'),
+        ('german', 'German'),
+        ('spanish', 'Spanish'),
+        ('italian', 'Italian'),
+        ('portuguese', 'Portuguese'),
+        ('russian', 'Russian'),
+        ('latin', 'Latin'),
+        ('greek', 'Greek'),
+        ('chinese', 'Chinese'),
+        ('japanese', 'Japanese'),
+        ('arabic', 'Arabic'),
+    ]
+    
+    ERA_CHOICES = [
+        ('ancient', 'Ancient (Before 500 CE)'),
+        ('medieval', 'Medieval (500-1500)'),
+        ('renaissance', 'Renaissance (1500-1700)'),
+        ('enlightenment', 'Enlightenment (1700-1800)'),
+        ('romantic', 'Romantic (1800-1850)'),
+        ('victorian', 'Victorian (1850-1900)'),
+        ('modern', 'Modern (1900-1950)'),
+        ('contemporary', 'Contemporary (1950+)'),
+    ]
+    
+    # Basic Information
+    title = models.CharField(max_length=500)
+    author = models.CharField(max_length=200)
+    original_title = models.CharField(max_length=500, blank=True, help_text="Original title if translated")
+    subtitle = models.CharField(max_length=500, blank=True)
+    
+    # Classification
+    genre = models.CharField(max_length=50, choices=GENRE_CHOICES)
+    language = models.CharField(max_length=50, choices=LANGUAGE_CHOICES, default='english')
+    original_language = models.CharField(max_length=50, choices=LANGUAGE_CHOICES, blank=True)
+    era = models.CharField(max_length=50, choices=ERA_CHOICES)
+    
+    # Publication Details
+    publication_year = models.IntegerField(help_text="Year of original publication")
+    copyright_status = models.CharField(max_length=100, default='Public Domain')
+    gutenberg_id = models.CharField(max_length=20, blank=True, help_text="Project Gutenberg ID if available")
+    
+    # Content Details
+    description = models.TextField(help_text="Book description or synopsis")
+    page_count = models.IntegerField(blank=True, null=True)
+    word_count = models.IntegerField(blank=True, null=True)
+    isbn = models.CharField(max_length=20, blank=True)
+    
+    # Metadata
+    subjects = models.JSONField(default=list, help_text="List of subject categories")
+    keywords = models.JSONField(default=list, help_text="Keywords for search")
+    
+    # Files and Resources
+    cover_image_url = models.URLField(blank=True, help_text="URL to book cover image")
+    epub_url = models.URLField(blank=True, help_text="URL to EPUB file")
+    pdf_url = models.URLField(blank=True, help_text="URL to PDF file")
+    txt_url = models.URLField(blank=True, help_text="URL to plain text file")
+    html_url = models.URLField(blank=True, help_text="URL to HTML version")
+    mobi_url = models.URLField(blank=True, help_text="URL to MOBI file")
+    
+    # Statistics
+    download_count = models.IntegerField(default=0)
+    rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
+    rating_count = models.IntegerField(default=0)
+    
+    # System fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_featured = models.BooleanField(default=False, help_text="Featured on homepage")
+    is_active = models.BooleanField(default=True, help_text="Available for borrowing")
+    
+    class Meta:
+        ordering = ['-is_featured', 'title']
+        indexes = [
+            models.Index(fields=['genre']),
+            models.Index(fields=['language']),
+            models.Index(fields=['era']),
+            models.Index(fields=['author']),
+            models.Index(fields=['publication_year']),
+            models.Index(fields=['-download_count']),
+            models.Index(fields=['-rating']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} by {self.author}"
+    
+    @property
+    def available_formats(self):
+        """Return list of available formats"""
+        formats = []
+        if self.epub_url:
+            formats.append('epub')
+        if self.pdf_url:
+            formats.append('pdf')
+        if self.txt_url:
+            formats.append('txt')
+        if self.html_url:
+            formats.append('html')
+        if self.mobi_url:
+            formats.append('mobi')
+        return formats
+    
+    @property
+    def primary_download_url(self):
+        """Return the primary download URL (prefer EPUB, then PDF, then TXT)"""
+        if self.epub_url:
+            return self.epub_url
+        elif self.pdf_url:
+            return self.pdf_url
+        elif self.txt_url:
+            return self.txt_url
+        elif self.html_url:
+            return self.html_url
+        elif self.mobi_url:
+            return self.mobi_url
+        return None
+
+
+class BorrowedBook(models.Model):
+    """Track books borrowed by users from the classics library"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='borrowed_books')
+    book = models.ForeignKey(ClassicBook, on_delete=models.CASCADE, related_name='borrowers')
+    borrowed_at = models.DateTimeField(auto_now_add=True)
+    last_read_at = models.DateTimeField(auto_now=True)
+    reading_progress = models.IntegerField(default=0, help_text="Reading progress as percentage")
+    current_page = models.IntegerField(default=1)
+    bookmarks = models.JSONField(default=list, help_text="List of bookmarked pages/positions")
+    notes = models.TextField(blank=True, help_text="User's notes on this book")
+    favorite = models.BooleanField(default=False)
+    reading_status = models.CharField(max_length=20, default='not_started', choices=[
+        ('not_started', 'Not Started'),
+        ('reading', 'Currently Reading'),
+        ('finished', 'Finished'),
+        ('paused', 'Paused'),
+        ('abandoned', 'Abandoned'),
+    ])
+    
+    class Meta:
+        unique_together = ['user', 'book']
+        ordering = ['-last_read_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.book.title}"
+    
+    @property
+    def is_reading(self):
+        return self.reading_status == 'reading'
+    
+    @property
+    def is_finished(self):
+        return self.reading_status == 'finished'
+
+
+class BookReview(models.Model):
+    """User reviews for classic books"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey(ClassicBook, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)], help_text="Rating from 1 to 5 stars")
+    title = models.CharField(max_length=200, blank=True)
+    content = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    helpful_votes = models.IntegerField(default=0)
+    
+    class Meta:
+        unique_together = ['user', 'book']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username}'s review of {self.book.title}"

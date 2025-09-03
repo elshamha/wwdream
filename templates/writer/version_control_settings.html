@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Version Control Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-cog text-primary"></i> Version Control Settings</h2>
+                    <p class="text-muted mb-0">Configure how version control works for your documents and chapters</p>
+                </div>
+                <div>
+                    <a href="{% url 'writer:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Settings Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sliders-h"></i> Version Control Preferences
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Auto-Save Settings -->
+                        <div class="mb-4">
+                            <h6 class="text-primary"><i class="fas fa-clock"></i> Auto-Save Settings</h6>
+                            <hr class="mt-2 mb-3">
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="auto_save_enabled" 
+                                       name="auto_save_enabled" {% if settings.auto_save_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="auto_save_enabled">
+                                    <strong>Enable Auto-Save</strong>
+                                    <small class="text-muted d-block">Automatically create versions when you save your work</small>
+                                </label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="auto_save_interval" class="form-label">
+                                    <strong>Auto-Save Interval</strong>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="auto_save_interval" 
+                                           name="auto_save_interval" value="{{ settings.auto_save_interval }}" 
+                                           min="1" max="60">
+                                    <span class="input-group-text">minutes</span>
+                                </div>
+                                <small class="text-muted">How often to automatically create versions (1-60 minutes)</small>
+                            </div>
+                        </div>
+
+                        <!-- Version Management -->
+                        <div class="mb-4">
+                            <h6 class="text-primary"><i class="fas fa-database"></i> Version Management</h6>
+                            <hr class="mt-2 mb-3">
+                            
+                            <div class="mb-3">
+                                <label for="max_versions_to_keep" class="form-label">
+                                    <strong>Maximum Versions to Keep</strong>
+                                </label>
+                                <input type="number" class="form-control" id="max_versions_to_keep" 
+                                       name="max_versions_to_keep" value="{{ settings.max_versions_to_keep }}" 
+                                       min="5" max="200">
+                                <small class="text-muted">
+                                    Maximum number of versions per document/chapter (5-200). 
+                                    Older non-major versions will be automatically deleted. Set to 0 for unlimited.
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- User Interface -->
+                        <div class="mb-4">
+                            <h6 class="text-primary"><i class="fas fa-bell"></i> User Interface</h6>
+                            <hr class="mt-2 mb-3">
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="notify_on_version_save" 
+                                       name="notify_on_version_save" {% if settings.notify_on_version_save %}checked{% endif %}>
+                                <label class="form-check-label" for="notify_on_version_save">
+                                    <strong>Show Save Notifications</strong>
+                                    <small class="text-muted d-block">Display notifications when versions are automatically saved</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="require_save_reason" 
+                                       name="require_save_reason" {% if settings.require_save_reason %}checked{% endif %}>
+                                <label class="form-check-label" for="require_save_reason">
+                                    <strong>Require Save Reason</strong>
+                                    <small class="text-muted d-block">Always ask for a reason when manually saving versions</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Information Box -->
+                        <div class="alert alert-info mb-4">
+                            <h6><i class="fas fa-info-circle"></i> How Version Control Works</h6>
+                            <ul class="mb-0 ps-3">
+                                <li><strong>Automatic Versions:</strong> Created when you save your work (if auto-save is enabled)</li>
+                                <li><strong>Manual Versions:</strong> Created when you explicitly save a version</li>
+                                <li><strong>Major Versions:</strong> Protected from automatic deletion, marked as important</li>
+                                <li><strong>Published Versions:</strong> Versions that were published, cannot be deleted</li>
+                                <li><strong>Version Comparison:</strong> Compare any two versions to see changes</li>
+                                <li><strong>Version Restoration:</strong> Restore to any previous version with automatic backup</li>
+                            </ul>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="{% url 'writer:document_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-file-alt"></i> View All Documents
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="{% url 'writer:project_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-folder"></i> View All Projects
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-lightbulb"></i>
+                            <strong>Tip:</strong> You can access version history from any document or chapter detail page.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-check-label strong {
+    color: #495057;
+}
+
+.card-header h5 {
+    color: #495057;
+}
+
+h6.text-primary {
+    font-weight: 600;
+}
+
+.alert-info h6 {
+    color: #0c5460;
+    margin-bottom: 0.75rem;
+}
+</style>
+{% endblock %}

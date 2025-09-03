@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ project.title }} - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:project_list' %}">Projects</a></li>
+                    <li class="breadcrumb-item active" style="color: #ffffff !important;">{{ project.title }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 style="color: #ffffff !important;"><i class="fas fa-folder-open text-primary"></i> {{ project.title }}</h1>
+                    <p class="text-muted">{{ project.description|default:"No description provided" }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn btn-primary me-2">
+                        <i class="fas fa-feather-alt"></i> Open Editor
+                    </a>
+                    <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit Project (Open Editor)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Stats -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ project.total_word_count|default:0 }}</h4>
+                    <small class="text-muted">Total Words</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-info">{{ collaborators.count|add:1 }}</h4>
+                    <small class="text-muted">{% if project.is_collaborative %}Collaborators{% else %}Author{% endif %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Collaboration Panel -->
+            {% if project.is_collaborative %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-users text-success"></i> Collaborators</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>{{ project.author.username }}</strong>
+                        <span class="badge bg-primary ms-2">Owner</span>
+                    </div>
+                    {% for collaborator in collaborators %}
+                    <div class="mb-2">
+                        <strong>{{ collaborator.user.username }}</strong>
+                        <span class="badge bg-secondary ms-2">{{ collaborator.get_role_display }}</span>
+                    </div>
+                    {% empty %}
+                        <p class="text-muted small">No additional collaborators yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Active Writing Sessions -->
+            {% if writing_sessions %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock text-warning"></i> Active Sessions</h5>
+                </div>
+                <div class="card-body">
+                    {% for session in writing_sessions %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ session.user.username }}</strong>
+                            <br>
+                            <small class="text-muted">{{ session.start_time|timesince }} ago</small>
+                        </div>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bolt text-secondary"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'writer:chapter_create' project.pk %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> New Chapter
+                        </a>
+                        <a href="{% url 'writer:character_create' project.pk %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-user-plus"></i> New Character
+                        </a>
+                        <a href="{% url 'writer:ai_assistant' %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-robot"></i> AI Assistance
+                        </a>
+                        <a href="{% url 'writer:project_update' project.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-cog"></i> Project Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chapter-item {
+    transition: background-color 0.2s;
+}
+
+.chapter-item:hover {
+    background-color: #f8f9fa !important;
+}
+
+.character-mini {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.character-mini:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.table-borderless td {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+
+.card-header {
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+    border-bottom: 2px solid #dee2e6;
+}
+</style>
+{% endblock %}

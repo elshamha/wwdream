@@ -1592,7 +1592,7 @@ function popBook(bookElement, projectId) {
     document.getElementById('popupDate').textContent = projectData.date;
     
     // Update edit link
-    document.getElementById('bookPopupEditLink').href = `/writer/projects/${projectId}/editor/`;
+    document.getElementById('bookPopupEditLink').href = `/writer/projects/${projectId}/docs-editor/`;
     
     // Show popup
     document.getElementById('bookPopupOverlay').classList.add('show');
@@ -1672,7 +1672,7 @@ function closeProjectOptions() {
 
 function openProjectInChapterEditor() {
     if (currentProjectId) {
-        window.location.href = `/writer/projects/${currentProjectId}/editor/`;
+        window.location.href = `/writer/projects/${currentProjectId}/docs-editor/`;
     }
 }
 

@@ -1,0 +1,621 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if character %}Edit Character{% else %}Character Creation Portal{% endif %} - A Writer's Web Dream{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Character Creation Portal Styling */
+:root {
+    --creator-primary: #0a0a1a;
+    --creator-secondary: #1a1a2e;
+    --creator-accent: #16213e;
+    --creator-gold: #ffd700;
+    --creator-silver: #c0c0c0;
+    --creator-cosmic: #4a90e2;
+    --creator-power: #ff6b6b;
+    --creator-energy: #51cf66;
+    --creator-shadow: #000011;
+}
+
+.creation-portal {
+    background: linear-gradient(135deg, 
+        var(--creator-primary) 0%, 
+        var(--creator-secondary) 40%, 
+        var(--creator-accent) 80%, 
+        var(--creator-primary) 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.creation-portal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 25% 25%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(74, 144, 226, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 107, 107, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    animation: cosmicFloat 20s ease-in-out infinite;
+}
+
+@keyframes cosmicFloat {
+    0%, 100% { opacity: 0.7; transform: translateY(0px); }
+    50% { opacity: 1; transform: translateY(-10px); }
+}
+
+.portal-header {
+    text-align: center;
+    padding: 3rem 0;
+    position: relative;
+    z-index: 10;
+}
+
+.portal-title {
+    font-size: 4rem;
+    font-weight: 900;
+    background: linear-gradient(45deg, var(--creator-gold), var(--creator-cosmic), var(--creator-power));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    animation: titlePulse 3s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+    0%, 100% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+    50% { text-shadow: 0 0 40px rgba(255, 215, 0, 0.6), 0 0 60px rgba(74, 144, 226, 0.4); }
+}
+
+.portal-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.4rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    font-style: italic;
+}
+
+.creation-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+    padding: 0 2rem;
+}
+
+.creation-form {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.creation-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, 
+        var(--creator-gold), 
+        var(--creator-cosmic), 
+        var(--creator-power), 
+        var(--creator-energy),
+        var(--creator-gold));
+    background-size: 400% 100%;
+    animation: energyFlow 4s linear infinite;
+}
+
+@keyframes energyFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+.power-section {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.power-section:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 215, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.1);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-icon {
+    font-size: 2rem;
+    margin-right: 1rem;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--creator-cosmic), var(--creator-gold));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--creator-gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.section-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    font-style: italic;
+    margin-top: 0.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-field {
+    position: relative;
+}
+
+.field-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    color: var(--creator-gold);
+    font-weight: 600;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.field-icon {
+    margin-right: 0.5rem;
+    width: 20px;
+    color: var(--creator-cosmic);
+}
+
+.cosmic-input,
+.cosmic-textarea,
+.cosmic-select {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.cosmic-input:focus,
+.cosmic-textarea:focus,
+.cosmic-select:focus {
+    outline: none;
+    border-color: var(--creator-gold);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 
+        0 0 0 2px rgba(255, 215, 0, 0.3),
+        0 5px 15px rgba(255, 215, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.cosmic-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.cosmic-select {
+    cursor: pointer;
+}
+
+.cosmic-input::placeholder,
+.cosmic-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
+.creation-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cosmic-btn {
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--creator-gold), var(--creator-cosmic));
+    color: #000;
+    box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.form-error {
+    color: var(--creator-power);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .portal-title {
+        font-size: 2.5rem;
+    }
+    
+    .creation-form {
+        padding: 2rem 1.5rem;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .creation-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="creation-portal">
+    <div class="container-fluid">
+        <!-- Portal Header -->
+        <div class="portal-header">
+            <h1 class="portal-title">
+                {% if character %}Character Evolution{% else %}Character Genesis{% endif %}
+            </h1>
+            <p class="portal-subtitle">
+                {% if character %}
+                    "Reshape the essence of {{ character.name }}"
+                {% else %}
+                    "Breathe life into a new being..."
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Creation Form Container -->
+        <div class="creation-form-container">
+            <div class="creation-form">
+                <form method="post" enctype="multipart/form-data" class="character-creation-form">
+                    {% csrf_token %}
+                    
+                    <!-- Core Identity Section -->
+                    <div class="power-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-user-astronaut"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Core Identity</h2>
+                                <p class="section-subtitle">Define the fundamental essence</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-signature"></i>
+                                    Character Name
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-crown"></i>
+                                    Role in Story
+                                </label>
+                                {{ form.role }}
+                                {% if form.role.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.role.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-calendar-alt"></i>
+                                    Age
+                                </label>
+                                {{ form.age }}
+                                {% if form.age.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.age.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Character Details -->
+                    <div class="power-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-scroll"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Character Details</h2>
+                                <p class="section-subtitle">Bring depth to your creation</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-book"></i>
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.description.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-eye"></i>
+                                    Appearance
+                                </label>
+                                {{ form.appearance }}
+                                {% if form.appearance.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.appearance.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-brain"></i>
+                                    Personality
+                                </label>
+                                {{ form.personality }}
+                                {% if form.personality.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.personality.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-history"></i>
+                                    Background
+                                </label>
+                                {{ form.background }}
+                                {% if form.background.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.background.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-bullseye"></i>
+                                    Goals
+                                </label>
+                                {{ form.goals }}
+                                {% if form.goals.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.goals.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="field-label">
+                                    <i class="field-icon fas fa-users"></i>
+                                    Relationships
+                                </label>
+                                {{ form.relationships }}
+                                {% if form.relationships.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ form.relationships.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Character Image -->
+                    <div class="power-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Visual Identity</h2>
+                                <p class="section-subtitle">How shall they appear?</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label class="field-label">
+                                <i class="field-icon fas fa-image"></i>
+                                Character Image
+                            </label>
+                            {% if character and character.image %}
+                                <div class="current-image mb-2">
+                                    <img src="{{ character.image.url }}" alt="{{ character.name }}" style="max-width: 200px; max-height: 200px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.3);">
+                                    <p class="text-muted mt-2" style="color: rgba(255, 255, 255, 0.7) !important;">Current image</p>
+                                </div>
+                            {% endif %}
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="form-error">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {{ form.image.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Creator Notes -->
+                    <div class="power-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-sticky-note"></i>
+                            </div>
+                            <div>
+                                <h2 class="section-title">Creator's Notes</h2>
+                                <p class="section-subtitle">Your personal insights</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label class="field-label">
+                                <i class="field-icon fas fa-pencil-alt"></i>
+                                Personal Notes
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="form-error">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    {{ form.notes.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Creation Actions -->
+                    <div class="creation-actions">
+                        <a href="{% if character %}{% url 'writer:character_detail' character.pk %}{% else %}{% url 'writer:character_universe' project.pk %}{% endif %}" 
+                           class="cosmic-btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Cancel
+                        </a>
+                        
+                        <button type="submit" class="cosmic-btn btn-primary">
+                            <i class="fas fa-magic"></i>
+                            {% if character %}Evolve Character{% else %}Birth Character{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply cosmic styling to form elements
+    const inputs = document.querySelectorAll('input[type="text"], input[type="number"], textarea, select');
+    inputs.forEach(input => {
+        input.classList.add('cosmic-input');
+        if (input.tagName === 'TEXTAREA') {
+            input.classList.add('cosmic-textarea');
+        }
+        if (input.tagName === 'SELECT') {
+            input.classList.add('cosmic-select');
+        }
+    });
+
+    // Add interactive effects
+    const powerSections = document.querySelectorAll('.power-section');
+    
+    powerSections.forEach(section => {
+        section.addEventListener('mouseenter', function() {
+            this.style.boxShadow = '0 15px 40px rgba(255, 215, 0, 0.15)';
+        });
+        
+        section.addEventListener('mouseleave', function() {
+            this.style.boxShadow = '';
+        });
+    });
+});
+</script>
+{% endblock %}

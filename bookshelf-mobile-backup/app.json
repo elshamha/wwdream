@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Atticus Bookshelf",
+    "slug": "atticus-bookshelf-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#667eea"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.atticuswriter.bookshelf"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#667eea"
+      },
+      "package": "com.atticuswriter.bookshelf"
+    },
+    "web": {},
+    "extra": {
+      "apiUrl": "http://192.168.0.34:8000",
+      "eas": {
+        "projectId": "e0570b63-8e60-4a5f-b17a-cd7472a84464"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}

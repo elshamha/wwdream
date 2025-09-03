@@ -97,6 +97,7 @@
         font-size: 1.5rem;
         font-weight: 500;
         margin: 0;
+        color: white;
     }
 
     .books-grid {
@@ -106,18 +107,22 @@
     }
 
     .book-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 12px;
-        padding: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border-radius: 16px;
+        padding: 24px;
         color: white;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.4s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
 
     .book-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transform: translateY(-8px);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(20px);
     }
 
     .book-title {
@@ -134,6 +139,7 @@
         margin-bottom: 10px;
         font-size: 0.85rem;
         opacity: 0.8;
+        color: white;
     }
 
     .book-description {
@@ -141,6 +147,7 @@
         opacity: 0.7;
         margin-bottom: 15px;
         line-height: 1.4;
+        color: white;
     }
 
     .book-actions {
@@ -199,29 +206,33 @@
         font-size: 0.9rem;
         opacity: 0.7;
         margin-left: 10px;
+        color: white;
     }
 
     .empty-state {
         text-align: center;
         padding: 60px 20px;
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(255, 255, 255, 0.8);
     }
 
     .empty-state i {
         font-size: 4rem;
         margin-bottom: 20px;
-        opacity: 0.3;
+        opacity: 0.4;
+        color: white;
     }
 
     .empty-state h3 {
         font-size: 1.3rem;
         margin-bottom: 10px;
         font-weight: 400;
+        color: white;
     }
 
     .empty-state p {
         font-size: 0.9rem;
-        opacity: 0.7;
+        opacity: 0.8;
+        color: white;
     }
 
     @media (max-width: 768px) {
@@ -292,8 +303,7 @@
                         {{ project.description|default:"A work in progress"|truncatewords:15 }}
                     </div>
                     <div class="book-actions">
-                        <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary">Continue Writing</a>
-                        <a href="{% url 'writer:project_detail' project.pk %}" class="btn">View Details</a>
+                        <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn">Open Project</a>
                         <button class="btn" onclick="shareBook({{ project.pk }}, '{{ project.title|escapejs }}')">
                             <i class="fas fa-share me-1"></i>Share
                         </button>
@@ -337,8 +347,7 @@
                         {{ project.description|default:"A work in progress"|truncatewords:15 }}
                     </div>
                     <div class="book-actions">
-                        <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary">Continue Writing</a>
-                        <a href="{% url 'writer:project_detail' project.pk %}" class="btn">View Details</a>
+                        <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn">Open Project</a>
                         <button class="btn" onclick="shareBook({{ project.pk }}, '{{ project.title|escapejs }}')">
                             <i class="fas fa-share me-1"></i>Share
                         </button>
@@ -389,7 +398,7 @@
                         {{ document.content|truncatewords:15|default:"A document waiting to be filled with your words" }}
                     </div>
                     <div class="book-actions">
-                        <a href="{% url 'writer:document_detail' document.pk %}" class="btn btn-primary">Open</a>
+                        <a href="{% url 'writer:google_docs_editor_document' document.pk %}" class="btn btn-primary">Open</a>
                         <a href="{% url 'writer:document_update' document.pk %}" class="btn">Edit</a>
                     </div>
                 </div>
@@ -473,15 +482,16 @@ function shareBook(projectId, projectTitle) {
     
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 20px;
         padding: 2rem;
         max-width: 500px;
         width: 90%;
         color: white;
         text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     `;
     
     modalContent.innerHTML = `

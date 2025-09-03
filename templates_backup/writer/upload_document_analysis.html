@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Document - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3><i class="fas fa-upload text-primary"></i> Upload Document for Chapter Analysis</h3>
+                    <p class="text-muted mb-0">Upload a document to automatically extract and organize chapters</p>
+                </div>
+                <div class="card-body">
+                    <div class="upload-section">
+                        <div class="upload-dropzone" id="upload-dropzone">
+                            <div class="upload-content">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                <h5>Drop your document here or click to browse</h5>
+                                <p class="text-muted">Supported formats: PDF, DOCX, TXT, HTML</p>
+                                <input type="file" id="file-input" class="d-none" accept=".pdf,.docx,.doc,.txt,.html,.htm">
+                                <button type="button" class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                                    <i class="fas fa-folder-open"></i> Choose File
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-progress d-none" id="upload-progress">
+                            <div class="progress mb-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-text text-center">
+                                <span id="progress-status">Uploading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-options mt-4">
+                        <h6><i class="fas fa-cog"></i> Analysis Options</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="detect-h1-titles" checked>
+                                    <label class="form-check-label" for="detect-h1-titles">
+                                        Detect H1 as Titles
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="detect-h2-chapters" checked>
+                                    <label class="form-check-label" for="detect-h2-chapters">
+                                        Detect H2 as Chapters
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="auto-split-long" checked>
+                                    <label class="form-check-label" for="auto-split-long">
+                                        Auto-split long content (4k sentences)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="detect-patterns" checked>
+                                    <label class="form-check-label" for="detect-patterns">
+                                        Detect "Chapter X" patterns
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-selection mt-4">
+                        <label for="target-project" class="form-label">
+                            <i class="fas fa-project-diagram"></i> Target Project
+                        </label>
+                        <select class="form-select" id="target-project">
+                            {% for project in user_projects %}
+                                <option value="{{ project.id }}" style="color: #ffffff !important;">{{ project.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Results -->
+            <div class="card mt-4 d-none" id="analysis-results">
+                <div class="card-header">
+                    <h5><i class="fas fa-list-alt text-success"></i> Analysis Results</h5>
+                </div>
+                <div class="card-body">
+                    <div id="chapters-preview"></div>
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-success" id="import-chapters">
+                            <i class="fas fa-check"></i> Import Chapters
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="location.reload()">
+                            <i class="fas fa-redo"></i> Upload Another Document
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-dropzone {
+    border: 2px dashed #dadce0;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-dropzone:hover {
+    border-color: #1a73e8;
+    background: #e8f0fe;
+}
+
+.upload-dropzone.dragover {
+    border-color: #1a73e8;
+    background: #e8f0fe;
+}
+
+.chapter-preview {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 8px 0;
+    background: #f9f9f9;
+}
+
+.chapter-preview h6 {
+    color: #1a73e8;
+    margin-bottom: 8px;
+}
+
+.chapter-content-preview {
+    font-size: 14px;
+    color: #666;
+    max-height: 100px;
+    overflow: hidden;
+    position: relative;
+}
+
+.chapter-content-preview::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(transparent, #f9f9f9);
+}
+
+.analysis-stats {
+    background: #e8f5e8;
+    border: 1px solid #d4edda;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropzone = document.getElementById('upload-dropzone');
+    const fileInput = document.getElementById('file-input');
+    const progressSection = document.getElementById('upload-progress');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressStatus = document.getElementById('progress-status');
+    const analysisResults = document.getElementById('analysis-results');
+    const chaptersPreview = document.getElementById('chapters-preview');
+    
+    let uploadedContent = '';
+    let currentAnalysisData = null;
+    let currentContent = null;
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Dropzone events
+    dropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+    
+    dropzone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+    });
+    
+    dropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+    
+    dropzone.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            handleFile(this.files[0]);
+        }
+    });
+    
+    function handleFile(file) {
+        progressSection.classList.remove('d-none');
+        dropzone.classList.add('d-none');
+        
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+        
+        progressBar.style.width = '20%';
+        progressStatus.textContent = 'Uploading file...';
+        
+        // Send file to backend for analysis
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                progressBar.style.width = '100%';
+                progressStatus.textContent = 'Analysis complete!';
+                
+                // Store the analysis data
+                currentAnalysisData = data.analysis;
+                currentContent = data.full_content;
+                
+                // Display results
+                displayAnalysisResults(data.analysis);
+                progressSection.classList.add('d-none');
+                analysisResults.classList.remove('d-none');
+            } else {
+                progressStatus.textContent = 'Upload failed: ' + data.error;
+                progressBar.classList.add('bg-danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            progressStatus.textContent = 'Upload failed: ' + error.message;
+            progressBar.classList.add('bg-danger');
+        });
+    }
+    
+    function displayAnalysisResults(analysis) {
+        // Update chapters preview with analysis results
+        let chaptersHtml = '<div class="analysis-summary mb-4">';
+        chaptersHtml += '<div class="row text-center">';
+        chaptersHtml += `<div class="col-4"><div class="h4 text-primary">${analysis.titles.length}</div><small>Titles Found</small></div>`;
+        chaptersHtml += `<div class="col-4"><div class="h4 text-success">${analysis.chapters.length}</div><small>Chapters Detected</small></div>`;
+        chaptersHtml += `<div class="col-4"><div class="h4 text-info">${analysis.total_sentences}</div><small>Total Sentences</small></div>`;
+        chaptersHtml += '</div></div>';
+        
+        if (analysis.chapters.length > 0) {
+            chaptersHtml += '<h6><i class="fas fa-bookmark"></i> Detected Chapters:</h6>';
+            analysis.chapters.forEach((chapter, index) => {
+                chaptersHtml += `
+                    <div class="chapter-preview border rounded p-3 mb-2">
+                        <strong>Chapter ${index + 1}:</strong> ${chapter.text}
+                        <small class="text-muted d-block">Found at position: ${chapter.position}</small>
+                    </div>
+                `;
+            });
+        } else if (analysis.suggested_splits.length > 0) {
+            chaptersHtml += '<div class="alert alert-info"><i class="fas fa-info-circle"></i> No chapter headings detected, but document is long enough for automatic splits:</div>';
+            analysis.suggested_splits.forEach((split, index) => {
+                chaptersHtml += `
+                    <div class="chapter-preview border rounded p-3 mb-2">
+                        <strong>${split.chapter_name}</strong>
+                        <small class="text-muted d-block">Auto-split after ~${split.sentence_count} sentences</small>
+                    </div>
+                `;
+            });
+        } else {
+            chaptersHtml += '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Document will be imported as a single chapter.</div>';
+        }
+        
+        chaptersPreview.innerHTML = chaptersHtml;
+        
+        // Update the import button to create a new project
+        const importBtn = document.getElementById('import-chapters');
+        importBtn.innerHTML = '<i class="fas fa-plus"></i> Create New Project';
+        importBtn.onclick = function() {
+            createProjectFromAnalysis();
+        };
+    }
+    
+    function createProjectFromAnalysis() {
+        if (!currentAnalysisData || !currentContent) {
+            alert('No analysis data available');
+            return;
+        }
+        
+        const projectTitle = prompt('Enter project title:', 
+            currentAnalysisData.titles.length > 0 ? currentAnalysisData.titles[0].text : 'Imported Document'
+        );
+        
+        if (!projectTitle) return;
+        
+        // Create form data for project creation
+        const formData = new FormData();
+        formData.append('create_project', '1');
+        formData.append('project_title', projectTitle);
+        formData.append('content', currentContent);
+        formData.append('analysis', JSON.stringify(currentAnalysisData));
+        formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+        
+        // Send to backend
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.redirected) {
+                // Success - redirect to project editor
+                window.location.href = response.url;
+            } else {
+                return response.text();
+            }
+        })
+        .then(data => {
+            if (data) {
+                console.log('Response:', data);
+                alert('Project created successfully!');
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating project: ' + error.message);
+        });
+    }
+    
+    function analyzeDocument(content, filename) {
+        // Simulate document analysis
+        const projectId = document.getElementById('target-project').value;
+        
+        fetch(`/writer/projects/${projectId}/editor/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                action: 'analyze_uploaded_document',
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAnalysisResults(data.chapters);
+                progressSection.classList.add('d-none');
+                analysisResults.classList.remove('d-none');
+            } else {
+                progressStatus.textContent = 'Analysis failed: ' + data.error;
+                progressBar.classList.add('bg-danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            progressStatus.textContent = 'Analysis failed';
+            progressBar.classList.add('bg-danger');
+        });
+    }
+    
+    function displayAnalysisResults(chapters) {
+        const statsHtml = `
+            <div class="analysis-stats">
+                <h6><i class="fas fa-chart-bar"></i> Analysis Summary</h6>
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <strong>${chapters.length}</strong><br>
+                        <small>Chapters Detected</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <strong>${chapters.reduce((sum, ch) => sum + ch.content.length, 0).toLocaleString()}</strong><br>
+                        <small>Total Characters</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <strong>${Math.round(chapters.reduce((sum, ch) => sum + ch.content.split(' ').length, 0))}</strong><br>
+                        <small>Estimated Words</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const chaptersHtml = chapters.map((chapter, index) => `
+            <div class="chapter-preview">
+                <h6><i class="fas fa-bookmark"></i> ${chapter.title}</h6>
+                <div class="chapter-content-preview">
+                    ${chapter.content.substring(0, 200)}...
+                </div>
+                <small class="text-muted">
+                    ~${chapter.content.split(' ').length} words
+                </small>
+            </div>
+        `).join('');
+        
+        chaptersPreview.innerHTML = statsHtml + chaptersHtml;
+        
+        // Store chapters data for import
+        window.analyzedChapters = chapters;
+    }
+    
+    document.getElementById('import-chapters').addEventListener('click', function() {
+        const projectId = document.getElementById('target-project').value;
+        window.location.href = `/writer/projects/${projectId}/editor/`;
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

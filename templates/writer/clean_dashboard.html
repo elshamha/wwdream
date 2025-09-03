@@ -34,28 +34,76 @@
         <section class="quick-actions-section">
             <h2 class="section-title">Quick Start</h2>
             <div class="action-grid">
-                <a href="{% url 'modern_editor' %}" class="action-card primary">
+                <a href="{% url 'writer:google_docs_editor' %}" class="action-card primary">
                     <div class="action-icon">✍️</div>
                     <h3>Start Writing</h3>
                     <p>Jump into the modern editor and start creating</p>
                 </a>
                 
-                <a href="{% url 'creativity_workshop' %}" class="action-card">
+                <a href="{% url 'writer:creativity_workshop' %}" class="action-card">
                     <div class="action-icon">✨</div>
                     <h3>Creative Workshop</h3>
                     <p>Get inspired with AI-powered writing exercises</p>
                 </a>
                 
-                <a href="{% url 'project_create' %}" class="action-card">
+                <a href="{% url 'writer:poetry_workshop' %}" class="action-card">
+                    <div class="action-icon">🎭</div>
+                    <h3>Poetry Workshop</h3>
+                    <p>Transform any text into beautiful poetry</p>
+                </a>
+                
+                <a href="{% url 'writer:book_formatter' %}" class="action-card">
+                    <div class="action-icon">📖</div>
+                    <h3>Book Formatter</h3>
+                    <p>50+ professional themes for beautiful books</p>
+                </a>
+                
+                <a href="{% url 'writer:cover_designer' %}" class="action-card">
+                    <div class="action-icon">🎨</div>
+                    <h3>Cover Designer</h3>
+                    <p>Create stunning book covers with 40+ templates</p>
+                </a>
+                
+                <a href="{% url 'writer:project_create' %}" class="action-card">
                     <div class="action-icon">📝</div>
                     <h3>New Project</h3>
                     <p>Start a new writing project or novel</p>
                 </a>
                 
-                <a href="{% url 'personal_library' %}" class="action-card">
+                <a href="{% url 'writer:personal_library' %}" class="action-card">
                     <div class="action-icon">📚</div>
                     <h3>Library</h3>
                     <p>Browse your collection and research materials</p>
+                </a>
+
+                <a href="{% url 'writer:media_library' %}" class="action-card">
+                    <div class="action-icon">🎬</div>
+                    <h3>Media Library</h3>
+                    <p>Upload and manage your files, videos, and images</p>
+                </a>
+                
+                <a href="{% url 'writer:ultimate_dashboard' %}" class="action-card">
+                    <div class="action-icon">🌟</div>
+                    <h3>Ultimate Dashboard</h3>
+                    <p>The most beautiful writing platform experience</p>
+                </a>
+                
+                <a href="{% url 'writer:ultimate_library' %}" class="action-card">
+                    <div class="action-icon">🏛️</div>
+                    <h3>Ultimate Library</h3>
+                    <p>Ethereal library with advanced research tools</p>
+                </a>
+                
+                <a href="{% url 'writer:ultimate_workshop' %}" class="action-card">
+                    <div class="action-icon">🔮</div>
+                    <h3>Ultimate Workshop</h3>
+                    <p>Advanced AI-powered creative workspace</p>
+                </a>
+                
+                <a href="{% url 'writer:ai_playground' %}" class="action-card">
+                    <div class="action-icon">🤖</div>
+                    <h3>AI Playground</h3>
+                    <p>Experiment with powerful AI writing tools</p>
                 </a>
             </div>
         </section>
@@ -63,7 +111,7 @@
         <!-- Current Projects -->
         <section class="projects-section">
             <div class="section-header">
-                <h2 class="section-title">Your Projects</h2>
+                <h2 class="section-title projects-section-title">📚 My Writing Projects</h2>
                 <a href="{% url 'project_create' %}" class="section-action">+ New Project</a>
             </div>
             
@@ -75,7 +123,7 @@
                         <div class="project-menu">
                             <button class="menu-btn" onclick="toggleProjectMenu({{ project.id }})">⋯</button>
                             <div class="project-menu-dropdown" id="menu-{{ project.id }}">
-                                <a href="{% url 'project_detail' project.id %}">View Details</a>
+                                <a href="{% url 'writer:ultimate_dashboard' %}">Ultimate Dashboard</a>
                                 <a href="{% url 'modern_editor' %}?project={{ project.id }}">Open in Editor</a>
                                 <a href="{% url 'project_edit' project.id %}">Edit Project</a>
                                 <button onclick="deleteProject({{ project.id }})">Delete</button>
@@ -453,7 +501,11 @@
     margin: 0;
 }
 
-/* Projects */
+/* Projects - Theme Aware */
+.projects-section-title {
+    color: white !important;
+}
+
 .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -462,12 +514,35 @@
 }
 
 .project-card {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: transparent;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 15px;
     padding: 1.5rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Theme-aware project card text colors */
+body[data-theme] .project-card {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body[data-theme] .project-title {
+    color: white !important;
+}
+
+body[data-theme] .project-description {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+body[data-theme] .project-stats .stat-value {
+    color: #ffd700 !important;
+}
+
+body[data-theme] .project-stats .stat-text {
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .project-card:hover {
@@ -485,7 +560,7 @@
 .project-title {
     font-size: 1.3rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: white;
     margin: 0;
 }
 
@@ -545,7 +620,7 @@
 }
 
 .project-description {
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.8);
     line-height: 1.5;
     margin-bottom: 1.5rem;
 }
@@ -564,12 +639,12 @@
     display: block;
     font-size: 1.2rem;
     font-weight: 600;
-    color: #667eea;
+    color: #ffd700;
 }
 
 .stat-text {
     font-size: 0.8rem;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .project-progress {
@@ -608,23 +683,29 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
     color: white;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.8);
 }
 
 .btn-secondary {
     background: transparent;
-    color: #667eea;
-    border: 1px solid #667eea;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover {
-    background: #667eea;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
     color: white;
 }
 
@@ -635,12 +716,15 @@
 
 .btn-outline {
     background: transparent;
-    border: 1px solid #e2e8f0;
-    color: #64748b;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
 }
 
 .btn-outline:hover {
-    background: #f8fafc;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
 }
 
 /* Chapters */

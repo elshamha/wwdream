@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Imported Document - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container mla-format">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:personal_library' %}">Personal Library</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'writer:import_detail' object.pk %}">{{ object.title|truncatechars:30 }}</a></li>
+                    <li class="breadcrumb-item active">Delete</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Delete Imported Document
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-warning"></i> Warning!
+                        </h5>
+                        <p class="mb-0">
+                            You are about to permanently delete the imported document 
+                            <strong>"{{ object.title }}"</strong>.
+                        </p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Document Details:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Title:</strong> {{ object.title }}</li>
+                                <li><strong>Type:</strong> {{ object.import_type|upper }}</li>
+                                <li><strong>Size:</strong> {{ object.file_size|filesizeformat }}</li>
+                                <li><strong>Imported:</strong> {{ object.created_at|date:"F d, Y" }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">What will be deleted:</h6>
+                            <ul class="list-unstyled text-danger">
+                                <li><i class="fas fa-times"></i> Original uploaded file</li>
+                                <li><i class="fas fa-times"></i> Extracted content</li>
+                                <li><i class="fas fa-times"></i> Import metadata</li>
+                                <li><i class="fas fa-times"></i> Analysis results</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-light p-3 rounded mb-4">
+                        <h6 class="text-warning">
+                            <i class="fas fa-info-circle"></i> Important Note:
+                        </h6>
+                        <p class="mb-0 small text-muted">
+                            This action cannot be undone. If you have converted this import into 
+                            projects or documents, those will remain unaffected. Only the original 
+                            import record and files will be deleted.
+                        </p>
+                    </div>
+
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'writer:import_detail' object.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <div>
+                                <a href="{% url 'writer:personal_library' %}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-home"></i> Back to Library
+                                </a>
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure? This cannot be undone.')">
+                                    <i class="fas fa-trash"></i> Delete Permanently
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if object.extracted_content %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-eye text-info"></i> Preview of Content to be Deleted</h5>
+                </div>
+                <div class="card-body">
+                    <div class="content-preview bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                        {{ object.extracted_content|striptags|truncatewords:100|linebreaks }}
+                    </div>
+                    <small class="text-muted">
+                        Showing first 100 words of {{ object.extracted_content|wordcount }} total words
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* MLA Format Styling for delete confirmation */
+.mla-format {
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 1in 1in 1in 1.25in;
+    min-height: 11in;
+    font-family: 'Inter', 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 2.0;
+    color: #FFFFFF !important;
+}
+
+.container.mla-format {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Enhanced card styling */
+.card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.15),
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+    background: rgba(220, 53, 69, 0.2);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px 12px 0 0;
+}
+
+.alert-danger {
+    background: rgba(220, 53, 69, 0.15);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: #FFFFFF !important;
+}
+
+.bg-light {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.content-preview {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #FFFFFF !important;
+}
+
+.breadcrumb {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+}
+
+.breadcrumb-item a {
+    color: #3399FF;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: #8B5CF6;
+}
+
+.breadcrumb-item.active {
+    color: #FFFFFF !important;
+}
+
+/* Override all text to be white */
+* {
+    color: #FFFFFF !important;
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.text-danger {
+    color: #ff6b6b !important;
+}
+
+.text-warning {
+    color: #ffd93d !important;
+}
+
+.text-info {
+    color: #74c0fc !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF !important;
+    text-shadow: 0 0 5px rgba(0, 191, 255, 0.2);
+}
+
+/* Button styling */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.fa, .fas {
+    filter: drop-shadow(0 0 3px rgba(0, 191, 255, 0.3));
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .mla-format {
+        padding: 0.5in;
+        font-size: 11pt;
+        line-height: 1.8;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex.justify-content-between > div {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+}
+
+@media print {
+    .mla-format {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
+    .mla-format * {
+        color: black !important;
+        text-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}

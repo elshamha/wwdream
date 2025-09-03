@@ -1,0 +1,1141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atticus Personal Library - A Writer's Haven</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #f97316;
+            --accent-color: #8b5cf6;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --text-accent: #475569;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .library-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Header Section */
+        .library-header {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .header-content {
+            padding: 32px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .library-title-section {
+            flex: 1;
+        }
+
+        .library-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .library-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: var(--bg-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .toggle-btn {
+            padding: 10px 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .toggle-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .toggle-btn:hover:not(.active) {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .sort-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Library Grid */
+        .library-content {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+        }
+
+        .content-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .collection-stats {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .projects-grid {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .projects-list {
+            padding: 0;
+            display: none;
+        }
+
+        .projects-list.active {
+            display: block;
+        }
+
+        .projects-grid.active {
+            display: grid;
+        }
+
+        /* Project Card */
+        .project-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: var(--transition);
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--border-hover);
+        }
+
+        .project-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .project-info {
+            flex: 1;
+        }
+
+        .project-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .project-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .project-genre {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .project-status {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .status-active {
+            color: var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .status-draft {
+            color: var(--warning-color);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .status-completed {
+            color: var(--accent-color);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .project-card:hover .project-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--bg-primary);
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            color: var(--text-primary);
+            background: var(--border-color);
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .project-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-icon {
+            color: var(--text-muted);
+            width: 16px;
+        }
+
+        .stat-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .project-progress {
+            margin-bottom: 12px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .progress-percentage {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+
+        .project-footer {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .last-modified {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* List View */
+        .project-list-item {
+            display: flex;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .project-list-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .project-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-info {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 2fr 1fr 120px 80px 100px;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .list-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .list-description {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .list-stats {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .list-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .list-progress-bar {
+            width: 60px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .list-progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .list-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .project-list-item:hover .list-actions {
+            opacity: 1;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .empty-description {
+            font-size: 16px;
+            margin-bottom: 32px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .empty-action {
+            padding: 12px 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .empty-action:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .projects-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .library-container {
+                padding: 12px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                padding: 24px;
+            }
+            
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .search-container {
+                min-width: auto;
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                justify-content: space-between;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+                padding: 16px;
+            }
+            
+            .project-card {
+                padding: 20px;
+            }
+            
+            .list-info {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .list-stats {
+                justify-content: space-between;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .project-card {
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .project-card:nth-child(2) { animation-delay: 0.1s; }
+        .project-card:nth-child(3) { animation-delay: 0.2s; }
+        .project-card:nth-child(4) { animation-delay: 0.3s; }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="library-container">
+        <!-- Header -->
+        <header class="library-header">
+            <div class="header-content">
+                <div class="library-title-section">
+                    <h1 class="library-title">Your Personal Library</h1>
+                    <p class="library-subtitle">A curated collection of your literary works</p>
+                </div>
+                <div class="header-controls">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search your library..." id="searchInput">
+                    </div>
+                    <div class="view-toggle">
+                        <button class="toggle-btn active" data-view="grid" onclick="switchView('grid')">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="toggle-btn" data-view="list" onclick="switchView('list')">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                <div class="filter-group">
+                    <span class="filter-label">Genre:</span>
+                    <select class="filter-select" id="genreFilter">
+                        <option value="all">All Genres</option>
+                        <option value="fiction">Fiction</option>
+                        <option value="non-fiction">Non-Fiction</option>
+                        <option value="romance">Romance</option>
+                        <option value="thriller">Thriller</option>
+                        <option value="sci-fi">Science Fiction</option>
+                        <option value="fantasy">Fantasy</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <span class="filter-label">Status:</span>
+                    <select class="filter-select" id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <span class="filter-label">Sort by:</span>
+                    <select class="filter-select" id="sortBy">
+                        <option value="modified">Last Modified</option>
+                        <option value="created">Date Created</option>
+                        <option value="title">Title A-Z</option>
+                        <option value="words">Word Count</option>
+                        <option value="progress">Progress</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="sort-info">
+                <i class="fas fa-info-circle"></i>
+                <span id="sortInfo">Showing all projects, sorted by last modified</span>
+            </div>
+        </div>
+
+        <!-- Library Content -->
+        <div class="library-content">
+            <div class="content-header">
+                <h2 class="content-title">
+                    <i class="fas fa-bookmark"></i>
+                    Your Collection
+                </h2>
+                <div class="collection-stats" id="collectionStats">
+                    12 projects • 245,670 words total
+                </div>
+            </div>
+            
+            <!-- Grid View -->
+            <div class="projects-grid active" id="gridView">
+                <!-- Projects will be loaded here -->
+            </div>
+            
+            <!-- List View -->
+            <div class="projects-list" id="listView">
+                <!-- List items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample project data with perfect text contrast
+        const projects = [
+            {
+                id: 1,
+                title: "The Digital Renaissance",
+                description: "An exploration of how technology transforms human creativity and connection in the 22nd century.",
+                genre: "Science Fiction",
+                status: "active",
+                wordCount: 67890,
+                targetWords: 85000,
+                chapters: 15,
+                lastModified: "2 hours ago",
+                created: "2023-10-15",
+                progress: 80,
+                rating: 4.5
+            },
+            {
+                id: 2,
+                title: "Whispers in the Garden",
+                description: "A tale of forbidden love and political intrigue set in Victorian England's most prestigious estate.",
+                genre: "Historical Romance",
+                status: "draft",
+                wordCount: 23450,
+                targetWords: 65000,
+                chapters: 8,
+                lastModified: "1 day ago",
+                created: "2023-11-02",
+                progress: 36,
+                rating: 4.2
+            },
+            {
+                id: 3,
+                title: "The Memory Thief",
+                description: "A psychological thriller following a detective who discovers she can steal and manipulate memories.",
+                genre: "Thriller",
+                status: "active",
+                wordCount: 45210,
+                targetWords: 75000,
+                chapters: 12,
+                lastModified: "3 days ago",
+                created: "2023-09-20",
+                progress: 60,
+                rating: 4.7
+            },
+            {
+                id: 4,
+                title: "Chronicles of Aethermoor",
+                description: "An epic fantasy saga spanning multiple realms where magic and technology collide.",
+                genre: "Fantasy",
+                status: "completed",
+                wordCount: 120000,
+                targetWords: 120000,
+                chapters: 24,
+                lastModified: "1 week ago",
+                created: "2023-06-10",
+                progress: 100,
+                rating: 4.9
+            },
+            {
+                id: 5,
+                title: "Midnight in Silicon Valley",
+                description: "A contemporary fiction piece exploring startup culture and the human cost of innovation.",
+                genre: "Fiction",
+                status: "active",
+                wordCount: 38700,
+                targetWords: 70000,
+                chapters: 9,
+                lastModified: "5 days ago",
+                created: "2023-11-15",
+                progress: 55,
+                rating: 4.3
+            }
+        ];
+
+        let filteredProjects = [...projects];
+        let currentView = 'grid';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProjects();
+            setupEventListeners();
+            updateStats();
+        });
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase();
+                filteredProjects = projects.filter(project => 
+                    project.title.toLowerCase().includes(query) ||
+                    project.description.toLowerCase().includes(query) ||
+                    project.genre.toLowerCase().includes(query)
+                );
+                renderProjects();
+                updateStats();
+            });
+
+            // Filter listeners
+            document.getElementById('genreFilter').addEventListener('change', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('sortBy').addEventListener('change', applyFilters);
+        }
+
+        function applyFilters() {
+            const genreFilter = document.getElementById('genreFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            // Apply filters
+            filteredProjects = projects.filter(project => {
+                const matchesGenre = genreFilter === 'all' || 
+                    project.genre.toLowerCase().includes(genreFilter.toLowerCase());
+                const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+                return matchesGenre && matchesStatus;
+            });
+
+            // Apply sorting
+            filteredProjects.sort((a, b) => {
+                switch(sortBy) {
+                    case 'title':
+                        return a.title.localeCompare(b.title);
+                    case 'words':
+                        return b.wordCount - a.wordCount;
+                    case 'progress':
+                        return b.progress - a.progress;
+                    case 'created':
+                        return new Date(b.created) - new Date(a.created);
+                    default: // modified
+                        return a.lastModified.localeCompare(b.lastModified);
+                }
+            });
+
+            renderProjects();
+            updateStats();
+            updateSortInfo();
+        }
+
+        function renderProjects() {
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView');
+            
+            if (filteredProjects.length === 0) {
+                const emptyState = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <div class="empty-title">No projects found</div>
+                        <div class="empty-description">
+                            ${projects.length === 0 ? 
+                                "Start your writing journey by creating your first project" : 
+                                "Try adjusting your search or filter criteria"
+                            }
+                        </div>
+                        <a href="{% url 'writer:google_docs_editor' %}" class="empty-action">
+                            <i class="fas fa-plus"></i>
+                            Create New Project
+                        </a>
+                    </div>
+                `;
+                gridView.innerHTML = emptyState;
+                listView.innerHTML = '';
+                return;
+            }
+
+            // Render grid view
+            gridView.innerHTML = filteredProjects.map((project, index) => `
+                <div class="project-card" onclick="openProject(${project.id})" style="animation-delay: ${index * 0.1}s">
+                    <div class="card-header">
+                        <div class="project-info">
+                            <h3 class="project-title">${project.title}</h3>
+                            <div class="project-meta">
+                                <span class="project-genre">${project.genre}</span>
+                                <span class="project-status status-${project.status}">${capitalizeFirst(project.status)}</span>
+                            </div>
+                        </div>
+                        <div class="project-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); editProject(${project.id})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); shareProject(${project.id})" title="Share">
+                                <i class="fas fa-share"></i>
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); moreActions(${project.id})" title="More">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <p class="project-description">${project.description}</p>
+                    
+                    <div class="project-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-file-alt stat-icon"></i>
+                            <span class="stat-value">${project.chapters}</span> chapters
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-feather-alt stat-icon"></i>
+                            <span class="stat-value">${project.wordCount.toLocaleString()}</span> words
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-clock stat-icon"></i>
+                            <span class="stat-value">${project.lastModified}</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-star stat-icon"></i>
+                            <span class="stat-value">${project.rating}</span> rating
+                        </div>
+                    </div>
+                    
+                    <div class="project-progress">
+                        <div class="progress-header">
+                            <span class="progress-label">Progress</span>
+                            <span class="progress-percentage">${project.progress}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${project.progress}%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="project-footer">
+                        <span class="last-modified">Modified ${project.lastModified}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render list view
+            listView.innerHTML = filteredProjects.map(project => `
+                <div class="project-list-item" onclick="openProject(${project.id})">
+                    <div class="list-info">
+                        <div>
+                            <div class="list-title">${project.title}</div>
+                            <div class="list-description">${project.description.substring(0, 80)}...</div>
+                        </div>
+                        <div class="list-stats">
+                            <span><i class="fas fa-file-alt"></i> ${project.chapters} chapters</span>
+                            <span><i class="fas fa-feather-alt"></i> ${project.wordCount.toLocaleString()} words</span>
+                        </div>
+                        <div class="list-progress">
+                            <span>${project.progress}%</span>
+                            <div class="list-progress-bar">
+                                <div class="list-progress-fill" style="width: ${project.progress}%;"></div>
+                            </div>
+                        </div>
+                        <span class="project-status status-${project.status}">${capitalizeFirst(project.status)}</span>
+                        <span class="last-modified">${project.lastModified}</span>
+                    </div>
+                    <div class="list-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); editProject(${project.id})" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn" onclick="event.stopPropagation(); shareProject(${project.id})" title="Share">
+                            <i class="fas fa-share"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchView(view) {
+            currentView = view;
+            
+            // Update button states
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-view="${view}"]`).classList.add('active');
+            
+            // Toggle views
+            document.getElementById('gridView').classList.toggle('active', view === 'grid');
+            document.getElementById('listView').classList.toggle('active', view === 'list');
+        }
+
+        function updateStats() {
+            const totalProjects = filteredProjects.length;
+            const totalWords = filteredProjects.reduce((sum, project) => sum + project.wordCount, 0);
+            
+            document.getElementById('collectionStats').textContent = 
+                `${totalProjects} project${totalProjects !== 1 ? 's' : ''} • ${totalWords.toLocaleString()} words total`;
+        }
+
+        function updateSortInfo() {
+            const genreFilter = document.getElementById('genreFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            let info = 'Showing ';
+            
+            if (genreFilter !== 'all' || statusFilter !== 'all') {
+                info += 'filtered ';
+            } else {
+                info += 'all ';
+            }
+            
+            info += 'projects, sorted by ';
+            
+            switch(sortBy) {
+                case 'title':
+                    info += 'title';
+                    break;
+                case 'words':
+                    info += 'word count';
+                    break;
+                case 'progress':
+                    info += 'progress';
+                    break;
+                case 'created':
+                    info += 'date created';
+                    break;
+                default:
+                    info += 'last modified';
+            }
+            
+            document.getElementById('sortInfo').textContent = info;
+        }
+
+        function openProject(projectId) {
+            window.location.href = `{% url 'writer:google_docs_editor' %}?project=${projectId}`;
+        }
+
+        function editProject(projectId) {
+            console.log('Editing project:', projectId);
+            // In real app, this would navigate to edit page
+        }
+
+        function shareProject(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            console.log('Sharing project:', project.title);
+            // In real app, this would show share modal
+        }
+
+        function moreActions(projectId) {
+            console.log('More actions for project:', projectId);
+            // In real app, this would show context menu
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Initialize with proper text visibility
+        updateStats();
+        updateSortInfo();
+    </script>
+</body>
+</html>

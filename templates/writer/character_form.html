@@ -21,15 +21,15 @@
                 </ol>
             </nav>
 
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="mb-0">
-                        <i class="fas fa-user-plus text-primary"></i>
+            <div class="card" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div class="card-header" style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                    <h2 class="mb-0" style="color: #ffffff;">
+                        <i class="fas fa-user-plus" style="color: #667eea;"></i>
                         {% if character %}Edit Character: {{ character.name }}{% else %}Add New Character{% endif %}
                     </h2>
                 </div>
-                <div class="card-body">
-                    <form method="post" class="character-form">
+                <div class="card-body" style="background: transparent;">
+                    <form method="post" class="character-form" enctype="multipart/form-data">
                         {% csrf_token %}
                         
                         <!-- Basic Information Section -->
@@ -63,6 +63,29 @@
                                         {% endif %}
                                         {% if form.role.errors %}
                                             <div class="text-danger">{{ form.role.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.image.id_for_label }}" class="form-label">
+                                            <i class="fas fa-image"></i> Character Image
+                                        </label>
+                                        {% if character and character.image %}
+                                            <div class="current-image mb-2">
+                                                <img src="{{ character.image.url }}" alt="{{ character.name }}" style="max-width: 200px; max-height: 200px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.3);">
+                                                <p class="text-muted mt-2" style="color: rgba(255, 255, 255, 0.7);">Current image</p>
+                                            </div>
+                                        {% endif %}
+                                        {{ form.image }}
+                                        {% if form.image.help_text %}
+                                            <div class="form-text" style="color: rgba(255, 255, 255, 0.7);">{{ form.image.help_text }}</div>
+                                        {% endif %}
+                                        {% if form.image.errors %}
+                                            <div class="text-danger">{{ form.image.errors }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -246,22 +269,23 @@
 }
 
 .form-section {
-    border: 1px solid #e9ecef;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
     padding: 20px;
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .section-title {
-    color: #495057;
+    color: #ffffff;
     margin-bottom: 15px;
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
     padding-bottom: 8px;
 }
 
 .form-label {
     font-weight: 600;
-    color: #495057;
+    color: #ffffff;
     margin-bottom: 8px;
 }
 
@@ -277,12 +301,46 @@
 .form-actions {
     margin-top: 30px;
     padding-top: 20px;
-    border-top: 2px solid #dee2e6;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 textarea.form-control {
     min-height: 100px;
     resize: vertical;
+}
+
+/* Custom file input styling */
+input[type="file"].form-control {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 8px 12px;
+}
+
+input[type="file"].form-control:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+input[type="file"].form-control::file-selector-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+input[type="file"].form-control::file-selector-button:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.current-image {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
 }
 </style>
 {% endblock %}

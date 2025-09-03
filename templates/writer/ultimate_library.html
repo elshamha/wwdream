@@ -697,6 +697,414 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Collaboration Styles */
+        .collaboration-stat {
+            color: var(--success-color);
+        }
+
+        .collaboration-stat .stat-icon {
+            color: var(--success-color);
+        }
+
+        .collaborators-section {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .collaborator-avatars {
+            display: flex;
+            align-items: center;
+            gap: -4px;
+        }
+
+        .collaborator-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: -4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .collaborator-avatar:first-child {
+            margin-left: 0;
+        }
+
+        .collaborator-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .collaborator-avatar span {
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .collaborator-count {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: -4px;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .collaboration-status {
+            font-size: 11px;
+            color: var(--success-color);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .collaboration-pulse {
+            font-size: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary);
+            margin: 5% auto;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+        }
+
+        .close {
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .close:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+
+        .modal-body {
+            padding: 24px 32px;
+        }
+
+        .project-info-section {
+            margin-bottom: 24px;
+        }
+
+        .project-info-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .collaboration-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+        }
+
+        .input-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .help-text {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .collaborator-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .collaborator-item:last-child {
+            border-bottom: none;
+        }
+
+        .collaborator-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal .collaborator-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            margin-left: 0;
+            border: none;
+        }
+
+        .collaborator-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .collaborator-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .collaborator-email {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .collaborator-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .permission-select {
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+            background: white;
+        }
+
+        .btn-remove {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: var(--error-color);
+            color: white;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: var(--transition);
+        }
+
+        .btn-remove:hover {
+            background: #dc2626;
+        }
+
+        .share-link-section {
+            space-y: 16px;
+        }
+
+        .link-settings {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 32px 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
     </style>
 </head>
 <body>
@@ -795,77 +1203,26 @@
 
     <script>
         // Sample project data with perfect text contrast
+        // Load actual project data from Django context, fallback to sample data if not available
         const projects = [
-            {
-                id: 1,
-                title: "The Digital Renaissance",
-                description: "An exploration of how technology transforms human creativity and connection in the 22nd century.",
-                genre: "Science Fiction",
-                status: "active",
-                wordCount: 67890,
-                targetWords: 85000,
-                chapters: 15,
-                lastModified: "2 hours ago",
-                created: "2023-10-15",
-                progress: 80,
-                rating: 4.5
-            },
-            {
-                id: 2,
-                title: "Whispers in the Garden",
-                description: "A tale of forbidden love and political intrigue set in Victorian England's most prestigious estate.",
-                genre: "Historical Romance",
-                status: "draft",
-                wordCount: 23450,
-                targetWords: 65000,
-                chapters: 8,
-                lastModified: "1 day ago",
-                created: "2023-11-02",
-                progress: 36,
-                rating: 4.2
-            },
-            {
-                id: 3,
-                title: "The Memory Thief",
-                description: "A psychological thriller following a detective who discovers she can steal and manipulate memories.",
-                genre: "Thriller",
-                status: "active",
-                wordCount: 45210,
-                targetWords: 75000,
-                chapters: 12,
-                lastModified: "3 days ago",
-                created: "2023-09-20",
-                progress: 60,
-                rating: 4.7
-            },
-            {
-                id: 4,
-                title: "Chronicles of Aethermoor",
-                description: "An epic fantasy saga spanning multiple realms where magic and technology collide.",
-                genre: "Fantasy",
-                status: "completed",
-                wordCount: 120000,
-                targetWords: 120000,
-                chapters: 24,
-                lastModified: "1 week ago",
-                created: "2023-06-10",
-                progress: 100,
-                rating: 4.9
-            },
-            {
-                id: 5,
-                title: "Midnight in Silicon Valley",
-                description: "A contemporary fiction piece exploring startup culture and the human cost of innovation.",
-                genre: "Fiction",
-                status: "active",
-                wordCount: 38700,
-                targetWords: 70000,
-                chapters: 9,
-                lastModified: "5 days ago",
-                created: "2023-11-15",
-                progress: 55,
-                rating: 4.3
-            }
+            {% if user_projects %}
+                {% for project in user_projects %}
+                {
+                    id: {{ project.id }},
+                    title: "{{ project.title|escapejs }}",
+                    description: "{{ project.description|default:'No description provided'|escapejs }}",
+                    genre: "{{ project.genre|default:'Fiction'|escapejs }}",
+                    status: "active",
+                    wordCount: {{ project.word_count|default:0 }},
+                    targetWords: {{ project.target_words|default:50000 }},
+                    chapters: {{ project.chapter_count|default:0 }},
+                    lastModified: "{{ project.updated_at|timesince }} ago",
+                    created: "{{ project.created_at|date:'Y-m-d' }}",
+                    progress: {{ project.progress|default:0 }},
+                    rating: 4.5
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            {% endif %}
         ];
 
         let filteredProjects = [...projects];
@@ -973,8 +1330,8 @@
                             <button class="action-btn" onclick="event.stopPropagation(); editProject(${project.id})" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="action-btn" onclick="event.stopPropagation(); shareProject(${project.id})" title="Share">
-                                <i class="fas fa-share"></i>
+                            <button class="action-btn" onclick="event.stopPropagation(); shareProject(${project.id})" title="Share & Collaborate">
+                                <i class="fas fa-users"></i>
                             </button>
                             <button class="action-btn" onclick="event.stopPropagation(); moreActions(${project.id})" title="More">
                                 <i class="fas fa-ellipsis-v"></i>
@@ -1001,7 +1358,32 @@
                             <i class="fas fa-star stat-icon"></i>
                             <span class="stat-value">${project.rating}</span> rating
                         </div>
+                        ${project.collaborators && project.collaborators.length > 0 ? `
+                        <div class="stat-item collaboration-stat">
+                            <i class="fas fa-users stat-icon"></i>
+                            <span class="stat-value">${project.collaborators.length}</span> collaborators
+                        </div>
+                        ` : ''}
                     </div>
+                    
+                    ${project.collaborators && project.collaborators.length > 0 ? `
+                    <div class="collaborators-section">
+                        <div class="collaborator-avatars">
+                            ${project.collaborators.slice(0, 4).map(collab => `
+                                <div class="collaborator-avatar" title="${collab.username}">
+                                    ${collab.profile_picture ? 
+                                        `<img src="${collab.profile_picture}" alt="${collab.username}">` : 
+                                        `<span>${collab.username.charAt(0).toUpperCase()}</span>`
+                                    }
+                                </div>
+                            `).join('')}
+                            ${project.collaborators.length > 4 ? `<div class="collaborator-count">+${project.collaborators.length - 4}</div>` : ''}
+                        </div>
+                        <div class="collaboration-status">
+                            <i class="fas fa-circle collaboration-pulse"></i> Active collaboration
+                        </div>
+                    </div>
+                    ` : ''}
                     
                     <div class="project-progress">
                         <div class="progress-header">
@@ -1110,7 +1492,7 @@
         }
 
         function openProject(projectId) {
-            window.location.href = `{% url 'writer:google_docs_editor' %}?project=${projectId}`;
+            window.location.href = `/writer/projects/${projectId}/docs-editor/`;
         }
 
         function editProject(projectId) {
@@ -1119,9 +1501,210 @@
         }
 
         function shareProject(projectId) {
+            console.log('Opening collaboration for project:', projectId);
+            openCollaborationModal(projectId);
+        }
+
+        // Mock collaborators for demo
+        const mockCollaborators = {
+            1: [
+                { username: 'Alice Johnson', email: 'alice@example.com', profile_picture: null },
+                { username: 'Bob Smith', email: 'bob@example.com', profile_picture: null }
+            ],
+            2: [
+                { username: 'Charlie Brown', email: 'charlie@example.com', profile_picture: null },
+                { username: 'Diana Ross', email: 'diana@example.com', profile_picture: null },
+                { username: 'Edward Norton', email: 'edward@example.com', profile_picture: null }
+            ]
+        };
+
+        // Add collaborators to projects for demo
+        projects = projects.map(project => ({
+            ...project,
+            collaborators: mockCollaborators[project.id] || []
+        }));
+
+        function openCollaborationModal(projectId) {
             const project = projects.find(p => p.id === projectId);
-            console.log('Sharing project:', project.title);
-            // In real app, this would show share modal
+            if (!project) return;
+
+            // Create modal HTML
+            const modalHTML = `
+                <div id="collaboration-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fas fa-users"></i> ${project.title} - Collaboration</h3>
+                            <span class="close" onclick="closeCollaborationModal()">&times;</span>
+                        </div>
+                        
+                        <div class="modal-body">
+                            <div class="project-info-section">
+                                <p>Manage collaborators and sharing settings for this project</p>
+                            </div>
+
+                            <div class="collaboration-tabs">
+                                <button class="tab-btn active" onclick="switchCollabTab('invite')">
+                                    <i class="fas fa-user-plus"></i> Invite People
+                                </button>
+                                <button class="tab-btn" onclick="switchCollabTab('manage')">
+                                    <i class="fas fa-users-cog"></i> Manage Access
+                                </button>
+                                <button class="tab-btn" onclick="switchCollabTab('link')">
+                                    <i class="fas fa-link"></i> Share Link
+                                </button>
+                            </div>
+
+                            <div class="tab-content">
+                                <!-- Invite Tab -->
+                                <div id="invite-tab" class="tab-panel active">
+                                    <div class="invite-section">
+                                        <div class="input-group">
+                                            <input type="email" id="invite-email" placeholder="Enter email address">
+                                            <select id="permission-level">
+                                                <option value="view">View Only</option>
+                                                <option value="comment">Can Comment</option>
+                                                <option value="edit">Can Edit</option>
+                                            </select>
+                                            <button class="btn-primary" onclick="inviteCollaborator()">
+                                                <i class="fas fa-paper-plane"></i> Invite
+                                            </button>
+                                        </div>
+                                        <p class="help-text">Invite people to collaborate on this project via email</p>
+                                    </div>
+                                </div>
+
+                                <!-- Manage Tab -->
+                                <div id="manage-tab" class="tab-panel">
+                                    <div id="collaborators-list">
+                                        ${project.collaborators.map(collab => `
+                                            <div class="collaborator-item">
+                                                <div class="collaborator-info">
+                                                    <div class="collaborator-avatar">
+                                                        <span>${collab.username.charAt(0).toUpperCase()}</span>
+                                                    </div>
+                                                    <div class="collaborator-details">
+                                                        <div class="collaborator-name">${collab.username}</div>
+                                                        <div class="collaborator-email">${collab.email}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="collaborator-actions">
+                                                    <select class="permission-select">
+                                                        <option value="view">View</option>
+                                                        <option value="comment">Comment</option>
+                                                        <option value="edit" selected>Edit</option>
+                                                    </select>
+                                                    <button class="btn-remove" title="Remove">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Link Tab -->
+                                <div id="link-tab" class="tab-panel">
+                                    <div class="share-link-section">
+                                        <div class="link-settings">
+                                            <label class="switch">
+                                                <input type="checkbox" id="link-enabled">
+                                                <span class="slider"></span>
+                                            </label>
+                                            <span>Enable shareable link</span>
+                                        </div>
+                                        
+                                        <div id="link-container" style="display: none;">
+                                            <div class="input-group">
+                                                <input type="text" id="share-link" readonly value="${window.location.origin}/writer/projects/${projectId}/collaborate/">
+                                                <button class="btn-secondary" onclick="copyShareLink()">
+                                                    <i class="fas fa-copy"></i> Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="closeCollaborationModal()">Close</button>
+                            <button class="btn-primary" onclick="saveCollaborationSettings()">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Show modal
+            document.getElementById('collaboration-modal').style.display = 'block';
+            
+            // Add event listeners
+            setupCollaborationModal();
+        }
+
+        function closeCollaborationModal() {
+            const modal = document.getElementById('collaboration-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function setupCollaborationModal() {
+            // Link toggle functionality
+            const linkToggle = document.getElementById('link-enabled');
+            const linkContainer = document.getElementById('link-container');
+            
+            if (linkToggle && linkContainer) {
+                linkToggle.addEventListener('change', function() {
+                    linkContainer.style.display = this.checked ? 'block' : 'none';
+                });
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modal = document.getElementById('collaboration-modal');
+                if (event.target === modal) {
+                    closeCollaborationModal();
+                }
+            }
+        }
+
+        function switchCollabTab(tab) {
+            // Remove active class from all tabs and panels
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Add active class to selected tab and panel
+            event.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+
+        function inviteCollaborator() {
+            const email = document.getElementById('invite-email').value;
+            const permission = document.getElementById('permission-level').value;
+            
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            
+            // Mock invitation
+            document.getElementById('invite-email').value = '';
+            showToast(`Invitation sent to ${email}!`);
+        }
+
+        function copyShareLink() {
+            const shareLink = document.getElementById('share-link');
+            shareLink.select();
+            document.execCommand('copy');
+            showToast('Link copied to clipboard!');
+        }
+
+        function saveCollaborationSettings() {
+            showToast('Collaboration settings saved!');
+            closeCollaborationModal();
         }
 
         function moreActions(projectId) {

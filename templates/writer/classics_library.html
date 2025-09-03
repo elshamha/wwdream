@@ -1,0 +1,1815 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classics Library - Free Public Domain Books</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8b4513;
+            --primary-dark: #5d2d0a;
+            --secondary-color: #daa520;
+            --accent-color: #cd853f;
+            --bg-primary: #fefcf8;
+            --bg-secondary: #f5f2ed;
+            --bg-tertiary: #ede7db;
+            --text-primary: #2c1810;
+            --text-secondary: #5a453a;
+            --text-muted: #8b7355;
+            --border-color: #d4c4a8;
+            --success-color: #228b22;
+            --warning-color: #b8860b;
+            --error-color: #dc143c;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f2ed 0%, #ede7db 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .library-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .library-header {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .library-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,20 Q25,10 50,20 T100,20 V100 H0 Z" fill="rgba(139,69,19,0.03)"/></svg>');
+            background-size: cover;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-main {
+            flex: 1;
+        }
+
+        .header-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .header-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        /* Search and Filters */
+        .search-section {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .view-toggle {
+            display: flex;
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .view-btn {
+            padding: 8px 12px;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .view-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .search-filters {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-input, .filter-select {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            background: var(--bg-primary);
+            transition: var(--transition);
+        }
+
+        .search-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+        }
+
+        .search-btn {
+            padding: 12px 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Books Grid */
+        .books-section {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .results-info {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .book-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .book-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .book-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-cover-placeholder {
+            color: white;
+            font-size: 48px;
+            opacity: 0.7;
+        }
+
+        .book-status {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-available {
+            color: var(--success-color);
+        }
+
+        .status-borrowed {
+            color: var(--warning-color);
+        }
+
+        .book-content {
+            padding: 20px;
+        }
+
+        .book-title {
+            font-family: 'Crimson Text', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .book-author {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .book-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .book-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .book-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .book-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .book-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn-borrow {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-borrow:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-preview {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-preview:hover {
+            background: var(--border-color);
+        }
+
+        .btn-return {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-return:hover {
+            background: #9a7209;
+        }
+
+        /* Reading Progress */
+        .reading-progress {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .progress-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .progress-percentage {
+            font-size: 11px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .search-filters {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .books-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 16px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .books-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .library-container {
+                padding: 12px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="library-container">
+        <!-- Header -->
+        <header class="library-header">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1 class="header-title">
+                        <div class="header-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        Classics Library
+                    </h1>
+                    <p class="header-subtitle">Discover timeless literature from the public domain</p>
+                    <div class="header-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-books"></i>
+                            <span class="stat-value" id="total-books">2,847</span>
+                            <span>Books Available</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-user-friends"></i>
+                            <span class="stat-value" id="total-authors">892</span>
+                            <span>Authors</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-heart"></i>
+                            <span class="stat-value" id="borrowed-books">12</span>
+                            <span>In Your Library</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="{% url 'writer:dashboard' %}" class="action-btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                    <button class="action-btn btn-primary" onclick="showMyBooks()">
+                        <i class="fas fa-bookmark"></i>
+                        My Books
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search and Filters -->
+        <section class="search-section">
+            <div class="search-header">
+                <h2 class="search-title">Find Your Next Classic</h2>
+                <div class="view-toggle">
+                    <button class="view-btn active" onclick="setViewMode('grid')">
+                        <i class="fas fa-th"></i>
+                        Grid
+                    </button>
+                    <button class="view-btn" onclick="setViewMode('list')">
+                        <i class="fas fa-list"></i>
+                        List
+                    </button>
+                </div>
+            </div>
+            
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label class="filter-label">Search Books</label>
+                    <input type="text" class="search-input" id="search-query" placeholder="Search by title, author, or description...">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Genre</label>
+                    <select class="filter-select" id="genre-filter">
+                        <option value="">All Genres</option>
+                        <option value="fiction">Fiction</option>
+                        <option value="non-fiction">Non-Fiction</option>
+                        <option value="poetry">Poetry</option>
+                        <option value="drama">Drama</option>
+                        <option value="philosophy">Philosophy</option>
+                        <option value="history">History</option>
+                        <option value="science">Science</option>
+                        <option value="biography">Biography</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Language</label>
+                    <select class="filter-select" id="language-filter">
+                        <option value="">All Languages</option>
+                        <option value="english">English</option>
+                        <option value="french">French</option>
+                        <option value="german">German</option>
+                        <option value="spanish">Spanish</option>
+                        <option value="italian">Italian</option>
+                        <option value="latin">Latin</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Era</label>
+                    <select class="filter-select" id="era-filter">
+                        <option value="">All Eras</option>
+                        <option value="ancient">Ancient (Before 500)</option>
+                        <option value="medieval">Medieval (500-1500)</option>
+                        <option value="renaissance">Renaissance (1500-1700)</option>
+                        <option value="enlightenment">Enlightenment (1700-1800)</option>
+                        <option value="romantic">Romantic (1800-1850)</option>
+                        <option value="victorian">Victorian (1850-1900)</option>
+                        <option value="modern">Modern (1900-1950)</option>
+                    </select>
+                </div>
+                <button class="search-btn" onclick="searchBooks()">
+                    <i class="fas fa-search"></i>
+                    Search
+                </button>
+            </div>
+        </section>
+
+        <!-- Books Grid -->
+        <section class="books-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i>
+                    Featured Classics
+                </h2>
+                <div class="results-info" id="results-info">
+                    Showing 24 of 2,847 books
+                </div>
+            </div>
+            
+            <div class="books-grid" id="books-grid">
+                <!-- Books will be loaded here dynamically -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    Loading classics...
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- In-App Reader Modal -->
+    <div id="reader-modal" class="reader-modal" style="display: none;">
+        <div class="reader-container">
+            <div class="reader-header">
+                <button class="reader-close" onclick="closeReader()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="reader-title">
+                    <h2 id="reader-book-title"></h2>
+                    <span id="reader-book-author"></span>
+                </div>
+                <div class="reader-controls">
+                    <button onclick="decreaseFontSize()" title="Decrease font size">
+                        <i class="fas fa-font"></i>
+                        <i class="fas fa-minus" style="font-size: 10px; margin-left: -5px;"></i>
+                    </button>
+                    <button onclick="increaseFontSize()" title="Increase font size">
+                        <i class="fas fa-font"></i>
+                        <i class="fas fa-plus" style="font-size: 10px; margin-left: -5px;"></i>
+                    </button>
+                    <button onclick="toggleDarkMode()" title="Toggle dark mode">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                    <button onclick="toggleFullscreen()" title="Toggle fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="reader-content" id="reader-content">
+                <div class="reader-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading book content...</p>
+                </div>
+            </div>
+            <div class="reader-footer">
+                <div class="reading-progress">
+                    <span id="reading-percentage">0%</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="page-navigation">
+                    <button onclick="previousChapter()" id="prev-chapter">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <span id="chapter-info">Chapter 1</span>
+                    <button onclick="nextChapter()" id="next-chapter">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* In-App Reader Styles */
+        .reader-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reader-container {
+            width: 90%;
+            max-width: 900px;
+            height: 90vh;
+            background: #fff;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .reader-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .reader-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 8px;
+            transition: color 0.3s;
+        }
+
+        .reader-close:hover {
+            color: #e74c3c;
+        }
+
+        .reader-title {
+            flex: 1;
+            margin: 0 20px;
+        }
+
+        .reader-title h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .reader-title span {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .reader-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .reader-controls button {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .reader-controls button:hover {
+            background: #f0f0f0;
+            border-color: #999;
+        }
+
+        .reader-content {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            font-size: 18px;
+            line-height: 1.8;
+            color: #333;
+            background: #fff;
+        }
+
+        .reader-content.dark-mode {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .reader-container.dark-mode {
+            background: #2a2a2a;
+        }
+
+        .reader-container.dark-mode .reader-header {
+            background: #2a2a2a;
+            border-bottom-color: #444;
+        }
+
+        .reader-container.dark-mode .reader-title h2 {
+            color: #e0e0e0;
+        }
+
+        .reader-container.dark-mode .reader-controls button {
+            background: #333;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        .reader-container.dark-mode .reader-footer {
+            background: #2a2a2a;
+            border-top-color: #444;
+        }
+
+        .reader-loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+
+        .reader-loading i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+
+        .reader-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .reading-progress {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .page-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-navigation button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .page-navigation button:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .page-navigation button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #chapter-info {
+            font-weight: 500;
+            color: #666;
+        }
+
+        /* Fullscreen styles */
+        .reader-modal.fullscreen .reader-container {
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            border-radius: 0;
+        }
+
+        .reader-modal.fullscreen .reader-header {
+            border-radius: 0;
+        }
+
+        .reader-modal.fullscreen .reader-footer {
+            border-radius: 0;
+        }
+
+        /* Reading content styles */
+        .reader-content p {
+            margin-bottom: 1.5em;
+            text-align: justify;
+        }
+
+        .reader-content h1, .reader-content h2, .reader-content h3 {
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+
+        .reader-content blockquote {
+            border-left: 4px solid #007bff;
+            padding-left: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #666;
+        }
+
+        .reader-container.dark-mode .reader-content blockquote {
+            border-left-color: #4a90e2;
+            color: #999;
+        }
+    </style>
+
+    <script>
+        // Mock data for classic books
+        // Initialize with empty array, will be populated from server
+        let classicBooks = [
+            {
+                id: 1,
+                title: "Pride and Prejudice",
+                author: "Jane Austen",
+                genre: "fiction",
+                language: "english",
+                era: "romantic",
+                year: 1813,
+                pages: 432,
+                description: "A romantic novel of manners written by Jane Austen in 1813. The novel follows the character development of Elizabeth Bennet, the dynamic protagonist of the book...",
+                cover: null,
+                status: "available",
+                downloads: 15420,
+                rating: 4.8,
+                progress: 0,
+                formats: ["epub", "pdf", "txt"]
+            },
+            {
+                id: 2,
+                title: "The Adventures of Sherlock Holmes",
+                author: "Arthur Conan Doyle",
+                genre: "fiction",
+                language: "english",
+                era: "victorian",
+                year: 1892,
+                pages: 307,
+                description: "A collection of twelve short stories by Arthur Conan Doyle, featuring his fictional detective Sherlock Holmes. The stories are the first series of short stories to feature Sherlock Holmes...",
+                cover: null,
+                status: "borrowed",
+                downloads: 23100,
+                rating: 4.7,
+                progress: 65,
+                formats: ["epub", "pdf", "txt", "mobi"]
+            },
+            {
+                id: 3,
+                title: "The Great Gatsby",
+                author: "F. Scott Fitzgerald",
+                genre: "fiction",
+                language: "english",
+                era: "modern",
+                year: 1925,
+                pages: 180,
+                description: "A classic American novel written by F. Scott Fitzgerald and published in 1925. The story is narrated by Nick Carraway and follows the life and times of Jay Gatsby...",
+                cover: null,
+                status: "available",
+                downloads: 18950,
+                rating: 4.6,
+                progress: 0,
+                formats: ["epub", "pdf", "txt"]
+            },
+            {
+                id: 4,
+                title: "Alice's Adventures in Wonderland",
+                author: "Lewis Carroll",
+                genre: "fiction",
+                language: "english",
+                era: "victorian",
+                year: 1865,
+                pages: 200,
+                description: "A fantasy novel written by English mathematician Charles Dodgson under the pseudonym Lewis Carroll. The story tells of a young girl named Alice falling through a rabbit hole...",
+                cover: null,
+                status: "available",
+                downloads: 25600,
+                rating: 4.9,
+                progress: 0,
+                formats: ["epub", "pdf", "txt", "mobi"]
+            },
+            {
+                id: 5,
+                title: "Frankenstein",
+                author: "Mary Shelley",
+                genre: "fiction",
+                language: "english",
+                era: "romantic",
+                year: 1818,
+                pages: 280,
+                description: "A Gothic novel by English author Mary Shelley that tells the story of Victor Frankenstein, a young scientist who creates a grotesque but sapient creature in an unorthodox scientific experiment...",
+                cover: null,
+                status: "borrowed",
+                downloads: 14200,
+                rating: 4.5,
+                progress: 23,
+                formats: ["epub", "pdf", "txt"]
+            },
+            {
+                id: 6,
+                title: "The Picture of Dorian Gray",
+                author: "Oscar Wilde",
+                genre: "fiction",
+                language: "english",
+                era: "victorian",
+                year: 1890,
+                pages: 254,
+                description: "A philosophical novel by Oscar Wilde that tells the story of a young man named Dorian Gray, the subject of a painting by artist Basil Hallward...",
+                cover: null,
+                status: "available",
+                downloads: 12800,
+                rating: 4.4,
+                progress: 0,
+                formats: ["epub", "pdf", "txt"]
+            },
+            {
+                id: 7,
+                title: "Jane Eyre",
+                author: "Charlotte Brontë",
+                genre: "fiction",
+                language: "english",
+                era: "victorian",
+                year: 1847,
+                pages: 507,
+                description: "A Bildungsroman which follows the experiences of its eponymous heroine, including her growth to adulthood and her love for Mr. Rochester, the brooding master of Thornfield Hall...",
+                cover: null,
+                status: "available",
+                downloads: 16750,
+                rating: 4.7,
+                progress: 0,
+                formats: ["epub", "pdf", "txt", "mobi"]
+            },
+            {
+                id: 8,
+                title: "Wuthering Heights",
+                author: "Emily Brontë",
+                genre: "fiction",
+                language: "english",
+                era: "victorian",
+                year: 1847,
+                pages: 416,
+                description: "The only novel written by Emily Brontë, published in 1847. It is a tale of passion set on the Yorkshire moors, telling the story of the turbulent relationship between Heathcliff and Catherine Earnshaw...",
+                cover: null,
+                status: "available",
+                downloads: 13200,
+                rating: 4.3,
+                progress: 0,
+                formats: ["epub", "pdf", "txt"]
+            },
+            {
+                id: 9,
+                title: "Dracula",
+                author: "Bram Stoker",
+                genre: "fiction",
+                language: "english",
+                era: "victorian",
+                year: 1897,
+                pages: 418,
+                description: "A Gothic horror novel by Irish author Bram Stoker. It introduced the character of Count Dracula and established many conventions of subsequent vampire fantasy...",
+                cover: null,
+                status: "borrowed",
+                downloads: 19400,
+                rating: 4.6,
+                progress: 42,
+                formats: ["epub", "pdf", "txt", "mobi"]
+            },
+            {
+                id: 10,
+                title: "The Odyssey",
+                author: "Homer",
+                genre: "poetry",
+                language: "english",
+                era: "ancient",
+                year: -800,
+                pages: 541,
+                description: "One of two major ancient Greek epic poems attributed to Homer. It is, in part, a sequel to the Iliad, and concerns the events that befall the Greek hero Odysseus in his long journey home to Ithaca...",
+                cover: null,
+                status: "available",
+                downloads: 28100,
+                rating: 4.8,
+                progress: 0,
+                formats: ["epub", "pdf", "txt"]
+            },
+            {
+                id: 11,
+                title: "The Art of War",
+                author: "Sun Tzu",
+                genre: "philosophy",
+                language: "english",
+                era: "ancient",
+                year: -500,
+                pages: 273,
+                description: "An ancient Chinese military treatise dating from the Late Spring and Autumn period. The work is attributed to the ancient Chinese military strategist Sun Tzu...",
+                cover: null,
+                status: "available",
+                downloads: 21500,
+                rating: 4.5,
+                progress: 0,
+                formats: ["epub", "pdf", "txt", "mobi"]
+            },
+            {
+                id: 12,
+                title: "Little Women",
+                author: "Louisa May Alcott",
+                genre: "fiction",
+                language: "english",
+                era: "victorian",
+                year: 1868,
+                pages: 449,
+                description: "A coming-of-age novel written by American novelist Louisa May Alcott. The novel follows the lives of the four March sisters—Meg, Jo, Beth, and Amy—in Concord, Massachusetts...",
+                cover: null,
+                status: "available",
+                downloads: 17300,
+                rating: 4.7,
+                progress: 0,
+                formats: ["epub", "pdf", "txt"]
+            }
+        ];
+
+        let filteredBooks = [...classicBooks];
+        let currentView = 'grid';
+
+        // CSRF Token helper function
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Load books from backend API
+        function loadInitialBooks() {
+            const loading = document.getElementById('loading');
+            const booksGrid = document.getElementById('books-grid');
+            
+            if (!booksGrid) {
+                console.error('Books grid element not found');
+                return;
+            }
+            
+            if (loading) {
+                loading.style.display = 'flex';
+            }
+            
+            fetch('/writer/api/classics/search/?per_page=24')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        filteredBooks = data.books;
+                        loadBooks();
+                        updateResultsInfo();
+                    } else {
+                        console.error('Failed to load books:', data.error);
+                        if (loading) {
+                            loading.style.display = 'none';
+                        }
+                        booksGrid.innerHTML = `
+                            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                                <h3>Failed to load books</h3>
+                                <p>Please try refreshing the page</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading books:', error);
+                    if (loading) {
+                        loading.style.display = 'none';
+                    }
+                    booksGrid.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <h3>Error loading books</h3>
+                            <p>Please check your connection and try again</p>
+                        </div>
+                    `;
+                });
+        }
+
+        // Load books on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitialBooks();
+        });
+
+        function loadBooks() {
+            const booksGrid = document.getElementById('books-grid');
+            const loading = document.getElementById('loading');
+            
+            if (!booksGrid) {
+                console.error('Books grid element not found');
+                return;
+            }
+            
+            if (loading) {
+                loading.style.display = 'none';
+            }
+            
+            if (filteredBooks.length === 0) {
+                booksGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <h3>No books found</h3>
+                        <p>Try adjusting your search criteria</p>
+                    </div>
+                `;
+                return;
+            }
+
+            booksGrid.innerHTML = filteredBooks.map(book => `
+                <div class="book-card" onclick="openBookDetails(${book.id})">
+                    <div class="book-cover">
+                        ${book.cover_image_url ? 
+                            `<img src="${book.cover_image_url}" alt="${book.title}">` :
+                            `<div class="book-cover-placeholder"><i class="fas fa-book"></i></div>`
+                        }
+                        <div class="book-status ${book.is_borrowed ? 'status-borrowed' : 'status-available'}">
+                            ${book.is_borrowed ? 'In Library' : 'Available'}
+                        </div>
+                    </div>
+                    
+                    <div class="book-content">
+                        <h3 class="book-title">${book.title}</h3>
+                        <div class="book-author">${book.author}</div>
+                        
+                        <div class="book-meta">
+                            <span><i class="fas fa-calendar"></i> ${book.publication_year > 0 ? book.publication_year : Math.abs(book.publication_year) + ' BC'}</span>
+                            <span><i class="fas fa-file-alt"></i> ${book.page_count || 'Unknown'} pages</span>
+                            <span><i class="fas fa-star"></i> ${book.rating || 'N/A'}</span>
+                        </div>
+                        
+                        <div class="book-description">${book.description}</div>
+                        
+                        <div class="book-actions">
+                            ${book.is_borrowed ? `
+                                <button class="book-action-btn btn-primary" onclick="event.stopPropagation(); readBook(${book.id})">
+                                    <i class="fas fa-book-open"></i> Continue Reading
+                                </button>
+                                <button class="book-action-btn btn-return" onclick="event.stopPropagation(); returnBook(${book.id})">
+                                    <i class="fas fa-undo"></i> Return
+                                </button>
+                            ` : `
+                                <button class="book-action-btn btn-borrow" onclick="event.stopPropagation(); borrowBook(${book.id})">
+                                    <i class="fas fa-plus"></i> Add to Library
+                                </button>
+                                <button class="book-action-btn btn-preview" onclick="event.stopPropagation(); previewBook(${book.id})">
+                                    <i class="fas fa-eye"></i> Preview
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updateResultsInfo();
+        }
+
+        function searchBooks() {
+            const query = document.getElementById('search-query').value.trim();
+            const genre = document.getElementById('genre-filter').value;
+            const language = document.getElementById('language-filter').value;
+            const era = document.getElementById('era-filter').value;
+
+            // Show loading
+            const booksGrid = document.getElementById('books-grid');
+            const loading = document.getElementById('loading');
+            
+            if (!booksGrid) {
+                console.error('Books grid element not found');
+                return;
+            }
+            
+            if (loading) {
+                loading.style.display = 'flex';
+                booksGrid.innerHTML = '';
+                booksGrid.appendChild(loading);
+            } else {
+                booksGrid.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+            }
+
+            // Build search URL
+            const params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (genre) params.append('genre', genre);
+            if (language) params.append('language', language);
+            if (era) params.append('era', era);
+            params.append('page', '1');
+            params.append('per_page', '24');
+
+            fetch(`/writer/api/classics/search/?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        filteredBooks = data.books;
+                        loadBooks();
+                        updateResultsInfo();
+                    } else {
+                        showToast('Search failed: ' + (data.error || 'Unknown error'), 'error');
+                        loadBooks(); // Show existing results
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    showToast('Search failed. Please try again.', 'error');
+                    loadBooks(); // Show existing results
+                });
+        }
+
+        function updateResultsInfo() {
+            const resultsInfo = document.getElementById('results-info');
+            
+            resultsInfo.textContent = `Showing ${filteredBooks.length} books`;
+        }
+
+        function borrowBook(bookId) {
+            fetch(`/writer/api/classics/${bookId}/borrow/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    const borrowedCount = document.getElementById('borrowed-books');
+                    const currentCount = parseInt(borrowedCount.textContent);
+                    borrowedCount.textContent = currentCount + 1;
+                    
+                    // Update book status in local data
+                    const book = filteredBooks.find(b => b.id === bookId);
+                    if (book) {
+                        book.is_borrowed = true;
+                    }
+                    
+                    showToast(data.message, 'success');
+                    loadBooks(); // Refresh the display
+                } else {
+                    showToast(data.message || 'Failed to borrow book', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Borrow error:', error);
+                showToast('Failed to borrow book. Please try again.', 'error');
+            });
+        }
+
+        function returnBook(bookId) {
+            fetch(`/writer/api/classics/${bookId}/return/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    const borrowedCount = document.getElementById('borrowed-books');
+                    const currentCount = parseInt(borrowedCount.textContent);
+                    borrowedCount.textContent = Math.max(0, currentCount - 1);
+                    
+                    // Update book status in local data
+                    const book = filteredBooks.find(b => b.id === bookId);
+                    if (book) {
+                        book.is_borrowed = false;
+                    }
+                    
+                    showToast(data.message, 'info');
+                    loadBooks(); // Refresh the display
+                } else {
+                    showToast(data.error || 'Failed to return book', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Return error:', error);
+                showToast('Failed to return book. Please try again.', 'error');
+            });
+        }
+
+        // Global variables for reader
+        let currentBookId = null;
+        let currentBookContent = '';
+        let currentFontSize = 18;
+        let isDarkMode = false;
+        let currentChapter = 0;
+        let bookChapters = [];
+
+        function readBook(bookId) {
+            // First, register the read action with the server
+            fetch(`/writer/api/classics/${bookId}/read/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const book = data.book;
+                    currentBookId = bookId;
+                    
+                    // Open the in-app reader
+                    openInAppReader(book);
+                } else {
+                    showToast(data.error || 'Failed to open book', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Read error:', error);
+                showToast('Failed to open book. Please try again.', 'error');
+            });
+        }
+
+        function openInAppReader(book) {
+            // Show the reader modal
+            const modal = document.getElementById('reader-modal');
+            modal.style.display = 'flex';
+            
+            // Set book title and author
+            document.getElementById('reader-book-title').textContent = book.title;
+            document.getElementById('reader-book-author').textContent = `by ${book.author}`;
+            
+            // Load book content
+            const readerContent = document.getElementById('reader-content');
+            readerContent.innerHTML = '<div class="reader-loading"><i class="fas fa-spinner fa-spin"></i><p>Loading book content...</p></div>';
+            
+            // Try to fetch book content from the text URL
+            if (book.txt_url) {
+                // Use a CORS proxy to fetch content from Project Gutenberg
+                fetchBookContent(book.txt_url, book.title);
+            } else if (book.html_url) {
+                // Fallback to HTML if text is not available
+                fetchBookContent(book.html_url, book.title);
+            } else {
+                // If no URLs available, show download options
+                readerContent.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <h3>Direct reading not available</h3>
+                        <p>Please download the book to read offline:</p>
+                        <div style="margin-top: 20px;">
+                            ${book.epub_url ? `<a href="${book.epub_url}" target="_blank" class="download-link">📖 Download EPUB</a>` : ''}
+                            ${book.pdf_url ? `<a href="${book.pdf_url}" target="_blank" class="download-link">📄 Download PDF</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function fetchBookContent(url, title) {
+            // For demonstration, we'll show a sample content
+            // In production, you'd need to set up a backend proxy to fetch content
+            const readerContent = document.getElementById('reader-content');
+            
+            // Check if we can fetch directly (won't work due to CORS)
+            fetch(url)
+                .then(response => response.text())
+                .then(text => {
+                    // Parse and display the content
+                    displayBookContent(text);
+                })
+                .catch(error => {
+                    // If direct fetch fails (expected due to CORS), request through backend
+                    fetchThroughBackend(url, title);
+                });
+        }
+
+        function fetchThroughBackend(url, title) {
+            // Request the content through our backend
+            fetch(`/writer/api/classics/fetch-content/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ url: url, title: title })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.content) {
+                    displayBookContent(data.content);
+                } else {
+                    showFallbackContent();
+                }
+            })
+            .catch(error => {
+                console.error('Failed to fetch content:', error);
+                showFallbackContent();
+            });
+        }
+
+        function displayBookContent(content) {
+            const readerContent = document.getElementById('reader-content');
+            
+            // Split content into paragraphs for better formatting
+            const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+            
+            // Create formatted HTML
+            let formattedContent = '';
+            paragraphs.forEach(paragraph => {
+                // Check if it's a chapter heading
+                if (paragraph.match(/^(CHAPTER|Chapter|BOOK|Book|PART|Part)\s+/)) {
+                    formattedContent += `<h2>${paragraph}</h2>`;
+                } else {
+                    formattedContent += `<p>${paragraph}</p>`;
+                }
+            });
+            
+            readerContent.innerHTML = formattedContent || '<p>No content available.</p>';
+            currentBookContent = formattedContent;
+            
+            // Update reading progress
+            updateReadingProgress();
+        }
+
+        function showFallbackContent() {
+            const readerContent = document.getElementById('reader-content');
+            readerContent.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <h3>Sample Content Preview</h3>
+                    <p style="text-align: justify; margin: 20px auto; max-width: 600px;">
+                        This is a preview of how the in-app reader works. To enable full book reading, 
+                        the backend needs to be configured to fetch and serve book content from Project Gutenberg.
+                    </p>
+                    <p style="text-align: justify; margin: 20px auto; max-width: 600px;">
+                        For now, you can download the book using the links below and read it offline:
+                    </p>
+                    <div style="margin-top: 30px;">
+                        <button onclick="closeReader()" class="page-navigation button">Close Reader</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeReader() {
+            const modal = document.getElementById('reader-modal');
+            modal.style.display = 'none';
+            currentBookId = null;
+            currentBookContent = '';
+        }
+
+        function increaseFontSize() {
+            currentFontSize = Math.min(currentFontSize + 2, 32);
+            const readerContent = document.getElementById('reader-content');
+            readerContent.style.fontSize = currentFontSize + 'px';
+        }
+
+        function decreaseFontSize() {
+            currentFontSize = Math.max(currentFontSize - 2, 12);
+            const readerContent = document.getElementById('reader-content');
+            readerContent.style.fontSize = currentFontSize + 'px';
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            const container = document.querySelector('.reader-container');
+            const content = document.getElementById('reader-content');
+            const icon = document.getElementById('theme-icon');
+            
+            if (isDarkMode) {
+                container.classList.add('dark-mode');
+                content.classList.add('dark-mode');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                container.classList.remove('dark-mode');
+                content.classList.remove('dark-mode');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        function toggleFullscreen() {
+            const modal = document.getElementById('reader-modal');
+            modal.classList.toggle('fullscreen');
+        }
+
+        function updateReadingProgress() {
+            const content = document.getElementById('reader-content');
+            const scrollPercentage = (content.scrollTop / (content.scrollHeight - content.clientHeight)) * 100;
+            
+            document.getElementById('reading-percentage').textContent = Math.round(scrollPercentage) + '%';
+            document.getElementById('progress-fill').style.width = scrollPercentage + '%';
+        }
+
+        function previousChapter() {
+            // Placeholder for chapter navigation
+            showToast('Previous chapter navigation coming soon', 'info');
+        }
+
+        function nextChapter() {
+            // Placeholder for chapter navigation
+            showToast('Next chapter navigation coming soon', 'info');
+        }
+
+        // Add scroll event listener for progress tracking
+        document.addEventListener('DOMContentLoaded', function() {
+            const readerContent = document.getElementById('reader-content');
+            if (readerContent) {
+                readerContent.addEventListener('scroll', updateReadingProgress);
+            }
+        });
+
+        function previewBook(bookId) {
+            const book = classicBooks.find(b => b.id === bookId);
+            if (book) {
+                showToast(`Loading preview of "${book.title}"...`, 'info');
+                setTimeout(() => {
+                    alert(`Preview of "${book.title}" would show here.\n\nFirst few pages or sample chapters would be displayed.`);
+                }, 500);
+            }
+        }
+
+        function openBookDetails(bookId) {
+            const book = classicBooks.find(b => b.id === bookId);
+            if (book) {
+                // Create detailed modal or navigate to book details page
+                const details = `
+                    📖 ${book.title}
+                    ✍️ by ${book.author}
+                    📅 Published: ${book.year > 0 ? book.year : Math.abs(book.year) + ' BC'}
+                    📄 Pages: ${book.pages}
+                    🌟 Rating: ${book.rating}/5 (${book.downloads.toLocaleString()} downloads)
+                    🏷️ Genre: ${book.genre.charAt(0).toUpperCase() + book.genre.slice(1)}
+                    🌍 Language: ${book.language.charAt(0).toUpperCase() + book.language.slice(1)}
+                    
+                    📝 Description:
+                    ${book.description}
+                    
+                    💾 Available formats: ${book.formats.join(', ').toUpperCase()}
+                `;
+                alert(details);
+            }
+        }
+
+        function setViewMode(mode) {
+            currentView = mode;
+            const gridBtn = document.querySelector('.view-btn:first-child');
+            const listBtn = document.querySelector('.view-btn:last-child');
+            
+            if (mode === 'grid') {
+                gridBtn.classList.add('active');
+                listBtn.classList.remove('active');
+            } else {
+                listBtn.classList.add('active');
+                gridBtn.classList.remove('active');
+            }
+            
+            // TODO: Implement list view layout
+            showToast(`Switched to ${mode} view`, 'info');
+        }
+
+        function showMyBooks() {
+            const borrowedBooks = classicBooks.filter(book => book.status === 'borrowed');
+            filteredBooks = borrowedBooks;
+            loadBooks();
+            
+            // Update section title
+            const sectionTitle = document.querySelector('.section-title');
+            sectionTitle.innerHTML = '<i class="fas fa-bookmark"></i> My Library';
+            
+            showToast(`Showing your ${borrowedBooks.length} borrowed books`, 'info');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--error-color)' : 'var(--primary-color)'};
+                color: white;
+                border-radius: var(--border-radius-sm);
+                font-weight: 500;
+                z-index: 10000;
+                box-shadow: var(--shadow-lg);
+                transition: all 0.3s ease;
+                transform: translateX(300px);
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                toast.style.transform = 'translateX(300px)';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Add search on enter key
+        document.getElementById('search-query').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchBooks();
+            }
+        });
+
+        // Add real-time search (debounced)
+        let searchTimeout;
+        document.getElementById('search-query').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchBooks, 500);
+        });
+
+        // Add filter change listeners
+        document.getElementById('genre-filter').addEventListener('change', searchBooks);
+        document.getElementById('language-filter').addEventListener('change', searchBooks);
+        document.getElementById('era-filter').addEventListener('change', searchBooks);
+    </script>
+</body>
+</html>

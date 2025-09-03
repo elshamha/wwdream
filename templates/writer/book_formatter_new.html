@@ -1,0 +1,721 @@
+{% extends 'base.html' %}
+{% block title %}Book Formatter - Professional Publishing{% endblock %}
+
+{% block content %}
+<style>
+/* Clean Professional Design */
+.formatter-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem 0;
+}
+
+.formatter-card {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.formatter-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.formatter-header h1 {
+    color: white !important;
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 300;
+}
+
+.formatter-header p {
+    color: rgba(255,255,255,0.8) !important;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.formatter-body {
+    padding: 2rem;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.setting-section {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.setting-section h3 {
+    color: #2c3e50 !important;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.setting-group {
+    margin-bottom: 1rem;
+}
+
+.setting-group:last-child {
+    margin-bottom: 0;
+}
+
+.setting-label {
+    display: block;
+    color: #495057 !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.setting-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: white !important;
+    color: #495057 !important;
+    transition: all 0.2s ease;
+}
+
+.setting-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25);
+}
+
+/* Theme Selection */
+.theme-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.theme-option {
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    background: white;
+}
+
+.theme-option:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.15);
+}
+
+.theme-option.active {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+}
+
+.theme-name {
+    font-weight: 600;
+    color: #2c3e50 !important;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.theme-desc {
+    font-size: 0.75rem;
+    color: #6c757d !important;
+    margin: 0;
+}
+
+/* Export Section */
+.export-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    color: white;
+    text-align: center;
+}
+
+.export-section h3 {
+    color: white !important;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.export-formats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.export-format {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.export-format:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+}
+
+.export-format.selected {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.5);
+}
+
+.format-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: white !important;
+}
+
+.format-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white !important;
+    margin-bottom: 0.25rem;
+}
+
+.format-desc {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8) !important;
+    margin: 0;
+}
+
+.export-button {
+    background: white;
+    color: #667eea !important;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.export-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255,255,255,0.3);
+}
+
+.export-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Project Selector */
+.project-selector {
+    background: #e8f2ff;
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.project-selector h4 {
+    color: #667eea !important;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Settings Summary */
+.settings-summary {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-label {
+    color: #495057 !important;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.summary-value {
+    color: #2c3e50 !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .formatter-container {
+        padding: 1rem;
+    }
+    
+    .settings-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .theme-selector {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .export-formats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<div class="formatter-container">
+    <div class="formatter-card">
+        <!-- Header -->
+        <div class="formatter-header">
+            <h1><i class="fas fa-book me-2"></i>Book Formatter</h1>
+            <p>Create professionally formatted books ready for publishing</p>
+        </div>
+        
+        <!-- Body -->
+        <div class="formatter-body">
+            <!-- Project Selection -->
+            <div class="project-selector">
+                <h4><i class="fas fa-folder-open me-2"></i>Select Project to Format</h4>
+                <select class="setting-control" id="projectSelect">
+                    <option value="">Choose a project...</option>
+                    {% for project in user_projects %}
+                    <option value="{{ project.pk }}">{{ project.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Settings Grid -->
+            <div class="settings-grid">
+                <!-- Typography Settings -->
+                <div class="setting-section">
+                    <h3><i class="fas fa-font"></i>Typography</h3>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Font Family</label>
+                        <select class="setting-control" id="fontFamily">
+                            <optgroup label="Professional Fonts">
+                                <option value="'EB Garamond', serif">EB Garamond</option>
+                                <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+                                <option value="'Crimson Text', serif">Crimson Text</option>
+                                <option value="'Lora', serif">Lora</option>
+                                <option value="'Merriweather', serif">Merriweather</option>
+                            </optgroup>
+                            <optgroup label="Classic Fonts">
+                                <option value="Georgia, serif" selected>Georgia</option>
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="Garamond, serif">Garamond</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Font Size</label>
+                        <select class="setting-control" id="fontSize">
+                            <option value="10pt">10pt</option>
+                            <option value="11pt">11pt</option>
+                            <option value="12pt" selected>12pt</option>
+                            <option value="14pt">14pt</option>
+                            <option value="16pt">16pt</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Line Spacing</label>
+                        <select class="setting-control" id="lineHeight">
+                            <option value="1.2">Single (1.2)</option>
+                            <option value="1.5">1.5 Lines</option>
+                            <option value="1.8" selected>Comfortable (1.8)</option>
+                            <option value="2.0">Double (2.0)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Paragraph Indent</label>
+                        <select class="setting-control" id="indent">
+                            <option value="0">None</option>
+                            <option value="0.25in">0.25"</option>
+                            <option value="0.5in" selected>0.5"</option>
+                            <option value="0.75in">0.75"</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Layout Settings -->
+                <div class="setting-section">
+                    <h3><i class="fas fa-layout"></i>Page Layout</h3>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Page Size</label>
+                        <select class="setting-control" id="pageSize">
+                            <option value="6x9">6" × 9" (Trade Paperback)</option>
+                            <option value="5.5x8.5">5.5" × 8.5" (Digest)</option>
+                            <option value="5x8">5" × 8" (Novella)</option>
+                            <option value="8.5x11" selected>8.5" × 11" (Letter)</option>
+                            <option value="a4">A4 (210 × 297 mm)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Margins</label>
+                        <select class="setting-control" id="margins">
+                            <option value="narrow">Narrow (0.5")</option>
+                            <option value="normal" selected>Normal (0.75")</option>
+                            <option value="wide">Wide (1")</option>
+                            <option value="mirror">Mirror (for binding)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Chapter Breaks</label>
+                        <select class="setting-control" id="chapterStart">
+                            <option value="anywhere">Anywhere</option>
+                            <option value="odd" selected>Odd pages only</option>
+                            <option value="even">Even pages only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="pageNumbers" checked style="margin-right: 0.5rem;">
+                            Include page numbers
+                        </label>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="tableOfContents" checked style="margin-right: 0.5rem;">
+                            Generate table of contents
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Theme Selection -->
+            <div class="setting-section">
+                <h3><i class="fas fa-palette"></i>Book Theme</h3>
+                <div class="theme-selector">
+                    <div class="theme-option active" data-theme="classic">
+                        <div class="theme-name">Classic</div>
+                        <div class="theme-desc">Traditional publishing</div>
+                    </div>
+                    <div class="theme-option" data-theme="modern">
+                        <div class="theme-name">Modern</div>
+                        <div class="theme-desc">Clean & minimal</div>
+                    </div>
+                    <div class="theme-option" data-theme="literary">
+                        <div class="theme-name">Literary</div>
+                        <div class="theme-desc">Elegant serif</div>
+                    </div>
+                    <div class="theme-option" data-theme="manuscript">
+                        <div class="theme-name">Manuscript</div>
+                        <div class="theme-desc">Submission format</div>
+                    </div>
+                    <div class="theme-option" data-theme="novel">
+                        <div class="theme-name">Novel</div>
+                        <div class="theme-desc">Professional fiction</div>
+                    </div>
+                    <div class="theme-option" data-theme="academic">
+                        <div class="theme-name">Academic</div>
+                        <div class="theme-desc">Research papers</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Summary -->
+            <div class="settings-summary">
+                <h4 style="color: #2c3e50; margin: 0 0 1rem 0; font-size: 1rem;">Current Settings</h4>
+                <div class="summary-item">
+                    <span class="summary-label">Theme:</span>
+                    <span class="summary-value" id="currentTheme">Classic</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Font:</span>
+                    <span class="summary-value" id="currentFont">Georgia, 12pt</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Page Size:</span>
+                    <span class="summary-value" id="currentPageSize">8.5" × 11"</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Line Spacing:</span>
+                    <span class="summary-value" id="currentLineHeight">1.8</span>
+                </div>
+            </div>
+            
+            <!-- Export Section -->
+            <div class="export-section">
+                <h3><i class="fas fa-download me-2"></i>Export Your Book</h3>
+                
+                <div class="export-formats">
+                    <div class="export-format selected" data-format="pdf">
+                        <i class="fas fa-file-pdf format-icon"></i>
+                        <div class="format-name">PDF</div>
+                        <div class="format-desc">Print ready</div>
+                    </div>
+                    <div class="export-format" data-format="epub">
+                        <i class="fas fa-book format-icon"></i>
+                        <div class="format-name">EPUB</div>
+                        <div class="format-desc">E-readers</div>
+                    </div>
+                    <div class="export-format" data-format="docx">
+                        <i class="fas fa-file-word format-icon"></i>
+                        <div class="format-name">Word</div>
+                        <div class="format-desc">Document</div>
+                    </div>
+                    <div class="export-format" data-format="txt">
+                        <i class="fas fa-file-alt format-icon"></i>
+                        <div class="format-name">Text</div>
+                        <div class="format-desc">Plain text</div>
+                    </div>
+                </div>
+                
+                <button class="export-button" id="exportButton">
+                    <i class="fas fa-download"></i>
+                    Export as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Current settings
+let currentSettings = {
+    theme: 'classic',
+    fontFamily: 'Georgia, serif',
+    fontSize: '12pt',
+    lineHeight: '1.8',
+    indent: '0.5in',
+    pageSize: '8.5x11',
+    margins: 'normal',
+    chapterStart: 'odd',
+    pageNumbers: true,
+    tableOfContents: true,
+    exportFormat: 'pdf'
+};
+
+// Theme configurations
+const themes = {
+    classic: {
+        fontFamily: 'Georgia, serif',
+        fontSize: '12pt',
+        lineHeight: '1.8',
+        indent: '0.5in'
+    },
+    modern: {
+        fontFamily: "'Source Serif Pro', serif",
+        fontSize: '11pt',
+        lineHeight: '1.6',
+        indent: '0'
+    },
+    literary: {
+        fontFamily: "'Crimson Text', serif",
+        fontSize: '12pt',
+        lineHeight: '1.8',
+        indent: '0.5in'
+    },
+    manuscript: {
+        fontFamily: "'Courier New', monospace",
+        fontSize: '12pt',
+        lineHeight: '2.0',
+        indent: '0.5in'
+    },
+    novel: {
+        fontFamily: "'EB Garamond', serif",
+        fontSize: '12pt',
+        lineHeight: '1.6',
+        indent: '1.5em'
+    },
+    academic: {
+        fontFamily: "'Times New Roman', serif",
+        fontSize: '12pt',
+        lineHeight: '2.0',
+        indent: '0.5in'
+    }
+};
+
+// Update settings summary
+function updateSummary() {
+    document.getElementById('currentTheme').textContent = currentSettings.theme.charAt(0).toUpperCase() + currentSettings.theme.slice(1);
+    document.getElementById('currentFont').textContent = `${currentSettings.fontFamily.replace(/['"]/g, '').split(',')[0]}, ${currentSettings.fontSize}`;
+    document.getElementById('currentPageSize').textContent = currentSettings.pageSize.replace('x', '" × ') + '"';
+    document.getElementById('currentLineHeight').textContent = currentSettings.lineHeight;
+}
+
+// Theme selection
+document.querySelectorAll('.theme-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // Update active state
+        document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Apply theme settings
+        const themeName = this.dataset.theme;
+        const theme = themes[themeName];
+        currentSettings.theme = themeName;
+        
+        // Update form controls
+        document.getElementById('fontFamily').value = theme.fontFamily;
+        document.getElementById('fontSize').value = theme.fontSize;
+        document.getElementById('lineHeight').value = theme.lineHeight;
+        document.getElementById('indent').value = theme.indent;
+        
+        // Update current settings
+        currentSettings.fontFamily = theme.fontFamily;
+        currentSettings.fontSize = theme.fontSize;
+        currentSettings.lineHeight = theme.lineHeight;
+        currentSettings.indent = theme.indent;
+        
+        updateSummary();
+    });
+});
+
+// Export format selection
+document.querySelectorAll('.export-format').forEach(format => {
+    format.addEventListener('click', function() {
+        document.querySelectorAll('.export-format').forEach(fmt => fmt.classList.remove('selected'));
+        this.classList.add('selected');
+        
+        const formatType = this.dataset.format;
+        currentSettings.exportFormat = formatType;
+        
+        const button = document.getElementById('exportButton');
+        button.innerHTML = `<i class="fas fa-download"></i>Export as ${formatType.toUpperCase()}`;
+    });
+});
+
+// Form controls
+document.getElementById('fontFamily').addEventListener('change', function() {
+    currentSettings.fontFamily = this.value;
+    updateSummary();
+});
+
+document.getElementById('fontSize').addEventListener('change', function() {
+    currentSettings.fontSize = this.value;
+    updateSummary();
+});
+
+document.getElementById('lineHeight').addEventListener('change', function() {
+    currentSettings.lineHeight = this.value;
+    updateSummary();
+});
+
+document.getElementById('pageSize').addEventListener('change', function() {
+    currentSettings.pageSize = this.value;
+    updateSummary();
+});
+
+// Export functionality
+document.getElementById('exportButton').addEventListener('click', function() {
+    const projectId = document.getElementById('projectSelect').value;
+    
+    if (!projectId) {
+        alert('Please select a project to export');
+        return;
+    }
+    
+    // Show loading state
+    const button = this;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Exporting...';
+    button.disabled = true;
+    
+    // Save current settings
+    localStorage.setItem('bookFormatSettings', JSON.stringify(currentSettings));
+    
+    // Determine export URL
+    let exportUrl;
+    const format = currentSettings.exportFormat;
+    
+    if (format === 'pdf') {
+        exportUrl = `/writer/projects/${projectId}/export-pdf/`;
+    } else if (format === 'epub') {
+        exportUrl = `/writer/projects/${projectId}/export-epub/`;
+    } else {
+        // For other formats, show coming soon message
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            alert(`${format.toUpperCase()} export coming soon! Use PDF or EPUB for now.`);
+        }, 1000);
+        return;
+    }
+    
+    // Test export with error handling
+    fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/pdf, application/epub+zip, */*'
+        }
+    }).then(response => {
+        if (response.ok) {
+            // If successful, redirect for download
+            window.location.href = exportUrl;
+        } else {
+            // Handle errors
+            response.text().then(errorText => {
+                console.error('Export error:', errorText);
+                alert('Export failed. Please ensure your project has content to export.');
+            });
+        }
+    }).catch(error => {
+        console.error('Export error:', error);
+        alert('Export failed. Please check your internet connection and try again.');
+    }).finally(() => {
+        // Reset button
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 2000);
+    });
+});
+
+// Load projects on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // This would typically load from your Django API
+    // For now, we'll simulate with placeholder
+    const projectSelect = document.getElementById('projectSelect');
+    
+    // You can add your actual project loading logic here
+    // fetch('/writer/api/projects/').then(...)
+    
+    updateSummary();
+});
+</script>
+{% endblock %}

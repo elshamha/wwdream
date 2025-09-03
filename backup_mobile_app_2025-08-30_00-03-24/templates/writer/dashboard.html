@@ -1,0 +1,1727 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Writer's Web Dream{% endblock %}
+
+{% block content %}
+
+<style>
+/* Dashboard Simplified Styling */
+/* Ensure background is never white */
+body {
+    background: var(--ethereal-primary) !important;
+    min-height: 100vh;
+}
+
+/* Hero Welcome Section */
+.dashboard-hero {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+    padding: 60px 0;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 3rem;
+    border-radius: 25px;
+}
+
+.dashboard-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    text-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.6),
+        0 2px 0 rgba(0, 0, 0, 0.2),
+        0 3px 0 rgba(0, 0, 0, 0.15),
+        0 4px 0 rgba(0, 0, 0, 0.1),
+        0 5px 8px rgba(0, 0, 0, 0.3),
+        0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+}
+
+/* Simplified Glass Cards */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    margin-bottom: 2rem;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Stats Cards */
+.stat-card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+    z-index: 1;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    position: relative;
+    z-index: 2;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 2;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    position: relative;
+    z-index: 2;
+}
+
+
+/* Project & Document Cards */
+.content-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.content-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.card-header-modern {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px 20px 0 0;
+    padding: 1.5rem;
+}
+
+.card-header-modern h6 {
+    color: #ffffff;
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.project-item, .document-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.project-item:hover, .document-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(5px);
+}
+
+.project-item:last-child, .document-item:last-child {
+    border-bottom: none;
+}
+
+.item-title {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.item-title:hover {
+    color: #4fd1c7;
+}
+
+.item-meta {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 8px 12px;
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+    color: #ffffff;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.empty-state i {
+    margin-bottom: 1rem;
+    color: #ffd93d;
+    filter: drop-shadow(0 4px 8px rgba(255, 217, 61, 0.3));
+}
+
+.empty-state h6 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+/* Color variations for stats */
+.stat-primary { color: #4fd1c7 !important; }
+.stat-success { color: #38ef7d !important; }
+.stat-warning { color: #ffd93d !important; }
+.stat-info { color: #74b9ff !important; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    /* Hide desktop-only elements on mobile */
+    .desktop-only {
+        display: none !important;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .dashboard-hero {
+        padding: 40px 0;
+        margin-bottom: 2rem;
+    }
+    
+    .action-button {
+        display: block;
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Simplified text colors - relying on base template */
+
+/* Smooth animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Removed floating animation to prevent issues */
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Admin Tools Styling */
+.admin-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.admin-tool-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    color: #ffffff !important;
+    text-align: center;
+}
+
+.admin-tool-button i {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+}
+
+.admin-tool-button span {
+    font-size: 12px;
+    font-weight: 500;
+    color: #ffffff !important;
+}
+
+.admin-tool-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(79, 209, 199, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(79, 209, 199, 0.2);
+    text-decoration: none;
+}
+
+/* Simplified Bookshelf Styling */
+.bookshelf-container {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.bookshelf {
+    padding: 20px;
+    background: linear-gradient(135deg, 
+        rgba(102, 126, 234, 0.1) 0%, 
+        rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 15px;
+    min-height: 220px;
+    position: relative;
+    width: 100%;
+    max-width: none;
+    margin-bottom: 15px;
+}
+
+.bookshelf:last-child {
+    margin-bottom: 0;
+}
+
+.bookshelf-books {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.bookshelf::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0.2) 100%);
+    border-radius: 0 0 15px 15px;
+}
+
+.book, .book-slot {
+    min-width: 110px;
+    max-width: 140px;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: bottom center;
+}
+
+.book {
+    cursor: pointer;
+}
+
+.book-slot.empty {
+    min-height: 180px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px 12px 6px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+}
+
+.book-slot.empty::before {
+    content: '+';
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: bold;
+}
+
+.book:hover {
+    transform: translateY(-8px) scale(1.02);
+}
+
+.book-spine {
+    background: linear-gradient(135deg, 
+        var(--book-color-1, #667eea) 0%, 
+        var(--book-color-2, #764ba2) 50%,
+        var(--book-color-1, #667eea) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px 16px 8px 8px;
+    padding: 22px 16px;
+    box-shadow: 
+        0 10px 32px rgba(0, 0, 0, 0.22),
+        0 1.5px 6px rgba(0, 0, 0, 0.08),
+        inset 0 0 18px 2px rgba(255, 255, 255, 0.12),
+        inset 0 0 8px 0 rgba(0, 0, 0, 0.10),
+        8px 0 18px -8px rgba(0, 0, 0, 0.18);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.book-spine::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 8px;
+    right: 8px;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.1) 100%);
+    border-radius: 2px;
+    opacity: 0.7;
+}
+
+.book-spine::after {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.05) 100%);
+    border-radius: 2px;
+    opacity: 0.5;
+}
+
+
+.book-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    line-height: 1.3;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-word;
+    font-family: 'Lora', serif;
+}
+/* Modern Color Variations */
+.book:nth-child(odd) {
+    --book-color-1: #667eea;
+    --book-color-2: #764ba2;
+}
+
+.book:nth-child(even) {
+    --book-color-1: #4facfe;
+    --book-color-2: #00f2fe;
+}
+
+.book:nth-child(3n) {
+    --book-color-1: #fa709a;
+    --book-color-2: #fee140;
+}
+
+.book:nth-child(4n) {
+    --book-color-1: #134e5e;
+    --book-color-2: #71b280;
+}
+
+.book:nth-child(5n) {
+    --book-color-1: #8e2de2;
+    --book-color-2: #4a00e0;
+}
+
+.book:nth-child(6n) {
+    --book-color-1: #00c9ff;
+    --book-color-2: #92fe9d;
+}
+
+/* Book Heights for Variety */
+.book:nth-child(2n) .book-spine {
+    height: 220px;
+}
+
+.book:nth-child(3n) .book-spine {
+    height: 240px;
+}
+
+.book:nth-child(4n) .book-spine {
+    height: 200px;
+}
+
+.book:nth-child(5n) .book-spine {
+    height: 260px;
+}
+
+.book .book-spine {
+    height: 230px;
+}
+
+/* Pop-out Book Effect */
+.book-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(25px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 25px;
+    width: 320px;
+    height: 450px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    opacity: 0;
+}
+
+.book-popup.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.book-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.book-popup-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.book-cover {
+    width: 100%;
+    height: 280px;
+    background: linear-gradient(135deg, 
+        var(--book-color-1, #667eea) 0%, 
+        var(--book-color-2, #764ba2) 100%);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+}
+
+.book-cover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+        linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+}
+
+.book-cover-title {
+    position: relative;
+    z-index: 2;
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    font-family: 'Lora', serif;
+}
+
+.book-popup-content {
+    color: #333 !important;
+    line-height: 1.5;
+}
+
+.book-popup h6 {
+    color: #333 !important;
+    font-size: 16px;
+    margin-bottom: 12px;
+    font-weight: bold;
+}
+
+.book-popup-summary {
+    color: #555 !important;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.book-popup-stats {
+    padding: 12px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 10px;
+    font-size: 11px;
+    color: #666 !important;
+}
+
+.book-popup-actions {
+    margin-top: 15px;
+    text-align: center;
+}
+
+/* Close button */
+.book-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.book-popup-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.admin-tool-button:hover i {
+    transform: scale(1.1);
+    text-shadow: 0 0 10px rgba(79, 209, 199, 0.5);
+}
+
+.admin-tool-button:hover span {
+    color: #ffffff !important;
+}
+
+/* Writer Dashboard Components */
+.writer-dashboard {
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+.writer-header {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.writer-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.writer-title i {
+    color: #ffffff !important;
+}
+
+.writer-subtitle {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 1.1rem;
+    margin: 0;
+    margin-top: 8px;
+}
+
+.btn-writer-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 15px;
+    padding: 12px 24px;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-writer-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: #ffffff !important;
+    text-decoration: none;
+}
+
+/* Library Section */
+.library-section {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.section-header h3 {
+    color: #ffffff !important;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.view-all-link {
+    /* color: #4fd1c7 !important; */
+    color: #ffffff !important;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: rgba(79, 209, 199, 0.1);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.view-all-link:hover {
+    background: rgba(79, 209, 199, 0.2);
+    color: #4fd1c7 !important;
+    text-decoration: none;
+}
+
+/* Compact Bookshelf */
+.bookshelf-compact {
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.books-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 10px 5px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.books-row::-webkit-scrollbar {
+    height: 6px;
+}
+
+.books-row::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.books-row::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.book-compact {
+    min-width: 85px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: bottom center;
+}
+
+.book-compact:hover {
+    transform: translateY(-8px) scale(1.05);
+}
+
+.book-spine-compact {
+    height: 140px;
+    width: 85px;
+    background: linear-gradient(135deg, var(--book-color-1, #667eea) 0%, var(--book-color-2, #764ba2) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px 12px 4px 4px;
+    padding: 12px 8px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.book-spine-compact::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 6px;
+    right: 6px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 1px;
+}
+
+.book-spine-compact::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 6px;
+    right: 6px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 1px;
+}
+
+.book-title-compact {
+    font-size: 10px;
+    font-weight: 600;
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    line-height: 1.2;
+    text-align: center;
+    word-break: break-word;
+    font-family: 'Segoe UI', sans-serif;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    hyphens: auto;
+}
+
+.book-stats {
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.8) !important;
+    text-align: center;
+    margin-top: 5px;
+}
+
+/* New Project Book */
+.book-compact.new-project .book-spine-compact {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.book-compact.new-project .book-spine-compact i {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.book-compact.new-project .book-spine-compact span {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-weight: 600;
+    text-align: center;
+}
+
+.book-compact.new-project:hover .book-spine-compact {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.book-compact.new-project:hover .book-spine-compact i,
+.book-compact.new-project:hover .book-spine-compact span {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Empty Library */
+.empty-library {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.empty-library i {
+    font-size: 4rem;
+    color: #4fd1c7 !important;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.empty-library h4 {
+    color: #ffffff !important;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.empty-library p {
+    color: rgba(255, 255, 255, 0.7) !important;
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+}
+
+/* Quick Links Section */
+.quick-links-section {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 2rem;
+}
+
+.quick-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.quick-link-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-link-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.quick-link-card:hover::before {
+    left: 100%;
+}
+
+.quick-link-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    color: inherit;
+}
+
+.quick-link-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.quick-link-card.new-document .quick-link-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.quick-link-card.creativity .quick-link-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.quick-link-card.new-project .quick-link-icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.quick-link-card.import .quick-link-icon {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.quick-link-content h4 {
+    color: #ffffff !important;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.quick-link-content p {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* Recent Documents */
+.recent-documents {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.document-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.document-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.document-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.document-icon i {
+    font-size: 20px;
+    color: #ffffff !important;
+}
+
+.document-info h4 {
+    color: #ffffff !important;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.document-info p {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+.document-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.no-documents {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.no-documents i {
+    font-size: 3rem;
+    color: #4fd1c7 !important;
+    margin-bottom: 15px;
+    opacity: 0.7;
+}
+
+/* Book Color Variations for Compact Bookshelf */
+.book-compact:nth-child(1) { --book-color-1: #667eea; --book-color-2: #764ba2; }
+.book-compact:nth-child(2) { --book-color-1: #4facfe; --book-color-2: #00f2fe; }
+.book-compact:nth-child(3) { --book-color-1: #fa709a; --book-color-2: #fee140; }
+.book-compact:nth-child(4) { --book-color-1: #134e5e; --book-color-2: #71b280; }
+.book-compact:nth-child(5) { --book-color-1: #8e2de2; --book-color-2: #4a00e0; }
+.book-compact:nth-child(6) { --book-color-1: #00c9ff; --book-color-2: #92fe9d; }
+.book-compact:nth-child(7) { --book-color-1: #fc466b; --book-color-2: #3f5efb; }
+
+/* Modal Styling */
+.docs-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.docs-modal-content {
+    /* background: rgba(255, 255, 255, 0.95); */
+    /* backdrop-filter: blur(25px); */
+    background: transparent;
+    margin: 15% auto;
+    padding: 0;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.docs-modal-header {
+    background: rgba(102, 126, 234, 0.1);
+    padding: 20px 25px;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.docs-modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff !important;
+}
+
+.docs-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.docs-modal-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.docs-modal-body {
+    padding: 25px;
+}
+
+.docs-modal-body .btn {
+    border-radius: 15px;
+    padding: 15px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.docs-modal-body .btn:hover {
+    transform: translateY(-2px);
+}
+
+.docs-modal-body .btn small {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .writer-header {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .writer-title {
+        font-size: 2rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .books-row {
+        gap: 10px;
+    }
+    
+    .book-compact {
+        min-width: 75px;
+    }
+    
+    .book-spine-compact {
+        width: 75px;
+        height: 120px;
+        padding: 10px 6px;
+    }
+    
+    .documents-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .quick-links-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .quick-link-card {
+        padding: 15px;
+    }
+    
+    .quick-link-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+    
+    .library-section, .recent-documents {
+        padding: 20px;
+    }
+    
+    .docs-modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+    
+    .docs-modal-header, .docs-modal-body {
+        padding: 20px;
+    }
+}
+</style>
+
+<div class="writer-dashboard">
+    <!-- Header -->
+    <div class="writer-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="writer-title">
+                        <i class="fas fa-feather-alt me-2"></i>
+                        A Writer's Web Dream
+                    </h1>
+                    <p class="writer-subtitle">Your writing sanctuary - accessible anywhere, anytime</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <!-- Actions moved to Quick Links section below -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Recent Documents -->
+            <div class="col-lg-8">
+                <!-- My Library Bookshelf -->
+                {% if show_bookshelf %}
+                <div class="library-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-book me-2"></i>My Library</h3>
+                        <a href="{% url 'writer:project_list' %}" class="view-all-link">View All Projects</a>
+                    </div>
+                    
+                    <div class="bookshelf-compact">
+                        {% if user_projects %}
+                            <div class="books-row">
+                                {% for project in user_projects|slice:":6" %}
+                                <div class="book-compact" onclick="openProject({{ project.pk }}, '{{ project.title|escapejs }}')">
+                                    <div class="book-spine-compact">
+                                        <div class="book-title-compact">{{ project.title|truncatechars:12 }}</div>
+                                        <div class="book-stats">{{ project.total_word_count|default:0 }} words</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                <!-- Add new project slot -->
+                                <div class="book-compact new-project" onclick="createNewProject()">
+                                    <div class="book-spine-compact new">
+                                        <i class="fas fa-plus"></i>
+                                        <span>New Project</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="empty-library">
+                                <i class="fas fa-book-open"></i>
+                                <h4>Start Your Writing Journey</h4>
+                                <p>Create your first project and begin writing</p>
+                                <button class="btn-writer-primary" onclick="createNewProject()">
+                                    <i class="fas fa-plus me-2"></i>Create First Project
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Quick Links Section -->
+                <div class="quick-links-section mt-4">
+                    <div class="section-header">
+                        <h3><i class="fas fa-bolt me-2"></i>Quick Actions</h3>
+                    </div>
+                    
+                    <div class="quick-links-grid">
+                        <a href="{% url 'writer:google_docs_editor' %}" class="quick-link-card new-document desktop-only">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h4>New Document</h4>
+                                <p>Start writing a new document</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'writer:creativity_workshop' %}" class="quick-link-card creativity">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h4>Creativity Workshop</h4>
+                                <p>Brainstorm ideas and connect concepts</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'writer:project_create' %}" class="quick-link-card new-project">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-folder-plus"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h4>New Project</h4>
+                                <p>Create a new writing project</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'writer:import_document' %}" class="quick-link-card import">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-file-import"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h4>Import Document</h4>
+                                <p>Upload and import existing files</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'writer:document_list' %}" class="quick-link-card documents">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-archive"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h4>Imported Documents</h4>
+                                <p>View your uploaded documents</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'writer:my_library' %}" class="quick-link-card library">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <div class="quick-link-content">
+                                <h4>My Ethereal Library</h4>
+                                <p>Browse your writing collection</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Documents -->
+                <div class="recent-documents mt-4">
+                    <div class="section-header">
+                        <h3><i class="fas fa-history me-2"></i>Recent Documents</h3>
+                    </div>
+                    
+                    <div class="documents-grid">
+                        {% for doc in recent_documents|slice:":4" %}
+                        <div class="document-card" onclick="openDocument({{ doc.id }})">
+                            <div class="document-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="document-info">
+                                <h4>{{ doc.title }}</h4>
+                                <p>{{ doc.content|striptags|truncatewords:10 }}</p>
+                                <div class="document-meta">
+                                    <span>{{ doc.word_count }} words</span>
+                                    <span>{{ doc.updated_at|timesince }} ago</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="no-documents">
+                            <i class="fas fa-edit"></i>
+                            <p>No recent documents. Start writing to see them here!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        <!-- Sidebar - Right Side -->
+        <div class="col-lg-4">
+            <!-- Admin Tools -->
+            {% if user.is_staff %}
+            <div class="glass-card content-card mb-4">
+                <div class="card-header-modern">
+                    <h6 style="color: #ffffff !important;"><i class="fas fa-cog me-2"></i>Admin Tools</h6>
+                </div>
+                <div class="card-body">
+                    <div class="admin-tools-grid">
+                        <a href="/admin/" class="admin-tool-button" target="_blank" title="Django Admin Panel">
+                            <i class="fas fa-database"></i>
+                            <span>Admin Panel</span>
+                        </a>
+                        <a href="/admin/auth/user/" class="admin-tool-button" target="_blank" title="Manage Users">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                        <!-- Imports link removed from Admin Tools -->
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<!-- Project Options Modal -->
+<div id="project-options-modal" class="docs-modal">
+    <div class="docs-modal-content" style="width: 400px;">
+        <div class="docs-modal-header">
+            <h3 id="project-modal-title">Project Options</h3>
+            <button class="docs-modal-close" onclick="closeProjectOptions()">&times;</button>
+        </div>
+        <div class="docs-modal-body">
+            <div class="d-grid gap-3">
+                <button class="btn btn-primary btn-lg" onclick="readYourBook()">
+                    <i class="fas fa-book-reader me-2"></i>
+                    Read Your Book
+                    <small class="d-block text-light">Experience your story as a formatted ebook</small>
+                </button>
+                <button class="btn btn-outline-primary" onclick="openProjectInChapterEditor()">
+                    <i class="fas fa-edit me-2"></i>
+                    Write
+                    <small class="d-block text-light">Continue writing your story</small>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="viewProjectDetails()">
+                    <i class="fas fa-eye me-2"></i>
+                    View Project Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Book Popup Overlay -->
+<div class="book-popup-overlay" id="bookPopupOverlay" onclick="closeBookPopup()"></div>
+
+<!-- Book Popup -->
+<div class="book-popup" id="bookPopup">
+    <button class="book-popup-close" onclick="closeBookPopup()">&times;</button>
+    <div class="book-cover" id="bookPopupCover">
+        <div class="book-cover-title" id="bookPopupTitle">Project Title</div>
+    </div>
+    <div class="book-popup-content">
+        <h6 id="bookPopupHeading">Project Details</h6>
+        <div class="book-popup-summary" id="bookPopupSummary">
+            <i class="fas fa-spinner fa-spin"></i> Generating preview...
+        </div>
+        <div class="book-popup-stats" id="bookPopupStats">
+            <div><strong>Words:</strong> <span id="popupWords">0</span></div>
+            <div><strong>Genre:</strong> <span id="popupGenre">Fiction</span></div>
+            <div><strong>Created:</strong> <span id="popupDate">-</span></div>
+        </div>
+        <div class="book-popup-actions">
+            <a href="#" id="bookPopupEditLink" class="btn btn-sm" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; text-decoration: none; padding: 8px 16px; border-radius: 8px;">
+                <i class="fas fa-edit me-1"></i>Open Editor
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth hover effects to glass cards
+    document.querySelectorAll('.glass-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Add click animations to buttons
+    document.querySelectorAll('.action-button, .action-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+    
+    // Add parallax effect to hero section
+    window.addEventListener('scroll', function() {
+        const hero = document.querySelector('.dashboard-hero');
+        const scrolled = window.pageYOffset;
+        const rate = scrolled * -0.5;
+        
+        if (hero) {
+            hero.style.transform = `translateY(${rate}px)`;
+        }
+    });
+    
+    // Animate stats on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'float 3s ease-in-out infinite';
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('.stat-card').forEach(card => {
+        observer.observe(card);
+    });
+});
+
+// Bookshelf Pop-out functionality
+function popBook(bookElement, projectId) {
+    // Get project data
+    const projectTitle = bookElement.querySelector('.book-title').textContent;
+    const bookSpine = bookElement.querySelector('.book-spine');
+    const computedStyle = getComputedStyle(bookElement);
+    const bookColor1 = computedStyle.getPropertyValue('--book-color-1') || '#667eea';
+    const bookColor2 = computedStyle.getPropertyValue('--book-color-2') || '#764ba2';
+    
+    // Set popup content
+    document.getElementById('bookPopupTitle').textContent = projectTitle;
+    document.getElementById('bookPopupHeading').textContent = projectTitle;
+    
+    // Set cover colors to match book spine
+    const bookCover = document.getElementById('bookPopupCover');
+    bookCover.style.background = `linear-gradient(135deg, ${bookColor1} 0%, ${bookColor2} 100%)`;
+    
+    // Get project stats (you might want to pass these from Django template)
+    const projectData = getProjectData(projectId);
+    document.getElementById('popupWords').textContent = projectData.words;
+    document.getElementById('popupGenre').textContent = projectData.genre;
+    document.getElementById('popupDate').textContent = projectData.date;
+    
+    // Update edit link
+    document.getElementById('bookPopupEditLink').href = `/writer/projects/${projectId}/editor/`;
+    
+    // Show popup
+    document.getElementById('bookPopupOverlay').classList.add('show');
+    document.getElementById('bookPopup').classList.add('show');
+    
+    // Generate summary
+    generateBookSummary(projectId);
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBookPopup() {
+    document.getElementById('bookPopupOverlay').classList.remove('show');
+    document.getElementById('bookPopup').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function getProjectData(projectId) {
+    // This would ideally come from the Django template or an AJAX call
+    // For now, using the data that's visible in the template
+    const bookElement = document.querySelector(`[data-project-id="${projectId}"]`);
+    const projectRow = bookElement.closest('.project-item');
+    
+    return {
+        words: '1,250', // You can get this from template data
+        genre: 'Fiction',
+        date: 'Aug 8, 2025'
+    };
+}
+
+function generateBookSummary(projectId) {
+    const summaryElement = document.getElementById('bookPopupSummary');
+    
+    // Show loading state
+    summaryElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating preview...';
+    
+    // Simulate AI summary generation
+    setTimeout(() => {
+        const summaries = [
+            "A captivating narrative that explores the depths of human emotion through compelling characters and intricate storytelling. This work seamlessly blends literary excellence with accessible prose, creating an immersive reading experience that challenges and entertains.",
+            "An innovative exploration of contemporary themes that resonates with modern readers. The author's masterful character development and engaging plot structure create a rich, multi-layered story that unfolds with precision and grace.",
+            "A thought-provoking work that examines the complexities of human relationships against a backdrop of extraordinary circumstances. The narrative flows with remarkable clarity while maintaining depth and emotional resonance throughout.",
+            "A powerful story that combines elements of drama and insight to create something truly memorable. The author's skillful use of language and attention to detail brings each scene to vivid life, keeping readers invested from beginning to end.",
+            "An engaging work that demonstrates exceptional storytelling craft. Through careful pacing and rich character development, this piece creates an authentic world that feels both familiar and refreshingly original."
+        ];
+        
+        // Get a consistent summary based on project ID
+        const summaryIndex = parseInt(projectId) % summaries.length;
+        const summary = summaries[summaryIndex];
+        
+        summaryElement.innerHTML = summary;
+    }, 2000);
+}
+
+// Close popup with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeBookPopup();
+        closeProjectOptions();
+    }
+});
+
+// Project Options Modal Functions
+let currentProjectId = null;
+
+function showProjectOptions(projectId, projectTitle) {
+    currentProjectId = projectId;
+    document.getElementById('project-modal-title').textContent = projectTitle;
+    document.getElementById('project-options-modal').style.display = 'block';
+}
+
+function closeProjectOptions() {
+    document.getElementById('project-options-modal').style.display = 'none';
+    currentProjectId = null;
+}
+
+function openProjectInChapterEditor() {
+    if (currentProjectId) {
+        window.location.href = `/writer/projects/${currentProjectId}/editor/`;
+    }
+}
+
+function viewProjectDetails() {
+    if (currentProjectId) {
+        window.location.href = `/writer/projects/${currentProjectId}/`;
+    }
+}
+function readYourBook() {
+    if (currentProjectId) {
+        window.location.href = `/writer/projects/${currentProjectId}/reader/`;
+    }
+}
+
+// New Dashboard Functions
+function openProject(projectId, projectTitle) {
+    // Show project options modal
+    showProjectOptions(projectId, projectTitle);
+}
+
+function createNewProject() {
+    // Redirect to project creation page
+    window.location.href = '/writer/projects/new/';
+}
+
+function openDocument(documentId) {
+    // Open document in Google Docs editor
+    window.location.href = `/writer/docs-editor/${documentId}/`;
+}
+
+// Old functions to remove
+function flipBook(bookElement, projectId) {
+    // This function is no longer used
+}
+
+function generateBookSummary_old(projectId) {
+    // This function is no longer used
+}
+</script>
+{% endblock %}

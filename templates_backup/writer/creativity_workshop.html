@@ -1,0 +1,1869 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="creativity-workshop">
+    <!-- Workshop Header -->
+    <header class="workshop-header">
+        <div class="container">
+            <h1 class="workshop-title">✨ Creativity Workshop</h1>
+            <p class="workshop-subtitle">Unleash your creative potential with AI-powered writing exercises and tools</p>
+            <div class="workshop-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="exercises-completed">0</span>
+                    <span class="stat-label">Exercises Completed</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="words-generated">0</span>
+                    <span class="stat-label">Words Generated</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="ideas-created">0</span>
+                    <span class="stat-label">Ideas Created</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container workshop-container">
+        <!-- Workshop Navigation -->
+        <nav class="workshop-nav">
+            <button class="nav-btn active" data-section="prompts">Writing Prompts</button>
+            <button class="nav-btn" data-section="characters">Character Builder</button>
+            <button class="nav-btn" data-section="plot">Plot Designer</button>
+            <button class="nav-btn" data-section="world">World Builder</button>
+            <button class="nav-btn" data-section="dialogue">Dialogue Generator</button>
+            <button class="nav-btn" data-section="exercises">Creative Exercises</button>
+            <button class="nav-btn" data-section="ai-brainstorm">AI Brainstorm</button>
+        </nav>
+
+        <!-- Writing Prompts Section -->
+        <section id="prompts" class="workshop-section active">
+            <div class="section-header">
+                <h2>📝 Writing Prompts</h2>
+                <p>Get inspired with AI-generated writing prompts tailored to your genre and style</p>
+            </div>
+
+            <div class="prompt-controls">
+                <div class="control-group">
+                    <label for="genre-select">Genre:</label>
+                    <select id="genre-select">
+                        <option value="fantasy">Fantasy</option>
+                        <option value="sci-fi">Science Fiction</option>
+                        <option value="mystery">Mystery</option>
+                        <option value="romance">Romance</option>
+                        <option value="thriller">Thriller</option>
+                        <option value="literary">Literary Fiction</option>
+                        <option value="horror">Horror</option>
+                        <option value="adventure">Adventure</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="mood-select">Mood:</label>
+                    <select id="mood-select">
+                        <option value="inspiring">Inspiring</option>
+                        <option value="dark">Dark</option>
+                        <option value="humorous">Humorous</option>
+                        <option value="romantic">Romantic</option>
+                        <option value="mysterious">Mysterious</option>
+                        <option value="adventurous">Adventurous</option>
+                    </select>
+                </div>
+                <button class="generate-btn" onclick="generatePrompt()">Generate Prompt</button>
+            </div>
+
+            <div class="prompt-display">
+                <div class="prompt-card" id="current-prompt">
+                    <div class="prompt-text">Click "Generate Prompt" to get started!</div>
+                    <div class="prompt-actions">
+                        <button class="action-btn" onclick="savePrompt()">💾 Save</button>
+                        <button class="action-btn" onclick="startWriting()">✍️ Start Writing</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saved-prompts">
+                <h3>Saved Prompts</h3>
+                <div id="saved-prompts-list" class="prompts-grid">
+                    <!-- Saved prompts will appear here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Character Builder Section -->
+        <section id="characters" class="workshop-section">
+            <div class="section-header">
+                <h2>👥 Character Builder</h2>
+                <p>Create compelling characters with AI assistance</p>
+            </div>
+
+            <div class="character-builder">
+                <div class="character-form">
+                    <div class="form-group">
+                        <label for="character-name">Character Name:</label>
+                        <input type="text" id="character-name" placeholder="Enter character name">
+                        <button class="generate-name-btn" onclick="generateCharacterName()">🎲 Generate</button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="character-age">Age:</label>
+                            <input type="number" id="character-age" placeholder="25">
+                        </div>
+                        <div class="form-group">
+                            <label for="character-gender">Gender:</label>
+                            <select id="character-gender">
+                                <option value="">Select...</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="non-binary">Non-binary</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="character-role">Role:</label>
+                            <select id="character-role">
+                                <option value="">Select...</option>
+                                <option value="protagonist">Protagonist</option>
+                                <option value="antagonist">Antagonist</option>
+                                <option value="supporting">Supporting</option>
+                                <option value="mentor">Mentor</option>
+                                <option value="love-interest">Love Interest</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="character-background">Background:</label>
+                        <textarea id="character-background" placeholder="Brief character background..."></textarea>
+                        <button class="ai-assist-btn" onclick="generateCharacterBackground()">🤖 AI Assist</button>
+                    </div>
+
+                    <div class="character-traits">
+                        <h4>Personality Traits</h4>
+                        <div class="traits-grid">
+                            <div class="trait-category">
+                                <h5>Strengths</h5>
+                                <div id="character-strengths" class="trait-tags">
+                                    <!-- Generated traits will appear here -->
+                                </div>
+                                <button class="generate-traits-btn" onclick="generateTraits('strengths')">Generate</button>
+                            </div>
+                            <div class="trait-category">
+                                <h5>Weaknesses</h5>
+                                <div id="character-weaknesses" class="trait-tags">
+                                    <!-- Generated traits will appear here -->
+                                </div>
+                                <button class="generate-traits-btn" onclick="generateTraits('weaknesses')">Generate</button>
+                            </div>
+                            <div class="trait-category">
+                                <h5>Fears</h5>
+                                <div id="character-fears" class="trait-tags">
+                                    <!-- Generated traits will appear here -->
+                                </div>
+                                <button class="generate-traits-btn" onclick="generateTraits('fears')">Generate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="save-character-btn" onclick="saveCharacter()">Save Character</button>
+                </div>
+
+                <div class="character-preview">
+                    <div class="character-card" id="character-preview">
+                        <div class="character-avatar">👤</div>
+                        <h3 id="preview-name">Character Name</h3>
+                        <div class="character-details">
+                            <p><strong>Age:</strong> <span id="preview-age">-</span></p>
+                            <p><strong>Role:</strong> <span id="preview-role">-</span></p>
+                            <p><strong>Background:</strong> <span id="preview-background">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saved-characters">
+                <h3>Your Characters</h3>
+                <div id="characters-gallery" class="characters-grid">
+                    <!-- Saved characters will appear here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Plot Designer Section -->
+        <section id="plot" class="workshop-section">
+            <div class="section-header">
+                <h2>📖 Plot Designer</h2>
+                <p>Structure your story with classic plot frameworks and AI suggestions</p>
+            </div>
+
+            <div class="plot-framework">
+                <div class="framework-selector">
+                    <label for="plot-structure">Choose Plot Structure:</label>
+                    <select id="plot-structure" onchange="loadPlotStructure()">
+                        <option value="three-act">Three-Act Structure</option>
+                        <option value="heros-journey">Hero's Journey</option>
+                        <option value="freytag">Freytag's Pyramid</option>
+                        <option value="seven-point">Seven-Point Story Structure</option>
+                        <option value="save-cat">Save the Cat Beat Sheet</option>
+                    </select>
+                </div>
+
+                <div class="plot-canvas" id="plot-canvas">
+                    <!-- Plot structure will be loaded here -->
+                </div>
+
+                <div class="plot-suggestions">
+                    <h4>AI Plot Suggestions</h4>
+                    <div id="plot-suggestions-list">
+                        <button class="suggestion-btn" onclick="generatePlotTwist()">🎭 Generate Plot Twist</button>
+                        <button class="suggestion-btn" onclick="generateConflict()">⚡ Create Conflict</button>
+                        <button class="suggestion-btn" onclick="generateClimax()">🎯 Design Climax</button>
+                        <button class="suggestion-btn" onclick="generateResolution()">🎊 Craft Resolution</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- World Builder Section -->
+        <section id="world" class="workshop-section">
+            <div class="section-header">
+                <h2>🌍 World Builder</h2>
+                <p>Create immersive settings and worlds for your stories</p>
+            </div>
+
+            <div class="world-builder">
+                <div class="world-categories">
+                    <div class="category-card" onclick="selectWorldCategory('geography')">
+                        <h4>🗺️ Geography</h4>
+                        <p>Landscapes, climates, and natural features</p>
+                    </div>
+                    <div class="category-card" onclick="selectWorldCategory('culture')">
+                        <h4>🏛️ Culture</h4>
+                        <p>Societies, customs, and traditions</p>
+                    </div>
+                    <div class="category-card" onclick="selectWorldCategory('politics')">
+                        <h4>👑 Politics</h4>
+                        <p>Governments, power structures, conflicts</p>
+                    </div>
+                    <div class="category-card" onclick="selectWorldCategory('magic')">
+                        <h4>✨ Magic/Technology</h4>
+                        <p>Supernatural or technological systems</p>
+                    </div>
+                    <div class="category-card" onclick="selectWorldCategory('history')">
+                        <h4>📜 History</h4>
+                        <p>Past events and their impact</p>
+                    </div>
+                    <div class="category-card" onclick="selectWorldCategory('economy')">
+                        <h4>💰 Economy</h4>
+                        <p>Trade, resources, and economic systems</p>
+                    </div>
+                </div>
+
+                <div class="world-details" id="world-details">
+                    <p>Select a category above to start building your world</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dialogue Generator Section -->
+        <section id="dialogue" class="workshop-section">
+            <div class="section-header">
+                <h2>💬 Dialogue Generator</h2>
+                <p>Create authentic conversations and develop character voices</p>
+            </div>
+
+            <div class="dialogue-tools">
+                <div class="conversation-setup">
+                    <h4>Conversation Setup</h4>
+                    <div class="setup-controls">
+                        <input type="text" id="character-a" placeholder="Character A name">
+                        <input type="text" id="character-b" placeholder="Character B name">
+                        <select id="dialogue-context">
+                            <option value="conflict">Conflict/Argument</option>
+                            <option value="romantic">Romantic Scene</option>
+                            <option value="revelation">Major Revelation</option>
+                            <option value="casual">Casual Conversation</option>
+                            <option value="negotiation">Negotiation</option>
+                            <option value="goodbye">Farewell</option>
+                        </select>
+                        <button onclick="generateDialogue()">Generate Dialogue</button>
+                    </div>
+                </div>
+
+                <div class="dialogue-display" id="dialogue-display">
+                    <div class="dialogue-placeholder">
+                        Set up your characters and context, then click "Generate Dialogue" to see AI-created conversations.
+                    </div>
+                </div>
+
+                <div class="dialogue-tips">
+                    <h4>💡 Dialogue Tips</h4>
+                    <div class="tips-grid">
+                        <div class="tip-card">
+                            <h5>Show Don't Tell</h5>
+                            <p>Use dialogue to reveal character personality and advance the plot.</p>
+                        </div>
+                        <div class="tip-card">
+                            <h5>Unique Voices</h5>
+                            <p>Each character should have a distinct speaking pattern and vocabulary.</p>
+                        </div>
+                        <div class="tip-card">
+                            <h5>Subtext</h5>
+                            <p>Characters often say one thing while meaning another.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Creative Exercises Section -->
+        <section id="exercises" class="workshop-section">
+            <div class="section-header">
+                <h2>🎯 Creative Exercises</h2>
+                <p>Stretch your creative muscles with targeted writing exercises</p>
+            </div>
+
+            <div class="exercises-grid">
+                <div class="exercise-card" onclick="startExercise('stream-of-consciousness')">
+                    <h4>🌊 Stream of Consciousness</h4>
+                    <p>Write continuously for 10 minutes without stopping or editing.</p>
+                    <div class="exercise-meta">
+                        <span>⏱️ 10 min</span>
+                        <span>🎯 Creativity</span>
+                    </div>
+                </div>
+
+                <div class="exercise-card" onclick="startExercise('character-interview')">
+                    <h4>🎤 Character Interview</h4>
+                    <p>Interview one of your characters to understand them better.</p>
+                    <div class="exercise-meta">
+                        <span>⏱️ 15 min</span>
+                        <span>🎯 Character Development</span>
+                    </div>
+                </div>
+
+                <div class="exercise-card" onclick="startExercise('sensory-scene')">
+                    <h4>👃 Sensory Scene</h4>
+                    <p>Describe a scene using all five senses.</p>
+                    <div class="exercise-meta">
+                        <span>⏱️ 12 min</span>
+                        <span>🎯 Description</span>
+                    </div>
+                </div>
+
+                <div class="exercise-card" onclick="startExercise('perspective-shift')">
+                    <h4>🔄 Perspective Shift</h4>
+                    <p>Rewrite a scene from a different character's point of view.</p>
+                    <div class="exercise-meta">
+                        <span>⏱️ 20 min</span>
+                        <span>🎯 POV</span>
+                    </div>
+                </div>
+
+                <div class="exercise-card" onclick="startExercise('dialogue-only')">
+                    <h4>💭 Dialogue Only</h4>
+                    <p>Tell a complete story using only dialogue.</p>
+                    <div class="exercise-meta">
+                        <span>⏱️ 15 min</span>
+                        <span>🎯 Dialogue</span>
+                    </div>
+                </div>
+
+                <div class="exercise-card" onclick="startExercise('constraint-writing')">
+                    <h4>🎲 Constraint Writing</h4>
+                    <p>Write a story following specific creative constraints.</p>
+                    <div class="exercise-meta">
+                        <span>⏱️ 18 min</span>
+                        <span>🎯 Creativity</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Brainstorm Section -->
+        <section id="ai-brainstorm" class="workshop-section">
+            <div class="section-header">
+                <h2>🧠 AI Brainstorm</h2>
+                <p>Collaborate with AI to generate and develop creative ideas</p>
+            </div>
+
+            <div class="brainstorm-interface">
+                <div class="brainstorm-input">
+                    <textarea id="brainstorm-prompt" placeholder="Describe what you're working on or what you need help with..."></textarea>
+                    <div class="brainstorm-options">
+                        <select id="brainstorm-type">
+                            <option value="ideas">Generate Ideas</option>
+                            <option value="expand">Expand Concept</option>
+                            <option value="solve">Solve Problem</option>
+                            <option value="connect">Make Connections</option>
+                        </select>
+                        <button onclick="startBrainstorm()">🚀 Brainstorm</button>
+                    </div>
+                </div>
+
+                <div class="brainstorm-results" id="brainstorm-results">
+                    <!-- AI brainstorm results will appear here -->
+                </div>
+
+                <div class="idea-board">
+                    <h4>💡 Idea Board</h4>
+                    <div id="saved-ideas" class="ideas-container">
+                        <!-- Saved ideas will appear here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Exercise Modal -->
+<div id="exercise-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="exercise-title">Exercise</h3>
+            <button class="close-btn" onclick="closeExercise()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="exercise-instructions"></div>
+            <div class="exercise-timer" id="exercise-timer">
+                <span id="timer-display">00:00</span>
+                <button id="timer-btn" onclick="toggleTimer()">Start</button>
+            </div>
+            <textarea id="exercise-writing-area" placeholder="Start writing here..."></textarea>
+            <div class="exercise-actions">
+                <button onclick="saveExercise()">Save Exercise</button>
+                <button onclick="shareExercise()">Share</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.creativity-workshop {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.workshop-header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    padding: 3rem 0;
+    text-align: center;
+    color: white;
+}
+
+.workshop-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.workshop-subtitle {
+    font-size: 1.2rem;
+    margin: 1rem 0 2rem;
+    opacity: 0.9;
+}
+
+.workshop-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffd700;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.workshop-container {
+    background: white;
+    margin: -2rem auto 0;
+    border-radius: 20px 20px 0 0;
+    min-height: 70vh;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.workshop-nav {
+    display: flex;
+    gap: 0;
+    background: #f8f9fa;
+    border-radius: 20px 20px 0 0;
+    overflow-x: auto;
+}
+
+.nav-btn {
+    background: transparent;
+    border: none;
+    padding: 1.5rem 2rem;
+    font-weight: 500;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.nav-btn.active {
+    background: white;
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.workshop-section {
+    display: none;
+    padding: 3rem;
+}
+
+.workshop-section.active {
+    display: block;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.section-header h2 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin: 0 0 1rem;
+}
+
+.section-header p {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Prompts Section */
+.prompt-controls {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.control-group select {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+}
+
+.generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 25px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.prompt-display {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+}
+
+.prompt-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+}
+
+.prompt-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.action-btn {
+    background: white;
+    border: 2px solid #667eea;
+    color: #667eea;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+.prompts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+/* Character Builder */
+.character-builder {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+}
+
+.character-form {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 15px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+}
+
+.generate-name-btn,
+.ai-assist-btn,
+.generate-traits-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.character-traits {
+    margin: 2rem 0;
+}
+
+.traits-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.trait-category {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.trait-category h5 {
+    margin: 0 0 1rem;
+    color: #495057;
+    text-align: center;
+}
+
+.trait-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    min-height: 2rem;
+}
+
+.trait-tag {
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.character-preview {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.character-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    width: 100%;
+    max-width: 300px;
+}
+
+.character-avatar {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.character-details {
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.characters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Plot Designer */
+.plot-framework {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.framework-selector {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.framework-selector label {
+    display: block;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.framework-selector select {
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    font-size: 1rem;
+}
+
+.plot-canvas {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    min-height: 400px;
+}
+
+.plot-suggestions {
+    text-align: center;
+}
+
+.suggestion-btn {
+    background: white;
+    border: 2px solid #667eea;
+    color: #667eea;
+    padding: 0.75rem 1.5rem;
+    margin: 0.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.suggestion-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+/* World Builder */
+.world-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.category-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    border-color: #667eea;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.category-card h4 {
+    font-size: 1.5rem;
+    margin: 0 0 1rem;
+    color: #2c3e50;
+}
+
+.world-details {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 2rem;
+    min-height: 300px;
+}
+
+/* Dialogue Generator */
+.dialogue-tools {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.conversation-setup {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.setup-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr 1fr;
+    gap: 1rem;
+    align-items: end;
+}
+
+.setup-controls input,
+.setup-controls select,
+.setup-controls button {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+}
+
+.setup-controls button {
+    background: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.dialogue-display {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    min-height: 300px;
+    font-family: 'Courier New', monospace;
+}
+
+.dialogue-placeholder {
+    color: #6c757d;
+    text-align: center;
+    padding: 3rem;
+    font-style: italic;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.tip-card {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.tip-card h5 {
+    margin: 0 0 1rem;
+    font-size: 1.2rem;
+}
+
+/* Creative Exercises */
+.exercises-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.exercise-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.exercise-card:hover {
+    transform: translateY(-5px);
+    border-color: #667eea;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.exercise-card h4 {
+    margin: 0 0 1rem;
+    color: #2c3e50;
+    font-size: 1.3rem;
+}
+
+.exercise-card p {
+    color: #6c757d;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.exercise-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #667eea;
+    font-weight: 500;
+}
+
+/* AI Brainstorm */
+.brainstorm-interface {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.brainstorm-input {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.brainstorm-input textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    resize: vertical;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.brainstorm-options {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.brainstorm-options select,
+.brainstorm-options button {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.brainstorm-options button {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.brainstorm-results {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    min-height: 200px;
+}
+
+.idea-board {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 15px;
+}
+
+.ideas-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.idea-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.idea-card:hover {
+    transform: translateX(5px);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-body {
+    padding: 2rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.exercise-timer {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.timer-display {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-right: 1rem;
+}
+
+.exercise-writing-area {
+    width: 100%;
+    min-height: 300px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.exercise-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.exercise-actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.exercise-actions button:first-child {
+    background: #28a745;
+    color: white;
+}
+
+.exercise-actions button:last-child {
+    background: #17a2b8;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .workshop-nav {
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .workshop-section {
+        padding: 1.5rem;
+    }
+    
+    .character-builder {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .traits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .setup-controls {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .workshop-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .prompt-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.workshop-section.active {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Character speaking animation */
+.character-speaking {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+</style>
+
+<script>
+class CreativityWorkshop {
+    constructor() {
+        this.currentSection = 'prompts';
+        this.exerciseTimer = null;
+        this.exerciseStartTime = null;
+        this.savedPrompts = JSON.parse(localStorage.getItem('savedPrompts') || '[]');
+        this.savedCharacters = JSON.parse(localStorage.getItem('savedCharacters') || '[]');
+        this.savedIdeas = JSON.parse(localStorage.getItem('savedIdeas') || '[]');
+        this.stats = JSON.parse(localStorage.getItem('workshopStats') || '{"exercisesCompleted": 0, "wordsGenerated": 0, "ideasCreated": 0}');
+        
+        this.init();
+    }
+    
+    init() {
+        this.setupNavigation();
+        this.updateStats();
+        this.loadSavedData();
+        this.loadPlotStructure();
+    }
+    
+    setupNavigation() {
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const section = e.target.dataset.section;
+                this.showSection(section);
+            });
+        });
+    }
+    
+    showSection(sectionName) {
+        // Hide all sections
+        document.querySelectorAll('.workshop-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        // Show selected section
+        document.getElementById(sectionName).classList.add('active');
+        
+        // Update navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+        
+        this.currentSection = sectionName;
+    }
+    
+    updateStats() {
+        document.getElementById('exercises-completed').textContent = this.stats.exercisesCompleted;
+        document.getElementById('words-generated').textContent = this.stats.wordsGenerated;
+        document.getElementById('ideas-created').textContent = this.stats.ideasCreated;
+    }
+    
+    saveStats() {
+        localStorage.setItem('workshopStats', JSON.stringify(this.stats));
+        this.updateStats();
+    }
+    
+    generatePrompt() {
+        const genre = document.getElementById('genre-select').value;
+        const mood = document.getElementById('mood-select').value;
+        
+        const prompts = {
+            fantasy: {
+                inspiring: [
+                    "A young blacksmith discovers that every weapon they forge can hold the soul of its first victim. Write about their moral dilemma when commissioned to create a sword for the kingdom's greatest hero.",
+                    "In a world where magic is fueled by memories, write about a character who must decide whether to sacrifice their happiest memory to save their village.",
+                    "A dragon that has been terrorizing villages for centuries suddenly appears at your door, asking for your help to break an ancient curse."
+                ],
+                dark: [
+                    "The last magic user in the realm discovers that their power comes from the life force of others, and they've been unknowingly killing innocent people for years.",
+                    "Write about a necromancer who can only communicate with the dead by experiencing their final moments of terror.",
+                    "In a kingdom where hope itself is a finite resource, write about the person tasked with deciding who deserves it most."
+                ]
+            },
+            'sci-fi': {
+                inspiring: [
+                    "Humanity's first contact with aliens occurs through dreams. Write about the person chosen to be Earth's diplomatic dreamer.",
+                    "A time traveler keeps preventing disasters, but each change creates worse consequences. Write about their final decision.",
+                    "In a world where AI has solved all of humanity's problems, write about the person who discovers what we've lost in return."
+                ]
+            }
+        };
+        
+        const genrePrompts = prompts[genre] || prompts.fantasy;
+        const moodPrompts = genrePrompts[mood] || genrePrompts.inspiring;
+        const randomPrompt = moodPrompts[Math.floor(Math.random() * moodPrompts.length)] || "Write about a character who discovers a hidden truth about their world.";
+        
+        document.getElementById('current-prompt').querySelector('.prompt-text').textContent = randomPrompt;
+        
+        // Update word count
+        this.stats.wordsGenerated += randomPrompt.split(' ').length;
+        this.saveStats();
+    }
+    
+    savePrompt() {
+        const promptText = document.getElementById('current-prompt').querySelector('.prompt-text').textContent;
+        if (promptText && promptText !== "Click \"Generate Prompt\" to get started!") {
+            this.savedPrompts.push({
+                id: Date.now(),
+                text: promptText,
+                genre: document.getElementById('genre-select').value,
+                mood: document.getElementById('mood-select').value,
+                date: new Date().toISOString()
+            });
+            localStorage.setItem('savedPrompts', JSON.stringify(this.savedPrompts));
+            this.loadSavedPrompts();
+            alert('Prompt saved successfully!');
+        }
+    }
+    
+    startWriting() {
+        const promptText = document.getElementById('current-prompt').querySelector('.prompt-text').textContent;
+        if (promptText && promptText !== "Click \"Generate Prompt\" to get started!") {
+            // Redirect to editor with the prompt
+            window.open(`/writer/simple-editor/?prompt=${encodeURIComponent(promptText)}`, '_blank');
+        }
+    }
+    
+    loadSavedPrompts() {
+        const container = document.getElementById('saved-prompts-list');
+        container.innerHTML = '';
+        
+        this.savedPrompts.forEach(prompt => {
+            const promptElement = document.createElement('div');
+            promptElement.className = 'prompt-card saved';
+            promptElement.innerHTML = `
+                <div class="prompt-text">${prompt.text.substring(0, 100)}...</div>
+                <div class="prompt-meta">
+                    <span>${prompt.genre} • ${prompt.mood}</span>
+                    <span>${new Date(prompt.date).toLocaleDateString()}</span>
+                </div>
+                <div class="prompt-actions">
+                    <button class="action-btn" onclick="workshop.usePrompt(${prompt.id})">Use</button>
+                    <button class="action-btn danger" onclick="workshop.deletePrompt(${prompt.id})">Delete</button>
+                </div>
+            `;
+            container.appendChild(promptElement);
+        });
+    }
+    
+    // Character Builder Methods
+    generateCharacterName() {
+        const names = [
+            'Aeliana', 'Bastian', 'Celeste', 'Dorian', 'Evangeline', 'Finnegan',
+            'Gabrielle', 'Harrison', 'Isolde', 'Jasper', 'Kaia', 'Lucian',
+            'Miranda', 'Nathaniel', 'Ophelia', 'Perseus', 'Quinton', 'Rosalind',
+            'Sebastian', 'Theodora', 'Ulysses', 'Vivienne', 'Winston', 'Xander',
+            'Yvonne', 'Zephyr'
+        ];
+        
+        const randomName = names[Math.floor(Math.random() * names.length)];
+        document.getElementById('character-name').value = randomName;
+        this.updateCharacterPreview();
+    }
+    
+    generateCharacterBackground() {
+        const backgrounds = [
+            "Grew up in a small village where everyone knew each other's secrets, developing a keen sense of observation and discretion.",
+            "Orphaned at a young age and raised by traveling merchants, learned to adapt quickly to new situations and read people's intentions.",
+            "Born into nobility but rejected their privileged life to pursue their own path, carrying both refined manners and rebellious spirit.",
+            "Spent years as a scholar in ancient libraries, possessing vast knowledge but lacking practical experience with the world.",
+            "Former soldier who witnessed the horrors of war and now seeks redemption through helping others."
+        ];
+        
+        const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+        document.getElementById('character-background').value = randomBackground;
+        this.updateCharacterPreview();
+        
+        this.stats.wordsGenerated += randomBackground.split(' ').length;
+        this.saveStats();
+    }
+    
+    generateTraits(type) {
+        const traits = {
+            strengths: ['Courageous', 'Intelligent', 'Compassionate', 'Loyal', 'Creative', 'Determined', 'Charismatic', 'Wise'],
+            weaknesses: ['Impatient', 'Stubborn', 'Naive', 'Pessimistic', 'Jealous', 'Reckless', 'Secretive', 'Arrogant'],
+            fears: ['Abandonment', 'Failure', 'Death', 'Betrayal', 'Loss of control', 'Being forgotten', 'Heights', 'The unknown']
+        };
+        
+        const traitList = traits[type] || [];
+        const selectedTraits = [];
+        
+        // Select 3 random traits
+        for (let i = 0; i < 3; i++) {
+            const randomTrait = traitList[Math.floor(Math.random() * traitList.length)];
+            if (!selectedTraits.includes(randomTrait)) {
+                selectedTraits.push(randomTrait);
+            }
+        }
+        
+        const container = document.getElementById(`character-${type}`);
+        container.innerHTML = '';
+        selectedTraits.forEach(trait => {
+            const traitElement = document.createElement('span');
+            traitElement.className = 'trait-tag';
+            traitElement.textContent = trait;
+            container.appendChild(traitElement);
+        });
+    }
+    
+    updateCharacterPreview() {
+        const name = document.getElementById('character-name').value || 'Character Name';
+        const age = document.getElementById('character-age').value || '-';
+        const role = document.getElementById('character-role').value || '-';
+        const background = document.getElementById('character-background').value || '-';
+        
+        document.getElementById('preview-name').textContent = name;
+        document.getElementById('preview-age').textContent = age;
+        document.getElementById('preview-role').textContent = role;
+        document.getElementById('preview-background').textContent = background.substring(0, 100) + (background.length > 100 ? '...' : '');
+    }
+    
+    saveCharacter() {
+        const character = {
+            id: Date.now(),
+            name: document.getElementById('character-name').value,
+            age: document.getElementById('character-age').value,
+            gender: document.getElementById('character-gender').value,
+            role: document.getElementById('character-role').value,
+            background: document.getElementById('character-background').value,
+            strengths: Array.from(document.getElementById('character-strengths').children).map(el => el.textContent),
+            weaknesses: Array.from(document.getElementById('character-weaknesses').children).map(el => el.textContent),
+            fears: Array.from(document.getElementById('character-fears').children).map(el => el.textContent),
+            date: new Date().toISOString()
+        };
+        
+        this.savedCharacters.push(character);
+        localStorage.setItem('savedCharacters', JSON.stringify(this.savedCharacters));
+        this.loadSavedCharacters();
+        
+        this.stats.ideasCreated++;
+        this.saveStats();
+        
+        alert('Character saved successfully!');
+    }
+    
+    loadSavedCharacters() {
+        const container = document.getElementById('characters-gallery');
+        container.innerHTML = '';
+        
+        this.savedCharacters.forEach(character => {
+            const characterElement = document.createElement('div');
+            characterElement.className = 'character-card mini';
+            characterElement.innerHTML = `
+                <div class="character-avatar">👤</div>
+                <h4>${character.name}</h4>
+                <p>${character.role}</p>
+                <div class="character-actions">
+                    <button onclick="workshop.editCharacter(${character.id})">Edit</button>
+                    <button onclick="workshop.deleteCharacter(${character.id})">Delete</button>
+                </div>
+            `;
+            container.appendChild(characterElement);
+        });
+    }
+    
+    // Plot Structure Methods
+    loadPlotStructure() {
+        const structure = document.getElementById('plot-structure').value;
+        const canvas = document.getElementById('plot-canvas');
+        
+        const structures = {
+            'three-act': {
+                title: 'Three-Act Structure',
+                acts: [
+                    { name: 'Act I - Setup', description: 'Introduce characters, world, and inciting incident', percentage: 25 },
+                    { name: 'Act II - Confrontation', description: 'Rising action, obstacles, and character development', percentage: 50 },
+                    { name: 'Act III - Resolution', description: 'Climax, falling action, and denouement', percentage: 25 }
+                ]
+            },
+            'heros-journey': {
+                title: "Hero's Journey",
+                acts: [
+                    { name: 'Ordinary World', description: 'Hero in their familiar environment' },
+                    { name: 'Call to Adventure', description: 'Hero faces a problem or challenge' },
+                    { name: 'Refusal of the Call', description: 'Hero hesitates or refuses the adventure' },
+                    { name: 'Meeting the Mentor', description: 'Hero encounters wise figure' },
+                    { name: 'Crossing the Threshold', description: 'Hero commits to the adventure' },
+                    { name: 'Tests and Trials', description: 'Hero faces challenges in the new world' },
+                    { name: 'The Ordeal', description: 'Hero confronts their deepest fear' },
+                    { name: 'The Reward', description: 'Hero survives and gains something' },
+                    { name: 'The Road Back', description: 'Hero begins journey back to ordinary world' },
+                    { name: 'Resurrection', description: 'Hero is tested once more' },
+                    { name: 'Return with Elixir', description: 'Hero returns home transformed' }
+                ]
+            }
+        };
+        
+        const selectedStructure = structures[structure] || structures['three-act'];
+        
+        canvas.innerHTML = `
+            <h3>${selectedStructure.title}</h3>
+            <div class="plot-structure-visual">
+                ${selectedStructure.acts.map((act, index) => `
+                    <div class="plot-act" data-act="${index}">
+                        <h4>${act.name}</h4>
+                        <p>${act.description}</p>
+                        <textarea placeholder="Your story notes for this section..."></textarea>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // World Building Methods
+    selectWorldCategory(category) {
+        const detailsContainer = document.getElementById('world-details');
+        
+        const categories = {
+            geography: {
+                title: 'Geography & Environment',
+                questions: [
+                    'What is the climate like?',
+                    'What natural landmarks exist?',
+                    'How does geography affect culture?',
+                    'What natural resources are available?',
+                    'Are there any supernatural environmental features?'
+                ]
+            },
+            culture: {
+                title: 'Culture & Society',
+                questions: [
+                    'What are the dominant beliefs and values?',
+                    'How do people greet each other?',
+                    'What are the social hierarchies?',
+                    'What festivals or traditions exist?',
+                    'How do different cultures interact?'
+                ]
+            },
+            politics: {
+                title: 'Politics & Governance',
+                questions: [
+                    'Who holds power and how?',
+                    'What are the major conflicts?',
+                    'How are laws made and enforced?',
+                    'What are the relationships between nations?',
+                    'Are there any rebellious groups?'
+                ]
+            }
+        };
+        
+        const selectedCategory = categories[category];
+        if (selectedCategory) {
+            detailsContainer.innerHTML = `
+                <h3>${selectedCategory.title}</h3>
+                <div class="world-questions">
+                    ${selectedCategory.questions.map(question => `
+                        <div class="question-item">
+                            <h5>${question}</h5>
+                            <textarea placeholder="Your answer..."></textarea>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="ai-assist-btn" onclick="workshop.generateWorldDetails('${category}')">
+                    🤖 Get AI Suggestions
+                </button>
+            `;
+        }
+    }
+    
+    // Dialogue Methods
+    generateDialogue() {
+        const charA = document.getElementById('character-a').value || 'Character A';
+        const charB = document.getElementById('character-b').value || 'Character B';
+        const context = document.getElementById('dialogue-context').value;
+        
+        const dialogues = {
+            conflict: [
+                `${charA}: "You can't be serious about this."`,
+                `${charB}: "I've never been more serious in my life."`,
+                `${charA}: "After everything we've been through?"`,
+                `${charB}: "That's exactly why I have to do this."`
+            ],
+            romantic: [
+                `${charA}: "I've been thinking about what you said."`,
+                `${charB}: "And?"`,
+                `${charA}: "Maybe you're right. Maybe we do deserve happiness."`,
+                `${charB}: "I've been waiting so long to hear you say that."`
+            ]
+        };
+        
+        const selectedDialogue = dialogues[context] || dialogues.conflict;
+        
+        document.getElementById('dialogue-display').innerHTML = `
+            <div class="dialogue-conversation">
+                ${selectedDialogue.map(line => `<p class="dialogue-line">${line}</p>`).join('')}
+            </div>
+            <div class="dialogue-actions">
+                <button onclick="workshop.continueDialogue()">Continue Conversation</button>
+                <button onclick="workshop.saveDialogue()">Save Dialogue</button>
+            </div>
+        `;
+        
+        this.stats.wordsGenerated += selectedDialogue.join(' ').split(' ').length;
+        this.saveStats();
+    }
+    
+    // Exercise Methods
+    startExercise(exerciseType) {
+        const exercises = {
+            'stream-of-consciousness': {
+                title: '🌊 Stream of Consciousness',
+                instructions: 'Write continuously for 10 minutes without stopping, editing, or worrying about grammar. Let your thoughts flow naturally onto the page. Don\'t lift your fingers from the keyboard!',
+                duration: 10 * 60 * 1000 // 10 minutes
+            },
+            'character-interview': {
+                title: '🎤 Character Interview',
+                instructions: 'Choose one of your characters and interview them. Ask them about their past, their fears, their dreams. Write both the questions and their answers. What would they say that might surprise you?',
+                duration: 15 * 60 * 1000 // 15 minutes
+            },
+            'sensory-scene': {
+                title: '👃 Sensory Scene',
+                instructions: 'Describe a scene using all five senses. What do your characters see, hear, smell, taste, and touch? Make the reader feel like they\'re really there.',
+                duration: 12 * 60 * 1000 // 12 minutes
+            }
+        };
+        
+        const exercise = exercises[exerciseType];
+        if (exercise) {
+            document.getElementById('exercise-title').textContent = exercise.title;
+            document.getElementById('exercise-instructions').innerHTML = `<p>${exercise.instructions}</p>`;
+            document.getElementById('timer-display').textContent = this.formatTime(exercise.duration);
+            document.getElementById('exercise-writing-area').value = '';
+            
+            this.currentExercise = { ...exercise, type: exerciseType };
+            document.getElementById('exercise-modal').classList.add('active');
+        }
+    }
+    
+    toggleTimer() {
+        const timerBtn = document.getElementById('timer-btn');
+        
+        if (this.exerciseTimer) {
+            // Stop timer
+            clearInterval(this.exerciseTimer);
+            this.exerciseTimer = null;
+            timerBtn.textContent = 'Start';
+        } else {
+            // Start timer
+            this.exerciseStartTime = Date.now();
+            timerBtn.textContent = 'Stop';
+            
+            this.exerciseTimer = setInterval(() => {
+                const elapsed = Date.now() - this.exerciseStartTime;
+                const remaining = Math.max(0, this.currentExercise.duration - elapsed);
+                
+                document.getElementById('timer-display').textContent = this.formatTime(remaining);
+                
+                if (remaining === 0) {
+                    clearInterval(this.exerciseTimer);
+                    this.exerciseTimer = null;
+                    timerBtn.textContent = 'Start';
+                    alert('Time\'s up! Great job on completing the exercise.');
+                    this.stats.exercisesCompleted++;
+                    this.saveStats();
+                }
+            }, 1000);
+        }
+    }
+    
+    formatTime(ms) {
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    saveExercise() {
+        const content = document.getElementById('exercise-writing-area').value;
+        if (content.trim()) {
+            const exercise = {
+                id: Date.now(),
+                type: this.currentExercise.type,
+                title: this.currentExercise.title,
+                content: content,
+                wordCount: content.split(' ').filter(w => w.length > 0).length,
+                date: new Date().toISOString()
+            };
+            
+            let savedExercises = JSON.parse(localStorage.getItem('savedExercises') || '[]');
+            savedExercises.push(exercise);
+            localStorage.setItem('savedExercises', JSON.stringify(savedExercises));
+            
+            this.stats.wordsGenerated += exercise.wordCount;
+            this.stats.exercisesCompleted++;
+            this.saveStats();
+            
+            alert('Exercise saved successfully!');
+        }
+    }
+    
+    closeExercise() {
+        if (this.exerciseTimer) {
+            clearInterval(this.exerciseTimer);
+            this.exerciseTimer = null;
+        }
+        document.getElementById('exercise-modal').classList.remove('active');
+    }
+    
+    // AI Brainstorm Methods
+    startBrainstorm() {
+        const prompt = document.getElementById('brainstorm-prompt').value;
+        const type = document.getElementById('brainstorm-type').value;
+        
+        if (!prompt.trim()) {
+            alert('Please enter a prompt for brainstorming.');
+            return;
+        }
+        
+        // Simulate AI brainstorming
+        const results = this.generateBrainstormResults(prompt, type);
+        
+        document.getElementById('brainstorm-results').innerHTML = `
+            <h4>💡 Brainstorm Results</h4>
+            <div class="brainstorm-ideas">
+                ${results.map(idea => `
+                    <div class="brainstorm-idea">
+                        <p>${idea}</p>
+                        <button onclick="workshop.saveIdea('${idea.replace(/'/g, '\\\'')}')" class="save-idea-btn">
+                            💾 Save Idea
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        this.stats.ideasCreated += results.length;
+        this.stats.wordsGenerated += results.join(' ').split(' ').length;
+        this.saveStats();
+    }
+    
+    generateBrainstormResults(prompt, type) {
+        // This would normally call an AI API, but we'll simulate it
+        const results = {
+            ideas: [
+                "What if your protagonist has the opposite problem of what you initially planned?",
+                "Consider adding a character who represents your protagonist's potential future.",
+                "What would happen if the stakes were personal rather than global?",
+                "Try introducing an element from a completely different genre.",
+                "What if the solution to the main problem creates a bigger problem?"
+            ],
+            expand: [
+                "Explore the emotional impact of this concept on different types of characters.",
+                "Consider the broader implications for your story world.",
+                "What are the unexpected consequences of this idea?",
+                "How might different cultures in your world react to this?",
+                "What would the long-term effects be?"
+            ],
+            solve: [
+                "Break the problem down into smaller, manageable pieces.",
+                "Consider what your favorite author would do in this situation.",
+                "Look for inspiration in real-world situations or historical events.",
+                "Try approaching from a character's emotional perspective.",
+                "What would happen if you did the opposite of your first instinct?"
+            ]
+        };
+        
+        return results[type] || results.ideas;
+    }
+    
+    saveIdea(idea) {
+        this.savedIdeas.push({
+            id: Date.now(),
+            text: idea,
+            date: new Date().toISOString()
+        });
+        localStorage.setItem('savedIdeas', JSON.stringify(this.savedIdeas));
+        this.loadSavedIdeas();
+    }
+    
+    loadSavedIdeas() {
+        const container = document.getElementById('saved-ideas');
+        container.innerHTML = '';
+        
+        this.savedIdeas.forEach(idea => {
+            const ideaElement = document.createElement('div');
+            ideaElement.className = 'idea-card';
+            ideaElement.innerHTML = `
+                <p>${idea.text}</p>
+                <small>${new Date(idea.date).toLocaleDateString()}</small>
+            `;
+            container.appendChild(ideaElement);
+        });
+    }
+    
+    loadSavedData() {
+        this.loadSavedPrompts();
+        this.loadSavedCharacters();
+        this.loadSavedIdeas();
+    }
+}
+
+// Initialize the workshop
+let workshop;
+document.addEventListener('DOMContentLoaded', () => {
+    workshop = new CreativityWorkshop();
+});
+
+// Global functions for HTML onclick events
+function generatePrompt() { workshop.generatePrompt(); }
+function savePrompt() { workshop.savePrompt(); }
+function startWriting() { workshop.startWriting(); }
+function generateCharacterName() { workshop.generateCharacterName(); }
+function generateCharacterBackground() { workshop.generateCharacterBackground(); }
+function generateTraits(type) { workshop.generateTraits(type); }
+function saveCharacter() { workshop.saveCharacter(); }
+function loadPlotStructure() { workshop.loadPlotStructure(); }
+function selectWorldCategory(category) { workshop.selectWorldCategory(category); }
+function generateDialogue() { workshop.generateDialogue(); }
+function startExercise(type) { workshop.startExercise(type); }
+function toggleTimer() { workshop.toggleTimer(); }
+function saveExercise() { workshop.saveExercise(); }
+function closeExercise() { workshop.closeExercise(); }
+function startBrainstorm() { workshop.startBrainstorm(); }
+</script>
+{% endblock %}

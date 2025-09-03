@@ -1,0 +1,1745 @@
+{% extends 'base.html' %}
+{% block title %}Book Formatter - Professional Publishing Preview{% endblock %}
+
+{% block content %}
+<style>
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #f1f5f9;
+    --accent-color: #0ea5e9;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --border-color: #e2e8f0;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.formatter-container {
+    display: grid;
+    grid-template-columns: 350px 1fr 400px;
+    height: 100vh;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* Left Sidebar - Theme Selection */
+.theme-sidebar {
+    background: white;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+.sidebar-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+}
+
+.sidebar-subtitle {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.theme-category {
+    margin-bottom: 25px;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.category-icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+    width: 25px;
+    text-align: center;
+}
+
+.category-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.category-count {
+    margin-left: auto;
+    background: var(--secondary-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.theme-card {
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+}
+
+.theme-card.active {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+}
+
+.theme-preview {
+    width: 100%;
+    height: 80px;
+    background: var(--secondary-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+}
+
+.theme-genre {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Center - Book Preview Area */
+.preview-area {
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-header {
+    background: white;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.preview-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.preview-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.device-selector {
+    display: flex;
+    background: var(--secondary-color);
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.device-btn {
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+}
+
+.device-btn.active {
+    background: white;
+    color: var(--text-dark);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.zoom-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.zoom-level {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    min-width: 50px;
+    text-align: center;
+}
+
+/* Book Preview Container */
+.book-container {
+    flex: 1;
+    padding: 60px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.book-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 70%, rgba(255,255,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.book-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 20px;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.1) 0%, transparent 70%);
+    filter: blur(8px);
+    pointer-events: none;
+}
+
+.device-frame {
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Print Book Mode - Realistic Book with Pages */
+.device-frame.print-mode {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.device-frame.print-mode .book-preview {
+    width: 420px;
+    height: 600px;
+    background: linear-gradient(to right, #f8f9fa 0%, #ffffff 50%, #f8f9fa 100%);
+    border-radius: 0 8px 8px 0;
+    box-shadow: 
+        -2px 0 8px rgba(0,0,0,0.1),
+        0 8px 32px rgba(0,0,0,0.2),
+        inset -1px 0 0 rgba(0,0,0,0.1);
+    position: relative;
+    transform: rotateY(-5deg);
+}
+
+.device-frame.print-mode .book-preview::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, transparent 100%);
+    border-radius: 0 0 0 8px;
+}
+
+.device-frame.print-mode .book-preview::after {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: #e2e8f0;
+    border-radius: 2px 0 0 2px;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.2);
+}
+
+/* eBook Reader Mode - Kindle-style */
+.device-frame.ebook-mode {
+    padding: 25px;
+    background: #2a2a2a;
+    border-radius: 12px;
+    box-shadow: 
+        0 0 0 2px #1a1a1a,
+        0 20px 40px rgba(0,0,0,0.3);
+}
+
+.device-frame.ebook-mode .book-preview {
+    width: 350px;
+    height: 480px;
+    background: #f4f4f2;
+    border-radius: 4px;
+    border: 2px solid #e0e0e0;
+    position: relative;
+    overflow: hidden;
+}
+
+.device-frame.ebook-mode::before {
+    content: '';
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: #666;
+    border-radius: 2px;
+}
+
+/* Mobile Phone Mode - iPhone-style */
+.device-frame.mobile-mode {
+    padding: 20px 12px;
+    background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
+    border-radius: 35px;
+    box-shadow: 
+        0 0 0 3px #0a0a0a,
+        0 25px 50px rgba(0,0,0,0.4);
+    position: relative;
+}
+
+.device-frame.mobile-mode .book-preview {
+    width: 280px;
+    height: 580px;
+    background: #000000;
+    border-radius: 25px;
+    overflow: hidden;
+    position: relative;
+}
+
+.device-frame.mobile-mode::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+}
+
+.device-frame.mobile-mode::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+}
+
+/* Tablet Mode - iPad-style */
+.device-frame.tablet-mode {
+    padding: 40px 30px;
+    background: linear-gradient(145deg, #c0c0c0, #e6e6e6);
+    border-radius: 25px;
+    box-shadow: 
+        0 0 0 2px #b0b0b0,
+        0 30px 60px rgba(0,0,0,0.25);
+    position: relative;
+}
+
+.device-frame.tablet-mode .book-preview {
+    width: 480px;
+    height: 640px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #d0d0d0;
+    overflow: hidden;
+}
+
+.device-frame.tablet-mode::before {
+    content: '';
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    border: 2px solid #999;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f0f0f0, #d0d0d0);
+}
+
+/* Hidden book-preview class - now handled by device-frame */
+.book-preview {
+    background: white;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Mobile Reading App Styling */
+.device-frame.mobile-mode .book-preview {
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+.device-frame.mobile-mode .book-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
+    z-index: 10;
+}
+
+.device-frame.mobile-mode .book-content {
+    background: #1a1a1a;
+    color: #e5e5e5;
+}
+
+.device-frame.mobile-mode .book-content h1 {
+    color: #ffffff !important;
+}
+
+/* eBook Reader Styling */
+.device-frame.ebook-mode .book-content {
+    background: #f4f4f2;
+    color: #2c3e50;
+}
+
+/* Page turn effects and realistic shadows */
+.device-frame.print-mode:hover {
+    transform: scale(1.02);
+}
+
+.device-frame.print-mode:hover .book-preview {
+    box-shadow: 
+        -2px 0 8px rgba(0,0,0,0.15),
+        0 12px 40px rgba(0,0,0,0.25),
+        inset -1px 0 0 rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .device-frame.print-mode .book-preview { width: 360px; height: 540px; }
+    .device-frame.ebook-mode .book-preview { width: 300px; height: 420px; }
+    .device-frame.mobile-mode .book-preview { width: 240px; height: 480px; }
+    .device-frame.tablet-mode .book-preview { width: 420px; height: 560px; }
+}
+
+/* Enhanced hover effects */
+.device-frame {
+    cursor: pointer;
+}
+
+.device-frame:hover {
+    transform: scale(1.01) !important;
+}
+
+/* Device-specific UI elements */
+.print-only, .ebook-only, .mobile-only, .tablet-only {
+    display: none;
+}
+
+/* Remove all scrollbars from device previews */
+.device-frame .book-preview,
+.device-frame .book-content {
+    overflow: hidden !important;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.device-frame .book-preview::-webkit-scrollbar,
+.device-frame .book-content::-webkit-scrollbar {
+    display: none; /* WebKit */
+}
+
+.device-frame.print-mode .print-only {
+    display: block;
+}
+
+.device-frame.ebook-mode .ebook-only {
+    display: block;
+}
+
+.device-frame.mobile-mode .mobile-only {
+    display: flex;
+}
+
+.device-frame.tablet-mode .tablet-only {
+    display: block;
+}
+
+/* Mobile status bar styling */
+.device-frame.mobile-mode .mobile-status {
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.3));
+    padding: 5px 0;
+    border-radius: 0 0 25px 25px;
+}
+
+/* eBook progress styling */
+.device-frame.ebook-mode .ebook-progress {
+    opacity: 0.7;
+}
+
+.device-frame.ebook-mode .ebook-progress:hover {
+    opacity: 1;
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+    max-width: 300px;
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.notification.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.book-content {
+    height: 100%;
+    padding: 40px 30px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Right Sidebar - Customization Panel */
+.customization-panel {
+    background: white;
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+    padding: 20px;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+    color: #1e293b !important;
+}
+
+.panel-header {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.panel-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1e293b !important;
+    margin-bottom: 5px;
+}
+
+.panel-subtitle {
+    color: #64748b !important;
+    font-size: 0.9rem;
+}
+
+.customization-section {
+    margin-bottom: 30px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 8px 0;
+}
+
+.section-icon {
+    font-size: 1.1rem;
+    margin-right: 10px;
+    width: 20px;
+    color: var(--primary-color);
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b !important;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1e293b !important;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background: white;
+    color: #1e293b !important;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.color-picker {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.font-preview {
+    padding: 15px;
+    background: var(--secondary-color);
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    color: #1e293b !important;
+}
+
+.action-buttons {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    margin: 0 -20px -20px -20px;
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+.btn-full {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .formatter-container {
+        grid-template-columns: 300px 1fr 320px;
+    }
+}
+
+@media (max-width: 968px) {
+    .formatter-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    .theme-sidebar,
+    .customization-panel {
+        display: none;
+    }
+    
+    .mobile-tabs {
+        display: flex;
+        background: white;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .mobile-tab {
+        flex: 1;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .mobile-tab.active {
+        border-bottom-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+}
+
+/* Theme-Specific Styles */
+.classic-theme .book-content {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #2c3e50;
+}
+
+.modern-theme .book-content {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #374151;
+}
+
+.elegant-theme .book-content {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    line-height: 1.9;
+    color: #1f2937;
+}
+</style>
+
+<div class="formatter-container">
+    <!-- Left Sidebar - Theme Selection -->
+    <div class="theme-sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">📚 Book Themes</h2>
+            <p class="sidebar-subtitle">Choose from 50+ professional designs</p>
+        </div>
+
+        <!-- Classic Literature Themes -->
+        <div class="theme-category">
+            <div class="category-header">
+                <div class="category-icon">📜</div>
+                <div class="category-title">Classic Literature</div>
+                <div class="category-count">10</div>
+            </div>
+            <div class="theme-grid">
+                <div class="theme-card active" data-theme="heritage" data-category="classic">
+                    <div class="theme-preview">
+                        <div style="text-align: center; font-family: 'Crimson Text', serif;">
+                            <div style="font-size: 14px; font-weight: bold;">CHAPTER ONE</div>
+                            <div style="font-size: 10px; margin-top: 5px; line-height: 1.4;">In which our story begins with elegant typography and timeless design...</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Heritage</div>
+                    <div class="theme-genre">Timeless • Elegant</div>
+                </div>
+                
+                <div class="theme-card" data-theme="manuscript" data-category="classic">
+                    <div class="theme-preview">
+                        <div style="text-align: center; font-family: 'Crimson Text', serif;">
+                            <div style="font-size: 16px;">❦</div>
+                            <div style="font-size: 12px; font-weight: bold;">Chapter One</div>
+                            <div style="font-size: 9px; margin-top: 5px;">Ornamental borders and classic flourishes</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Manuscript</div>
+                    <div class="theme-genre">Ornate • Classic</div>
+                </div>
+                
+                <div class="theme-card" data-theme="bibliophile" data-category="classic">
+                    <div class="theme-preview">
+                        <div style="text-align: left; font-family: 'Crimson Text', serif; padding: 10px;">
+                            <div style="font-size: 11px; font-weight: bold; margin-bottom: 3px;">ONE</div>
+                            <div style="font-size: 8px; line-height: 1.3;">The scholar's choice with refined typography...</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Bibliophile</div>
+                    <div class="theme-genre">Scholarly • Refined</div>
+                </div>
+                
+                <div class="theme-card" data-theme="victorian" data-category="classic">
+                    <div class="theme-preview">
+                        <div style="text-align: center; font-family: 'Playfair Display', serif;">
+                            <div style="font-size: 10px; letter-spacing: 2px;">CHAPTER</div>
+                            <div style="font-size: 20px; font-weight: bold;">I</div>
+                            <div style="font-size: 8px; margin-top: 3px;">Ornamental • Decorative</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Victorian</div>
+                    <div class="theme-genre">Ornamental • Period</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modern Fiction Themes -->
+        <div class="theme-category">
+            <div class="category-header">
+                <div class="category-icon">✨</div>
+                <div class="category-title">Modern Fiction</div>
+                <div class="category-count">8</div>
+            </div>
+            <div class="theme-grid">
+                <div class="theme-card" data-theme="contemporary" data-category="modern">
+                    <div class="theme-preview">
+                        <div style="text-align: left; font-family: 'Inter', sans-serif; padding: 10px;">
+                            <div style="font-size: 10px; font-weight: 600; color: #2563eb;">Chapter 1</div>
+                            <div style="font-size: 8px; line-height: 1.4; margin-top: 5px;">Clean lines and modern typography for today's readers...</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Contemporary</div>
+                    <div class="theme-genre">Clean • Modern</div>
+                </div>
+                
+                <div class="theme-card" data-theme="minimal" data-category="modern">
+                    <div class="theme-preview">
+                        <div style="text-align: center; font-family: 'Inter', sans-serif; padding-top: 15px;">
+                            <div style="font-size: 18px; font-weight: 300;">1</div>
+                            <div style="font-size: 8px; margin-top: 10px; color: #64748b;">Less is more in design</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Minimal</div>
+                    <div class="theme-genre">Simple • Clean</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Romance Themes -->
+        <div class="theme-category">
+            <div class="category-header">
+                <div class="category-icon">💕</div>
+                <div class="category-title">Romance</div>
+                <div class="category-count">6</div>
+            </div>
+            <div class="theme-grid">
+                <div class="theme-card" data-theme="romantic" data-category="romance">
+                    <div class="theme-preview">
+                        <div style="text-align: center; font-family: 'Dancing Script', cursive; padding-top: 10px;">
+                            <div style="font-size: 12px; color: #ec4899;">Chapter One</div>
+                            <div style="font-size: 16px; margin: 5px 0;">♥</div>
+                            <div style="font-size: 7px; font-family: 'Inter', sans-serif;">Romantic flourishes</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Romantic</div>
+                    <div class="theme-genre">Flowing • Lovely</div>
+                </div>
+                
+                <div class="theme-card" data-theme="passion" data-category="romance">
+                    <div class="theme-preview">
+                        <div style="text-align: center; font-family: 'Playfair Display', serif; padding-top: 10px;">
+                            <div style="font-size: 10px; letter-spacing: 1px; color: #dc2626;">CHAPTER ONE</div>
+                            <div style="font-size: 8px; margin-top: 8px; font-style: italic;">Intense and captivating</div>
+                        </div>
+                    </div>
+                    <div class="theme-name">Passion</div>
+                    <div class="theme-genre">Bold • Intense</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional categories will be loaded dynamically -->
+        <div id="additional-themes"></div>
+    </div>
+
+    <!-- Center - Preview Area -->
+    <div class="preview-area">
+        <div class="preview-header">
+            <div class="preview-title">📖 Live Preview</div>
+            <div class="preview-controls">
+                <div class="device-selector">
+                    <button class="device-btn active" data-device="print">📚 Print</button>
+                    <button class="device-btn" data-device="ebook">📱 eBook</button>
+                    <button class="device-btn" data-device="mobile">📱 Mobile</button>
+                    <button class="device-btn" data-device="tablet">📱 Tablet</button>
+                </div>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" data-zoom="out">−</button>
+                    <div class="zoom-level">100%</div>
+                    <button class="zoom-btn" data-zoom="in">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="book-container">
+            <div class="device-frame print-mode" id="device-frame">
+                <div class="book-preview" id="book-preview">
+                    <div class="book-content" id="book-content">
+                    <div class="chapter-header">
+                        <h1 style="font-size: 2rem; text-align: center; margin-bottom: 2rem; font-weight: 300;">Chapter One</h1>
+                        <div style="text-align: center; margin-bottom: 3rem; font-size: 1.2rem; font-style: italic; color: #64748b;">The Beginning</div>
+                    </div>
+                    
+                    <div class="chapter-content">
+                        <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness, it was the spring of hope, it was the winter of despair.</p>
+                        
+                        <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">We had everything before us, we had nothing before us, we were all going direct to Heaven, we were all going direct the other way—in short, the period was so far like the present period, that some of its noisiest authorities insisted on its being received, for good or for evil, in the superlative degree of comparison only.</p>
+                        
+                        <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">There were a king with a large jaw and a queen with a plain face, on the throne of England; there were a king with a large jaw and a queen with a fair face, on the throne of France. In both countries it was clearer than crystal to the lords of the State preserves of loaves and fishes, that things in general were settled for ever.</p>
+                        
+                        <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">Your story continues here with beautiful typography and professional formatting that makes your words come alive on the page. Every element is carefully crafted to create the perfect reading experience.</p>
+                        
+                        <!-- Page Number for Print Mode -->
+                        <div class="page-number print-only" style="position: absolute; bottom: 20px; text-align: center; width: 100%; font-size: 12px; color: #666;">
+                            — 1 —
+                        </div>
+                        
+                        <!-- eBook Progress Bar -->
+                        <div class="ebook-progress ebook-only" style="position: absolute; bottom: 10px; left: 20px; right: 20px; height: 2px; background: #ddd; border-radius: 1px;">
+                            <div style="width: 15%; height: 100%; background: #007AFF; border-radius: 1px;"></div>
+                        </div>
+                        
+                        <!-- Mobile Reading Progress -->
+                        <div class="mobile-status mobile-only" style="position: absolute; bottom: 10px; left: 20px; right: 20px; font-size: 10px; color: #999; display: flex; justify-content: space-between;">
+                            <span>Chapter 1 • 15%</span>
+                            <span>🔋 85%</span>
+                        </div>
+                        
+                        <!-- Tablet Page Info -->
+                        <div class="tablet-info tablet-only" style="position: absolute; bottom: 15px; text-align: center; width: 100%; font-size: 11px; color: #888;">
+                            Page 1 of 247 • Chapter 1
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar - Customization Panel -->
+    <div class="customization-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">🎨 Customize</h3>
+            <p class="panel-subtitle">Fine-tune your book's appearance</p>
+        </div>
+
+        <!-- Typography Section -->
+        <div class="customization-section">
+            <div class="section-header">
+                <div class="section-icon">🔤</div>
+                <div class="section-title">Typography</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Font Family</label>
+                <select class="form-control" id="font-family">
+                    <option value="Crimson Text">Crimson Text (Serif)</option>
+                    <option value="Inter">Inter (Sans-serif)</option>
+                    <option value="Playfair Display">Playfair Display (Display)</option>
+                    <option value="Merriweather">Merriweather (Serif)</option>
+                    <option value="Source Sans Pro">Source Sans Pro (Sans-serif)</option>
+                    <option value="Lora">Lora (Serif)</option>
+                    <option value="Open Sans">Open Sans (Sans-serif)</option>
+                    <option value="Roboto Slab">Roboto Slab (Slab Serif)</option>
+                </select>
+                <div class="font-preview" id="font-preview">
+                    The quick brown fox jumps over the lazy dog. This is how your text will appear.
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Font Size</label>
+                <select class="form-control" id="font-size">
+                    <option value="14">14px - Small</option>
+                    <option value="15">15px - Medium</option>
+                    <option value="16" selected>16px - Standard</option>
+                    <option value="17">17px - Large</option>
+                    <option value="18">18px - Extra Large</option>
+                    <option value="20">20px - Print Large</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Line Height</label>
+                <select class="form-control" id="line-height">
+                    <option value="1.5">1.5 - Tight</option>
+                    <option value="1.6">1.6 - Normal</option>
+                    <option value="1.7">1.7 - Comfortable</option>
+                    <option value="1.8" selected>1.8 - Spacious</option>
+                    <option value="2.0">2.0 - Double</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Color Scheme -->
+        <div class="customization-section">
+            <div class="section-header">
+                <div class="section-icon">🎨</div>
+                <div class="section-title">Colors</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Text Color</label>
+                <input type="color" class="color-picker" id="text-color" value="#1e293b">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Background Color</label>
+                <input type="color" class="color-picker" id="bg-color" value="#ffffff">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Accent Color</label>
+                <input type="color" class="color-picker" id="accent-color" value="#2563eb">
+            </div>
+        </div>
+
+        <!-- Layout Options -->
+        <div class="customization-section">
+            <div class="section-header">
+                <div class="section-icon">📐</div>
+                <div class="section-title">Layout</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Chapter Title Style</label>
+                <select class="form-control" id="chapter-style">
+                    <option value="centered">Centered</option>
+                    <option value="left">Left Aligned</option>
+                    <option value="decorative">Decorative</option>
+                    <option value="minimal">Minimal</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Paragraph Indent</label>
+                <select class="form-control" id="paragraph-indent">
+                    <option value="0">No Indent</option>
+                    <option value="1">Small (1em)</option>
+                    <option value="1.5" selected>Standard (1.5em)</option>
+                    <option value="2">Large (2em)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Export Actions -->
+        <div class="action-buttons">
+            <button class="btn btn-primary btn-full" onclick="exportBook('pdf')">
+                📄 Export PDF
+            </button>
+            <button class="btn btn-primary btn-full" onclick="exportBook('epub')">
+                📚 Export EPUB
+            </button>
+            <button class="btn btn-secondary btn-full" onclick="saveTheme()">
+                💾 Save Custom Theme
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Theme data with 50+ themes
+const themes = {
+    classic: [
+        { id: 'heritage', name: 'Heritage', genre: 'Timeless • Elegant', font: 'Crimson Text', colors: { text: '#2c3e50', bg: '#ffffff', accent: '#8b4513' } },
+        { id: 'manuscript', name: 'Manuscript', genre: 'Ornate • Classic', font: 'Crimson Text', colors: { text: '#1a1a1a', bg: '#fefefe', accent: '#d4a574' } },
+        { id: 'bibliophile', name: 'Bibliophile', genre: 'Scholarly • Refined', font: 'Crimson Text', colors: { text: '#2d3748', bg: '#ffffff', accent: '#4a5568' } },
+        { id: 'victorian', name: 'Victorian', genre: 'Ornamental • Period', font: 'Playfair Display', colors: { text: '#1a202c', bg: '#faf5f0', accent: '#8b4513' } },
+        { id: 'academic', name: 'Academic', genre: 'Scholarly • Professional', font: 'Crimson Text', colors: { text: '#2d3748', bg: '#ffffff', accent: '#2b6cb0' } },
+        { id: 'library', name: 'Library', genre: 'Traditional • Warm', font: 'Crimson Text', colors: { text: '#2c3e50', bg: '#f8f6f0', accent: '#8b4513' } },
+        { id: 'antique', name: 'Antique', genre: 'Vintage • Weathered', font: 'Crimson Text', colors: { text: '#3c2415', bg: '#f5f1e8', accent: '#8b4513' } },
+        { id: 'renaissance', name: 'Renaissance', genre: 'Historical • Ornate', font: 'Playfair Display', colors: { text: '#1a202c', bg: '#fefcf7', accent: '#d69e2e' } },
+        { id: 'serif-classic', name: 'Serif Classic', genre: 'Traditional • Readable', font: 'Crimson Text', colors: { text: '#2d3748', bg: '#ffffff', accent: '#4a5568' } },
+        { id: 'old-world', name: 'Old World', genre: 'European • Classic', font: 'Playfair Display', colors: { text: '#2c3e50', bg: '#faf8f3', accent: '#8b4513' } }
+    ],
+    modern: [
+        { id: 'contemporary', name: 'Contemporary', genre: 'Clean • Modern', font: 'Inter', colors: { text: '#374151', bg: '#ffffff', accent: '#2563eb' } },
+        { id: 'minimal', name: 'Minimal', genre: 'Simple • Clean', font: 'Inter', colors: { text: '#1f2937', bg: '#ffffff', accent: '#6b7280' } },
+        { id: 'urban', name: 'Urban', genre: 'City • Sharp', font: 'Inter', colors: { text: '#111827', bg: '#f9fafb', accent: '#1f2937' } },
+        { id: 'tech', name: 'Tech', genre: 'Digital • Future', font: 'Inter', colors: { text: '#1e293b', bg: '#ffffff', accent: '#0ea5e9' } },
+        { id: 'crisp', name: 'Crisp', genre: 'Sharp • Professional', font: 'Inter', colors: { text: '#0f172a', bg: '#ffffff', accent: '#334155' } },
+        { id: 'sleek', name: 'Sleek', genre: 'Polished • Smooth', font: 'Inter', colors: { text: '#1e293b', bg: '#f8fafc', accent: '#475569' } },
+        { id: 'fresh', name: 'Fresh', genre: 'Bright • Airy', font: 'Inter', colors: { text: '#334155', bg: '#ffffff', accent: '#0ea5e9' } },
+        { id: 'stark', name: 'Stark', genre: 'Bold • Contrasted', font: 'Inter', colors: { text: '#000000', bg: '#ffffff', accent: '#ef4444' } }
+    ],
+    romance: [
+        { id: 'romantic', name: 'Romantic', genre: 'Flowing • Lovely', font: 'Playfair Display', colors: { text: '#1f2937', bg: '#fef7f7', accent: '#ec4899' } },
+        { id: 'passion', name: 'Passion', genre: 'Bold • Intense', font: 'Playfair Display', colors: { text: '#7c2d12', bg: '#fef2f2', accent: '#dc2626' } },
+        { id: 'dreamy', name: 'Dreamy', genre: 'Soft • Ethereal', font: 'Playfair Display', colors: { text: '#374151', bg: '#f3f4f6', accent: '#a855f7' } },
+        { id: 'elegant-romance', name: 'Elegant Romance', genre: 'Refined • Graceful', font: 'Playfair Display', colors: { text: '#1f2937', bg: '#fffbeb', accent: '#f59e0b' } },
+        { id: 'sweet', name: 'Sweet', genre: 'Gentle • Tender', font: 'Lora', colors: { text: '#374151', bg: '#fef3f2', accent: '#fb7185' } },
+        { id: 'enchanted', name: 'Enchanted', genre: 'Magical • Whimsical', font: 'Playfair Display', colors: { text: '#1f2937', bg: '#f0f9ff', accent: '#3b82f6' } }
+    ],
+    mystery: [
+        { id: 'noir', name: 'Noir', genre: 'Dark • Atmospheric', font: 'Inter', colors: { text: '#f3f4f6', bg: '#111827', accent: '#ef4444' } },
+        { id: 'thriller', name: 'Thriller', genre: 'Suspenseful • Edgy', font: 'Inter', colors: { text: '#1f2937', bg: '#f9fafb', accent: '#dc2626' } },
+        { id: 'detective', name: 'Detective', genre: 'Classic • Investigative', font: 'Crimson Text', colors: { text: '#1f2937', bg: '#f5f5f4', accent: '#78716c' } },
+        { id: 'shadow', name: 'Shadow', genre: 'Mysterious • Moody', font: 'Inter', colors: { text: '#e5e7eb', bg: '#1f2937', accent: '#fbbf24' } },
+        { id: 'crime', name: 'Crime', genre: 'Gritty • Urban', font: 'Inter', colors: { text: '#111827', bg: '#f3f4f6', accent: '#991b1b' } },
+        { id: 'gothic', name: 'Gothic', genre: 'Dark • Victorian', font: 'Playfair Display', colors: { text: '#1c1917', bg: '#fafaf9', accent: '#7c2d12' } }
+    ],
+    fantasy: [
+        { id: 'magical', name: 'Magical', genre: 'Enchanting • Mystical', font: 'Playfair Display', colors: { text: '#1f2937', bg: '#f0f9ff', accent: '#7c3aed' } },
+        { id: 'epic', name: 'Epic', genre: 'Grand • Heroic', font: 'Playfair Display', colors: { text: '#1c1917', bg: '#fffbeb', accent: '#d97706' } },
+        { id: 'medieval', name: 'Medieval', genre: 'Ancient • Traditional', font: 'Crimson Text', colors: { text: '#292524', bg: '#fef7cd', accent: '#a16207' } },
+        { id: 'ethereal', name: 'Ethereal', genre: 'Otherworldly • Light', font: 'Playfair Display', colors: { text: '#374151', bg: '#f8fafc', accent: '#8b5cf6' } },
+        { id: 'dragon', name: 'Dragon', genre: 'Fierce • Powerful', font: 'Playfair Display', colors: { text: '#7c2d12', bg: '#fef2f2', accent: '#dc2626' } },
+        { id: 'elven', name: 'Elven', genre: 'Graceful • Natural', font: 'Lora', colors: { text: '#166534', bg: '#f0fdf4', accent: '#16a34a' } },
+        { id: 'wizardly', name: 'Wizardly', genre: 'Scholarly • Arcane', font: 'Crimson Text', colors: { text: '#1e3a8a', bg: '#eff6ff', accent: '#3730a3' } },
+        { id: 'realm', name: 'Realm', genre: 'Kingdom • Majestic', font: 'Playfair Display', colors: { text: '#1c1917', bg: '#fefce8', accent: '#ca8a04' } }
+    ],
+    nonfiction: [
+        { id: 'professional', name: 'Professional', genre: 'Business • Clean', font: 'Inter', colors: { text: '#1f2937', bg: '#ffffff', accent: '#2563eb' } },
+        { id: 'academic-modern', name: 'Academic Modern', genre: 'Scholarly • Contemporary', font: 'Inter', colors: { text: '#374151', bg: '#f9fafb', accent: '#4b5563' } },
+        { id: 'textbook', name: 'Textbook', genre: 'Educational • Clear', font: 'Source Sans Pro', colors: { text: '#1f2937', bg: '#ffffff', accent: '#059669' } },
+        { id: 'business', name: 'Business', genre: 'Corporate • Authoritative', font: 'Inter', colors: { text: '#111827', bg: '#ffffff', accent: '#1d4ed8' } },
+        { id: 'guide', name: 'Guide', genre: 'Helpful • Accessible', font: 'Open Sans', colors: { text: '#374151', bg: '#f3f4f6', accent: '#059669' } },
+        { id: 'memoir', name: 'Memoir', genre: 'Personal • Warm', font: 'Lora', colors: { text: '#1f2937', bg: '#fefce8', accent: '#d97706' } }
+    ],
+    poetry: [
+        { id: 'verse', name: 'Verse', genre: 'Lyrical • Flowing', font: 'Playfair Display', colors: { text: '#1f2937', bg: '#f8fafc', accent: '#8b5cf6' } },
+        { id: 'haiku', name: 'Haiku', genre: 'Minimalist • Zen', font: 'Inter', colors: { text: '#374151', bg: '#ffffff', accent: '#6b7280' } },
+        { id: 'sonnet', name: 'Sonnet', genre: 'Classical • Structured', font: 'Crimson Text', colors: { text: '#1c1917', bg: '#fefce8', accent: '#a16207' } },
+        { id: 'free-verse', name: 'Free Verse', genre: 'Modern • Expressive', font: 'Inter', colors: { text: '#111827', bg: '#f9fafb', accent: '#ef4444' } },
+        { id: 'spoken-word', name: 'Spoken Word', genre: 'Performance • Bold', font: 'Inter', colors: { text: '#7c2d12', bg: '#fefce8', accent: '#ea580c' } },
+        { id: 'anthology', name: 'Anthology', genre: 'Collection • Varied', font: 'Lora', colors: { text: '#1f2937', bg: '#f0f9ff', accent: '#0ea5e9' } }
+    ]
+};
+
+// Current settings
+let currentSettings = {
+    theme: 'heritage',
+    device: 'print',
+    zoom: 100,
+    fontFamily: 'Crimson Text',
+    fontSize: '16',
+    lineHeight: '1.8',
+    textColor: '#1e293b',
+    bgColor: '#ffffff',
+    accentColor: '#2563eb',
+    chapterStyle: 'centered',
+    paragraphIndent: '1.5'
+};
+
+// Initialize the formatter
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initializing book formatter...');
+    try {
+        loadAllThemes();
+        setupEventListeners();
+        // Initialize with the heritage theme and ensure it applies
+        setTimeout(() => {
+            applyTheme('heritage');
+            updatePreviewDevice();
+            updateAllStyles();
+        }, 100);
+    } catch (error) {
+        console.error('❌ Initialization error:', error);
+    }
+});
+
+function loadAllThemes() {
+    const container = document.getElementById('additional-themes');
+    if (!container) {
+        console.error('❌ Additional themes container not found');
+        return;
+    }
+    
+    const categories = [
+        { key: 'mystery', title: 'Mystery & Thriller', icon: '🔍', count: 6 },
+        { key: 'fantasy', title: 'Fantasy & Sci-Fi', icon: '🐉', count: 8 },
+        { key: 'nonfiction', title: 'Non-Fiction', icon: '📖', count: 6 },
+        { key: 'poetry', title: 'Poetry', icon: '🎭', count: 6 }
+    ];
+    
+    categories.forEach(category => {
+        if (themes[category.key]) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'theme-category';
+            categoryDiv.innerHTML = `
+                <div class="category-header">
+                    <div class="category-icon">${category.icon}</div>
+                    <div class="category-title">${category.title}</div>
+                    <div class="category-count">${themes[category.key].length}</div>
+                </div>
+                <div class="theme-grid">
+                    ${themes[category.key].map(theme => `
+                        <div class="theme-card" data-theme="${theme.id}" data-category="${category.key}">
+                            <div class="theme-preview">
+                                <div style="text-align: center; font-family: '${theme.font}', serif; color: ${theme.colors.text}; padding: 8px;">
+                                    <div style="font-size: 10px; font-weight: bold; margin-bottom: 3px;">${theme.name.toUpperCase()}</div>
+                                    <div style="font-size: 7px; line-height: 1.3;">${theme.genre}</div>
+                                </div>
+                            </div>
+                            <div class="theme-name">${theme.name}</div>
+                            <div class="theme-genre">${theme.genre}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(categoryDiv);
+        }
+    });
+    console.log('✅ Loaded additional themes');
+}
+
+function setupEventListeners() {
+    console.log('🔧 Setting up event listeners...');
+    
+    // Theme selection with improved error handling
+    document.addEventListener('click', function(e) {
+        const themeCard = e.target.closest('.theme-card');
+        if (themeCard) {
+            const themeId = themeCard.dataset.theme;
+            console.log('🎨 Theme selected:', themeId);
+            
+            // Update active state
+            document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+            themeCard.classList.add('active');
+            
+            // Apply theme with error handling
+            try {
+                applyTheme(themeId);
+            } catch (error) {
+                console.error('❌ Error applying theme:', error);
+                showNotification('Error applying theme', 'error');
+            }
+        }
+    });
+    
+    // Device selection with improved functionality
+    document.querySelectorAll('.device-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            console.log('📱 Device selected:', this.dataset.device);
+            
+            document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const device = this.dataset.device;
+            currentSettings.device = device;
+            updatePreviewDevice();
+        });
+    });
+    
+    // Zoom controls
+    document.querySelectorAll('.zoom-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const direction = this.dataset.zoom;
+            const oldZoom = currentSettings.zoom;
+            
+            if (direction === 'in' && currentSettings.zoom < 200) {
+                currentSettings.zoom += 25;
+            } else if (direction === 'out' && currentSettings.zoom > 50) {
+                currentSettings.zoom -= 25;
+            }
+            
+            if (currentSettings.zoom !== oldZoom) {
+                updateZoom();
+                console.log('🔍 Zoom changed to:', currentSettings.zoom + '%');
+            }
+        });
+    });
+    
+    // Customization controls with real-time updates
+    const controls = [
+        { id: 'font-family', handler: updateTypography },
+        { id: 'font-size', handler: updateTypography },
+        { id: 'line-height', handler: updateTypography },
+        { id: 'text-color', handler: updateColors },
+        { id: 'bg-color', handler: updateColors },
+        { id: 'accent-color', handler: updateColors },
+        { id: 'chapter-style', handler: updateLayout },
+        { id: 'paragraph-indent', handler: updateLayout }
+    ];
+    
+    controls.forEach(control => {
+        const element = document.getElementById(control.id);
+        if (element) {
+            element.addEventListener('change', () => {
+                console.log('⚙️ Setting changed:', control.id, '=', element.value);
+                control.handler();
+            });
+        } else {
+            console.warn('⚠️ Control not found:', control.id);
+        }
+    });
+    
+    console.log('✅ Event listeners set up');
+}
+
+function applyTheme(themeId) {
+    console.log('🎨 Applying theme:', themeId);
+    
+    // Find theme in all categories
+    let selectedTheme = null;
+    for (const category of Object.values(themes)) {
+        const theme = category.find(t => t.id === themeId);
+        if (theme) {
+            selectedTheme = theme;
+            break;
+        }
+    }
+    
+    if (!selectedTheme) {
+        console.error('❌ Theme not found:', themeId);
+        showNotification('Theme not found', 'error');
+        return;
+    }
+    
+    console.log('✅ Found theme:', selectedTheme.name, selectedTheme.font, selectedTheme.colors);
+    
+    // Update current settings
+    currentSettings.theme = themeId;
+    currentSettings.fontFamily = selectedTheme.font;
+    currentSettings.textColor = selectedTheme.colors.text;
+    currentSettings.bgColor = selectedTheme.colors.bg;
+    currentSettings.accentColor = selectedTheme.colors.accent;
+    
+    // Apply all visual changes
+    try {
+        updateAllStyles();
+        updateCustomizationPanel();
+        
+        // Force refresh the preview content
+        refreshPreviewContent();
+        
+        console.log('✅ Theme applied successfully');
+        showNotification(`Applied ${selectedTheme.name} theme`, 'success', 2000);
+    } catch (error) {
+        console.error('❌ Error applying theme:', error);
+        showNotification('Error applying theme', 'error');
+    }
+}
+
+function refreshPreviewContent() {
+    const bookContent = document.getElementById('book-content');
+    const bookPreview = document.getElementById('book-preview');
+    
+    if (!bookContent || !bookPreview) {
+        console.error('❌ Preview elements not found');
+        return;
+    }
+    
+    // Force reflow to ensure styles are applied
+    bookContent.style.display = 'none';
+    bookContent.offsetHeight; // Trigger reflow
+    bookContent.style.display = 'block';
+    
+    console.log('🔄 Preview content refreshed');
+}
+
+function updateAllStyles() {
+    updateTypography();
+    updateColors();
+    updateLayout();
+}
+
+function updateTypography() {
+    const bookContent = document.getElementById('book-content');
+    const fontFamilyElement = document.getElementById('font-family');
+    const fontSizeElement = document.getElementById('font-size');
+    const lineHeightElement = document.getElementById('line-height');
+    
+    if (!bookContent || !fontFamilyElement || !fontSizeElement || !lineHeightElement) {
+        console.error('❌ Typography elements not found');
+        return;
+    }
+    
+    const fontFamily = fontFamilyElement.value;
+    const fontSize = fontSizeElement.value;
+    const lineHeight = lineHeightElement.value;
+    
+    currentSettings.fontFamily = fontFamily;
+    currentSettings.fontSize = fontSize;
+    currentSettings.lineHeight = lineHeight;
+    
+    // Apply to book content
+    bookContent.style.fontFamily = `${fontFamily}, serif`;
+    bookContent.style.fontSize = `${fontSize}px`;
+    bookContent.style.lineHeight = lineHeight;
+    
+    // Update font preview
+    const fontPreview = document.getElementById('font-preview');
+    if (fontPreview) {
+        fontPreview.style.fontFamily = `${fontFamily}, serif`;
+        fontPreview.style.fontSize = `${fontSize}px`;
+        fontPreview.style.lineHeight = lineHeight;
+    }
+    
+    console.log('📝 Typography updated:', { fontFamily, fontSize: fontSize + 'px', lineHeight });
+}
+
+function updateColors() {
+    const bookContent = document.getElementById('book-content');
+    const bookPreview = document.getElementById('book-preview');
+    const textColorElement = document.getElementById('text-color');
+    const bgColorElement = document.getElementById('bg-color');
+    const accentColorElement = document.getElementById('accent-color');
+    
+    if (!bookContent || !bookPreview || !textColorElement || !bgColorElement || !accentColorElement) {
+        console.error('❌ Color elements not found');
+        return;
+    }
+    
+    const textColor = textColorElement.value;
+    const bgColor = bgColorElement.value;
+    const accentColor = accentColorElement.value;
+    
+    currentSettings.textColor = textColor;
+    currentSettings.bgColor = bgColor;
+    currentSettings.accentColor = accentColor;
+    
+    // Apply colors
+    bookContent.style.color = textColor;
+    bookPreview.style.backgroundColor = bgColor;
+    
+    // Update chapter header with accent color
+    const chapterHeader = bookContent.querySelector('.chapter-header h1');
+    if (chapterHeader) {
+        chapterHeader.style.color = accentColor;
+    }
+    
+    // Also update any paragraph colors for consistency
+    const paragraphs = bookContent.querySelectorAll('p');
+    paragraphs.forEach(p => p.style.color = textColor);
+    
+    console.log('🎨 Colors updated:', { textColor, bgColor, accentColor });
+}
+
+function updateLayout() {
+    const chapterStyleElement = document.getElementById('chapter-style');
+    const paragraphIndentElement = document.getElementById('paragraph-indent');
+    const bookContent = document.getElementById('book-content');
+    
+    if (!chapterStyleElement || !paragraphIndentElement || !bookContent) {
+        console.error('❌ Layout elements not found');
+        return;
+    }
+    
+    const chapterStyle = chapterStyleElement.value;
+    const paragraphIndent = paragraphIndentElement.value;
+    
+    currentSettings.chapterStyle = chapterStyle;
+    currentSettings.paragraphIndent = paragraphIndent;
+    
+    const chapterHeader = bookContent.querySelector('.chapter-header h1');
+    const paragraphs = bookContent.querySelectorAll('p');
+    
+    // Apply chapter style
+    if (chapterHeader) {
+        switch(chapterStyle) {
+            case 'left':
+                chapterHeader.style.textAlign = 'left';
+                chapterHeader.style.fontSize = '2rem';
+                chapterHeader.style.fontWeight = '300';
+                break;
+            case 'minimal':
+                chapterHeader.style.textAlign = 'center';
+                chapterHeader.style.fontSize = '1.5rem';
+                chapterHeader.style.fontWeight = '400';
+                break;
+            case 'decorative':
+                chapterHeader.style.textAlign = 'center';
+                chapterHeader.style.fontSize = '2.2rem';
+                chapterHeader.style.fontWeight = '400';
+                break;
+            default: // centered
+                chapterHeader.style.textAlign = 'center';
+                chapterHeader.style.fontSize = '2rem';
+                chapterHeader.style.fontWeight = '300';
+        }
+    }
+    
+    // Apply paragraph indent
+    paragraphs.forEach(p => {
+        p.style.textIndent = `${paragraphIndent}rem`;
+    });
+    
+    console.log('📐 Layout updated:', { chapterStyle, paragraphIndent: paragraphIndent + 'rem' });
+}
+
+function updatePreviewDevice() {
+    const deviceFrame = document.getElementById('device-frame');
+    const device = currentSettings.device;
+    
+    // Remove all device classes
+    deviceFrame.classList.remove('print-mode', 'ebook-mode', 'mobile-mode', 'tablet-mode');
+    
+    // Add appropriate device class
+    deviceFrame.classList.add(device + '-mode');
+    
+    // Update device-specific content styling
+    const bookContent = document.getElementById('book-content');
+    switch(device) {
+        case 'mobile':
+            bookContent.style.padding = '30px 20px';
+            bookContent.style.fontSize = '14px';
+            bookContent.style.lineHeight = '1.6';
+            break;
+        case 'tablet':
+            bookContent.style.padding = '50px 40px';
+            bookContent.style.fontSize = '16px';
+            bookContent.style.lineHeight = '1.7';
+            break;
+        case 'ebook':
+            bookContent.style.padding = '40px 30px';
+            bookContent.style.fontSize = '15px';
+            bookContent.style.lineHeight = '1.8';
+            break;
+        default: // print
+            bookContent.style.padding = '40px 30px';
+            bookContent.style.fontSize = '16px';
+            bookContent.style.lineHeight = '1.8';
+    }
+}
+
+function updateZoom() {
+    const deviceFrame = document.getElementById('device-frame');
+    const zoomLevel = document.querySelector('.zoom-level');
+    
+    deviceFrame.style.transform = `scale(${currentSettings.zoom / 100})`;
+    zoomLevel.textContent = currentSettings.zoom + '%';
+}
+
+function updateCustomizationPanel() {
+    document.getElementById('font-family').value = currentSettings.fontFamily;
+    document.getElementById('font-size').value = currentSettings.fontSize;
+    document.getElementById('line-height').value = currentSettings.lineHeight;
+    document.getElementById('text-color').value = currentSettings.textColor;
+    document.getElementById('bg-color').value = currentSettings.bgColor;
+    document.getElementById('accent-color').value = currentSettings.accentColor;
+    document.getElementById('chapter-style').value = currentSettings.chapterStyle;
+    document.getElementById('paragraph-indent').value = currentSettings.paragraphIndent;
+}
+
+async function exportBook(format) {
+    try {
+        const exportData = {
+            format: format,
+            theme: currentSettings.theme,
+            settings: currentSettings,
+            content: document.getElementById('book-content').innerHTML
+        };
+        
+        // Show loading state
+        const loadingText = format === 'pdf' ? 'Generating PDF...' : 'Creating EPUB...';
+        showNotification(loadingText, 'info');
+        
+        const response = await fetch('/writer/api/export-book/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(exportData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            // In production, you would redirect to the download URL
+            // window.open(result.download_url, '_blank');
+        } else {
+            showNotification('Export failed: ' + result.error, 'error');
+        }
+        
+    } catch (error) {
+        console.error('Export error:', error);
+        showNotification('Export failed. Please try again.', 'error');
+    }
+}
+
+function saveTheme() {
+    const themeName = prompt('Enter a name for your custom theme:');
+    if (themeName) {
+        // Save theme to localStorage or backend
+        const customTheme = {
+            name: themeName,
+            settings: { ...currentSettings }
+        };
+        
+        localStorage.setItem('customTheme_' + themeName, JSON.stringify(customTheme));
+        showNotification('Custom theme "' + themeName + '" saved successfully!', 'success');
+    }
+}
+
+// Utility function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Enhanced notification system
+function showNotification(message, type = 'success', duration = 3000) {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    // Add icon based on type
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'info' ? 'ℹ️' : '⚠️';
+    notification.textContent = icon + ' ' + message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, duration);
+}
+
+// Sample content for different book types
+const sampleContent = {
+    novel: `
+        <div class="chapter-header">
+            <h1 style="font-size: 2rem; text-align: center; margin-bottom: 2rem; font-weight: 300;">Chapter One</h1>
+            <div style="text-align: center; margin-bottom: 3rem; font-size: 1.2rem; font-style: italic; color: #64748b;">The Beginning</div>
+        </div>
+        
+        <div class="chapter-content">
+            <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness, it was the spring of hope, it was the winter of despair.</p>
+            
+            <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">We had everything before us, we had nothing before us, we were all going direct to Heaven, we were all going direct the other way—in short, the period was so far like the present period, that some of its noisiest authorities insisted on its being received, for good or for evil, in the superlative degree of comparison only.</p>
+            
+            <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">There were a king with a large jaw and a queen with a plain face, on the throne of England; there were a king with a large jaw and a queen with a fair face, on the throne of France. In both countries it was clearer than crystal to the lords of the State preserves of loaves and fishes, that things in general were settled for ever.</p>
+            
+            <p style="margin-bottom: 1.5rem; text-indent: 1.5rem;">Your story continues here with beautiful typography and professional formatting that makes your words come alive on the page. Every element is carefully crafted to create the perfect reading experience.</p>
+        </div>
+    `,
+    
+    poetry: `
+        <div class="chapter-header">
+            <h1 style="font-size: 2rem; text-align: center; margin-bottom: 3rem; font-weight: 300;">Morning Light</h1>
+        </div>
+        
+        <div class="poetry-content" style="text-align: center; line-height: 2;">
+            <div style="margin-bottom: 2rem;">
+                <p style="margin-bottom: 0.5rem;">The morning light breaks through</p>
+                <p style="margin-bottom: 0.5rem;">Casting shadows of yesterday</p>
+                <p style="margin-bottom: 0.5rem;">While tomorrow whispers softly</p>
+                <p style="margin-bottom: 2rem;">In the golden dawn.</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <p style="margin-bottom: 0.5rem;">Each word finds its place</p>
+                <p style="margin-bottom: 0.5rem;">On pages dressed in elegance,</p>
+                <p style="margin-bottom: 0.5rem;">Where typography dances</p>
+                <p style="margin-bottom: 2rem;">With meaning and form.</p>
+            </div>
+        </div>
+    `
+};
+</script>
+
+{% endblock %}

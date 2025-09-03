@@ -1,0 +1,731 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - A Writer's Web Dream{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Beautiful Edit Profile Styling */
+.edit-profile-page {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 20px 0;
+}
+
+.edit-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Form Container */
+.form-container {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Form Sections */
+.form-section {
+    padding: 32px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.section-icon {
+    width: 24px;
+    height: 24px;
+    color: #667eea;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.section-description {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-top: 4px;
+}
+
+/* Profile Picture Section */
+.picture-section {
+    background: linear-gradient(135deg, #f8faff, #f1f5f9);
+    padding: 40px 32px;
+    text-align: center;
+}
+
+.avatar-upload {
+    display: inline-block;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.avatar-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    border: 4px solid white;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.upload-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.avatar-upload:hover .upload-overlay {
+    opacity: 1;
+}
+
+.upload-overlay i {
+    color: white;
+    font-size: 1.5rem;
+}
+
+.upload-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-text {
+    font-size: 1.1rem;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.upload-hint {
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 16px 18px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fefefe;
+    font-family: inherit;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    background: white;
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.form-textarea.large {
+    min-height: 140px;
+}
+
+.help-text {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Character Counter */
+.char-counter {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    text-align: right;
+    margin-top: 4px;
+}
+
+.char-counter.warning {
+    color: #f59e0b;
+}
+
+.char-counter.danger {
+    color: #ef4444;
+}
+
+/* Checkbox Styling */
+.checkbox-group {
+    display: grid;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.checkbox-item:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.checkbox-input {
+    width: 20px;
+    height: 20px;
+    accent-color: #667eea;
+}
+
+.checkbox-label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Messages */
+.messages {
+    margin-bottom: 20px;
+}
+
+.message {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+}
+
+.message.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.message.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.message i {
+    font-size: 1.1rem;
+}
+
+/* Action Buttons */
+.form-actions {
+    padding: 32px;
+    background: #f8fafc;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    color: white;
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 2px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    color: #475569;
+}
+
+/* Loading State */
+.btn.loading {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.btn.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .edit-container {
+        padding: 0 16px;
+    }
+    
+    .form-section {
+        padding: 24px 20px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        padding: 24px 20px;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .picture-section {
+        padding: 32px 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+    }
+}
+
+/* Success Animation */
+@keyframes successPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.success-animation {
+    animation: successPulse 0.6s ease-in-out;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-profile-page">
+    <div class="edit-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Edit Your Profile</h1>
+            <p class="page-subtitle">Personalize your writing profile and share your creative journey</p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <form method="post" enctype="multipart/form-data" id="profileForm">
+                {% csrf_token %}
+
+                <!-- Profile Picture Section -->
+                <div class="form-section picture-section">
+                    <div class="section-header">
+                        <i class="fas fa-camera section-icon"></i>
+                        <div>
+                            <h2 class="section-title">Profile Picture</h2>
+                            <p class="section-description">Upload a photo to personalize your profile</p>
+                        </div>
+                    </div>
+                    
+                    <div class="avatar-upload">
+                        {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="avatar-preview" id="avatarDisplay">
+                        {% else %}
+                            <div class="avatar-placeholder" id="avatarPlaceholder">
+                                {{ user.first_name.0|default:user.username.0|upper }}
+                            </div>
+                        {% endif %}
+                        <div class="upload-overlay">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <input type="file" name="profile_picture" class="upload-input" id="profilePicture" accept="image/*">
+                    </div>
+                    
+                    <div class="upload-text">Click to upload a new photo</div>
+                    <div class="upload-hint">JPG, PNG or GIF • Max 5MB • Square images work best</div>
+                </div>
+
+                <!-- Personal Information -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-user section-icon"></i>
+                        <div>
+                            <h2 class="section-title">Personal Information</h2>
+                            <p class="section-description">Tell the world about yourself and your writing</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bio" class="form-label">Bio</label>
+                        <textarea name="bio" id="bio" class="form-textarea" placeholder="Tell us about your writing journey, current projects, or what inspires you..." maxlength="500">{{ profile.bio|default:"" }}</textarea>
+                        <div class="char-counter" id="bioCounter">0/500 characters</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" name="location" id="location" class="form-input" placeholder="City, Country" value="{{ profile.location|default:"" }}">
+                            <div class="help-text">Where you're writing from</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="website" class="form-label">Website</label>
+                            <input type="url" name="website" id="website" class="form-input" placeholder="https://yourwebsite.com" value="{{ profile.website|default:"" }}">
+                            <div class="help-text">Your personal website or blog</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Writing Interests -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-heart section-icon"></i>
+                        <div>
+                            <h2 class="section-title">Writing Interests</h2>
+                            <p class="section-description">What genres and styles do you love to write?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="interests" class="form-label">Your Writing Interests</label>
+                        <textarea name="interests" id="interests" class="form-textarea" placeholder="Fantasy, Science Fiction, Romance, Mystery, Historical Fiction, Poetry, Screenwriting...">{{ profile.interests|default:"" }}</textarea>
+                        <div class="help-text">Separate different interests with commas for best display</div>
+                    </div>
+                </div>
+
+                <!-- Literary Inspirations -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-book section-icon"></i>
+                        <div>
+                            <h2 class="section-title">Literary Inspirations</h2>
+                            <p class="section-description">Share the authors and quotes that inspire your writing</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="favorite_writers" class="form-label">Favorite Writers</label>
+                        <textarea name="favorite_writers" id="favorite_writers" class="form-textarea large" placeholder="J.K. Rowling&#10;Stephen King&#10;Maya Angelou&#10;Ursula K. Le Guin">{{ profile.favorite_writers|default:"" }}</textarea>
+                        <div class="help-text">One author per line for best formatting on your profile</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="favorite_quotes" class="form-label">Favorite Quotes</label>
+                        <textarea name="favorite_quotes" id="favorite_quotes" class="form-textarea large" placeholder="The first draft of anything is shit. - Ernest Hemingway&#10;Write what you know. - Mark Twain">{{ profile.favorite_quotes|default:"" }}</textarea>
+                        <div class="help-text">One quote per line • Include the author if you'd like</div>
+                    </div>
+                </div>
+
+                <!-- Dreams and Goals -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-star section-icon"></i>
+                        <div>
+                            <h2 class="section-title">Dreams & Aspirations</h2>
+                            <p class="section-description">What are your writing goals and dreams?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hopes_and_dreams" class="form-label">Your Writing Goals</label>
+                        <textarea name="hopes_and_dreams" id="hopes_and_dreams" class="form-textarea large" placeholder="I dream of publishing a bestselling novel, inspiring young writers, winning a literary award, creating stories that change lives...">{{ profile.hopes_and_dreams|default:"" }}</textarea>
+                        <div class="help-text">Share your aspirations, no matter how big or small</div>
+                    </div>
+                </div>
+
+                <!-- Writing Preferences -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-cog section-icon"></i>
+                        <div>
+                            <h2 class="section-title">Writing Preferences</h2>
+                            <p class="section-description">Customize your writing environment</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="theme" class="form-label">Interface Theme</label>
+                            <select name="theme" id="theme" class="form-select">
+                                {% for theme_key, theme_name in profile.THEME_CHOICES %}
+                                    <option value="{{ theme_key }}" {% if profile.theme == theme_key %}selected{% endif %}>{{ theme_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="font_size" class="form-label">Font Size</label>
+                            <select name="font_size" id="font_size" class="form-select">
+                                <option value="small" {% if profile.font_size == 'small' %}selected{% endif %}>Small</option>
+                                <option value="medium" {% if profile.font_size == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="large" {% if profile.font_size == 'large' %}selected{% endif %}>Large</option>
+                                <option value="x-large" {% if profile.font_size == 'x-large' %}selected{% endif %}>Extra Large</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="writing_goal_daily" class="form-label">Daily Writing Goal</label>
+                        <input type="number" name="writing_goal_daily" id="writing_goal_daily" class="form-input" min="0" max="10000" value="{{ profile.writing_goal_daily|default:500 }}" placeholder="500">
+                        <div class="help-text">Your target word count per day</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Display Options</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="show_statistics" id="show_statistics" class="checkbox-input" {% if profile.show_statistics %}checked{% endif %}>
+                                <label for="show_statistics" class="checkbox-label">Show writing statistics on dashboard</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="show_bookshelf" id="show_bookshelf" class="checkbox-input" {% if profile.show_bookshelf %}checked{% endif %}>
+                                <label for="show_bookshelf" class="checkbox-label">Display project bookshelf</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="fas fa-save"></i>
+                        Save Profile
+                    </button>
+                    <a href="{% url 'writer:user_profile' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile picture preview
+    const profilePicture = document.getElementById('profilePicture');
+    const avatarDisplay = document.getElementById('avatarDisplay');
+    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+    
+    profilePicture.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (avatarDisplay) {
+                    avatarDisplay.src = e.target.result;
+                } else if (avatarPlaceholder) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'avatar-preview';
+                    img.id = 'avatarDisplay';
+                    avatarPlaceholder.parentNode.replaceChild(img, avatarPlaceholder);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Character counter for bio
+    const bioTextarea = document.getElementById('bio');
+    const bioCounter = document.getElementById('bioCounter');
+    
+    function updateCharCounter() {
+        const currentLength = bioTextarea.value.length;
+        const maxLength = 500;
+        bioCounter.textContent = `${currentLength}/${maxLength} characters`;
+        
+        bioCounter.className = 'char-counter';
+        if (currentLength > maxLength * 0.9) {
+            bioCounter.classList.add('warning');
+        }
+        if (currentLength > maxLength) {
+            bioCounter.classList.add('danger');
+        }
+    }
+    
+    bioTextarea.addEventListener('input', updateCharCounter);
+    updateCharCounter(); // Initial count
+
+    // Form submission with loading state
+    const form = document.getElementById('profileForm');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    form.addEventListener('submit', function(e) {
+        saveBtn.classList.add('loading');
+        saveBtn.disabled = true;
+        
+        // Re-enable after 10 seconds if still processing
+        setTimeout(() => {
+            saveBtn.classList.remove('loading');
+            saveBtn.disabled = false;
+        }, 10000);
+    });
+
+    // Success animation
+    const messages = document.querySelectorAll('.message.success');
+    messages.forEach(message => {
+        message.classList.add('success-animation');
+    });
+
+    // Auto-resize textareas
+    const textareas = document.querySelectorAll('.form-textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(120, this.scrollHeight) + 'px';
+        });
+    });
+});
+</script>
+{% endblock %}

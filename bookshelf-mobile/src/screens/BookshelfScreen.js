@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Share,
+  Linking,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -93,6 +94,14 @@ const BookshelfScreen = ({ navigation }) => {
         },
       ]
     );
+  };
+
+  const handleOpenWebApp = () => {
+    const webAppUrl = 'http://192.168.0.34:8000';
+    Linking.openURL(webAppUrl).catch((err) => {
+      Alert.alert('Error', 'Failed to open web dashboard');
+      console.error('Failed to open URL:', err);
+    });
   };
 
   const formatDate = (dateString) => {
@@ -260,6 +269,12 @@ const BookshelfScreen = ({ navigation }) => {
             }
           >
             <Menu.Item 
+              onPress={handleOpenWebApp} 
+              title="Web Dashboard"
+              leadingIcon="web"
+            />
+            <Divider />
+            <Menu.Item 
               onPress={toggleTheme} 
               title={isDarkMode ? "Light Mode" : "Dark Mode"}
               leadingIcon={isDarkMode ? "white-balance-sunny" : "moon-waning-crescent"}
@@ -326,6 +341,8 @@ const BookshelfScreen = ({ navigation }) => {
         icon="plus"
         onPress={() => navigation.navigate('NewProject')}
         label="New Book"
+        labelStyle={{ color: '#ffffff', fontWeight: '600' }}
+        color="#ffffff"
       />
     </View>
   );

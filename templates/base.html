@@ -46,9 +46,63 @@
             color: #ffffff !important;
             font-family: 'Lora', Georgia, serif;
         }
+        
+        /* EXCEPTIONS: Writing areas with black text and white background */
+        .editor-container *,
+        .writing-area *,
+        .notebook-editor *,
+        .document-editor *,
+        .chapter-editor *,
+        .google-docs-editor *,
+        #editor *,
+        #editorContent *,
+        .ql-editor *,
+        .ql-container *,
+        .content-editable *,
+        [contenteditable="true"] *,
+        textarea.editor-content *,
+        .editor-workspace * {
+            color: #000000 !important;
+            background-color: #ffffff !important;
+        }
+        
+        /* Ensure editors have white background */
+        .editor-container,
+        .writing-area,
+        .notebook-editor,
+        .document-editor,
+        .chapter-editor,
+        .google-docs-editor,
+        #editor,
+        #editorContent,
+        .ql-editor,
+        .ql-container,
+        .content-editable,
+        [contenteditable="true"],
+        textarea.editor-content,
+        .editor-workspace {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        /* Elements with white/light backgrounds - keep dark text for readability */
+        .filter-tab,
+        .card.bg-white,
+        .bg-white *,
+        .card-body.bg-white *,
+        .modal-body *,
+        .form-control,
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select,
+        textarea:not(.editor-content) {
+            color: #000000 !important;
+            background-color: #ffffff !important;
+        }
 
         /* Numbers and stats styling */
-        .stat-number, .badge, .btn, .form-control, .card-text, .fas, .far, .fab {
+        .stat-number, .badge, .btn, .card-text, .fas, .far, .fab {
             color: #ffffff !important;
         }
 
@@ -97,12 +151,26 @@
         .form-control, .form-select, .form-label {
             background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            color: var(--ethereal-text) !important;
+            color: #ffffff !important;
             border-radius: 15px !important;
         }
 
         .form-control::placeholder {
-            color: var(--ethereal-text-muted) !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+        
+        /* Ensure form inputs text is visible */
+        input.form-control,
+        select.form-select,
+        textarea.form-control {
+            color: #ffffff !important;
+        }
+        
+        /* But keep editor textareas black text on white */
+        textarea.editor-content,
+        .editor-container textarea {
+            background-color: #ffffff !important;
+            color: #000000 !important;
         }
 
         /* Button styling */
@@ -125,7 +193,42 @@
             backdrop-filter: blur(20px);
             border: 1px solid var(--ethereal-glass-border) !important;
             border-radius: 20px !important;
-            color: var(--ethereal-text) !important;
+            color: #ffffff !important;
+        }
+        
+        /* Additional white text overrides */
+        .table, .table td, .table th {
+            color: #ffffff !important;
+        }
+        
+        .dropdown-menu {
+            background: rgba(30, 30, 30, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        .dropdown-item {
+            color: #ffffff !important;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+        }
+        
+        .breadcrumb-item a,
+        .breadcrumb-item.active {
+            color: #ffffff !important;
+        }
+        
+        .modal-content {
+            background: rgba(30, 30, 30, 0.95) !important;
+            color: #ffffff !important;
+        }
+        
+        .modal-header, .modal-body, .modal-footer {
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
         }
 
         /* Animated Background Particles */
@@ -672,14 +775,14 @@
     
     <!-- Mobile optimization meta tags -->
     <meta name="theme-color" content="#667eea">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Ethereal Writing">
     
     <!-- Theme System CSS -->
     <link rel="stylesheet" href="{% static 'css/themes.css' %}">
 </head>
-<body class="ethereal-fade-in" data-theme="{{ user.writer_profile.theme|default:'ethereal' }}">
+<body class="ethereal-fade-in" data-theme="{% if user.writer_profile %}{{ user.writer_profile.theme|default:'ethereal' }}{% else %}ethereal{% endif %}">
 
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg sticky-top">
@@ -706,15 +809,15 @@
                         </a>
                     </li>
                     <li class="nav-item d-lg-none">
-                        <a class="nav-link" href="{% url 'writer:project_list' %}">
-                            <i class="fas fa-folder-open me-1"></i>My Projects
+                        <a class="nav-link" href="{% url 'writer:ultimate_library' %}">
+                            <i class="fas fa-gem me-1"></i>Ultimate Library
                         </a>
                     </li>
                     
                     <!-- Simplified Desktop Navigation -->
                     <li class="nav-item d-none d-lg-block">
-                        <a class="nav-link" href="{% url 'writer:project_list' %}">
-                            <i class="fas fa-folder-open me-1"></i>My Projects
+                        <a class="nav-link" href="{% url 'writer:ultimate_library' %}">
+                            <i class="fas fa-gem me-1"></i>Ultimate Library
                         </a>
                     </li>
                     
@@ -742,7 +845,11 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle user-menu" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <div class="user-avatar">
-                                <i class="fas fa-user"></i>
+                                {% if user.writer_profile and user.writer_profile.profile_picture %}
+                                    <img src="{{ user.writer_profile.profile_picture.url }}" alt="{{ user.username }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                    <i class="fas fa-user"></i>
+                                {% endif %}
                             </div>
                             <span class="d-none d-md-inline">{{ user.username }}</span>
                         </a>
@@ -751,6 +858,9 @@
                                 <i class="fas fa-user-circle me-2"></i>{{ user.username }}
                             </h6></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'writer:user_profile' %}">
+                                <i class="fas fa-user me-2"></i>My Profile
+                            </a></li>
                             <li><a class="dropdown-item" href="{% url 'writer:user_preferences' %}">
                                 <i class="fas fa-cog me-2"></i>Preferences
                             </a></li>
@@ -804,8 +914,8 @@
             <i class="fas fa-plus fab-icon"></i>
         </div>
         <div class="fab-options" id="fabOptions">
-            <a href="{% url 'writer:project_list' %}" class="fab-option" data-tooltip="My Writing Projects">
-                <i class="fas fa-folder"></i>
+            <a href="{% url 'writer:ultimate_library' %}" class="fab-option" data-tooltip="Ultimate Library">
+                <i class="fas fa-gem"></i>
             </a>
         </div>
     </div>

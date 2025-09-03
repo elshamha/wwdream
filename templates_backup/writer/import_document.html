@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Import Guidelines - A Writer's Web Dream{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'writer:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Import Guidelines</li>
+                </ol>
+            </nav>
+
+            <!-- Supported Formats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="mb-0" style="color: #ffffff !important;">
+                        <i class="fas fa-info-circle text-primary"></i> Supported Formats
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><i class="fas fa-file-pdf text-danger"></i> PDF Documents (.pdf)</li>
+                                <li><i class="fas fa-file-word text-primary"></i> Microsoft Word (.docx, .doc)</li>
+                                <li><i class="fas fa-file-alt text-secondary"></i> Plain Text (.txt)</li>
+                                <li><i class="fas fa-file-code text-success"></i> HTML Files (.html, .htm)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><i class="fas fa-file-alt text-warning"></i> Rich Text (.rtf)</li>
+                                <li><i class="fas fa-file-alt text-info"></i> OpenDocument (.odt)</li>
+                                <li><i class="fab fa-google text-success"></i> Google Docs (export as .docx first)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Docs Instructions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 style="color: #ffffff !important;"><i class="fab fa-google text-success"></i> Google Docs Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li>Open your Google Doc</li>
+                        <li>Go to <strong>File → Download → Microsoft Word (.docx)</strong></li>
+                        <li>Upload the downloaded .docx file to the import page</li>
+                        <li>All formatting, images, and structure will be preserved!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Tips and Guidelines -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 style="color: #ffffff !important;"><i class="fas fa-lightbulb text-warning"></i> Import Tips & Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 style="color: #ffffff !important;"><i class="fas fa-check text-success"></i> Best Practices</h6>
+                            <ul>
+                                <li>Use descriptive titles for easy identification</li>
+                                <li>Assign to a project for better organization</li>
+                                <li>Check "Preserve Formatting" for styled documents</li>
+                                <li>Enable metadata extraction for detailed information</li>
+                                <li>Test with smaller documents first to understand the conversion process</li>
+                                <li>Save your original files as backups before importing</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 style="color: #ffffff !important;"><i class="fas fa-exclamation-triangle text-warning"></i> Limitations</h6>
+                            <ul>
+                                <li>Maximum file size: 50 MB</li>
+                                <li>Complex layouts may not convert perfectly</li>
+                                <li>Images and tables are converted to text descriptions</li>
+                                <li>Some formatting may be lost during conversion</li>
+                                <li>Password-protected files cannot be imported</li>
+                                <li>Embedded objects may not be preserved</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Tips -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 style="color: #ffffff !important;"><i class="fas fa-star text-warning"></i> Pro Tips</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 style="color: #ffffff !important;"><i class="fas fa-magic text-primary"></i> For Better Results</h6>
+                            <ul>
+                                <li>Clean up your document formatting before export</li>
+                                <li>Use consistent heading styles (H1, H2, H3)</li>
+                                <li>Remove unnecessary page breaks and spacing</li>
+                                <li>Use standard fonts when possible</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 style="color: #ffffff !important;"><i class="fas fa-tools text-info"></i> Troubleshooting</h6>
+                            <ul>
+                                <li>If import fails, try saving as a different format</li>
+                                <li>For large PDFs, consider splitting into chapters</li>
+                                <li>Check file permissions if upload is blocked</li>
+                                <li>Contact support for files over 50MB</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Dashboard -->
+            <div class="text-center">
+                <a href="{% url 'writer:dashboard' %}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                <a href="{% url 'writer:personal_library' %}" class="btn btn-outline-secondary ms-2">
+                    <i class="fas fa-book"></i> Personal Library
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

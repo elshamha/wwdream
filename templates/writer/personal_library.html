@@ -46,7 +46,7 @@
                 <!-- Prominent Start Writing Button -->
                 <div class="text-center mb-3">
                     {% if latest_project %}
-                        <a href="{% url 'writer:chapter_editor' latest_project.pk %}"
+                        <a href="{% url 'writer:google_docs_editor' %}"
                            class="btn ethereal-btn ethereal-btn-warning ethereal-glow btn-lg px-5 py-3"
                            style="font-size:1.3rem; font-weight:700;"
                            title="Jump to your most recent project editor"
@@ -87,7 +87,7 @@
                         <i class="fas fa-folder-open ethereal-icon-glow me-2"></i> 
                         My Magical Projects
                         {% if latest_project %}
-                        <a href="{% url 'writer:chapter_editor' latest_project.pk %}" class="btn btn-primary btn-sm ms-3" style="vertical-align: middle;">
+                        <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-primary btn-sm ms-3" style="vertical-align: middle;">
                             <i class="fas fa-pen-nib"></i> Go to Editor
                         </a>
                         {% endif %}
@@ -106,7 +106,7 @@
                                         <div class="d-flex justify-content-between align-items-start mb-3">
                                             <h4 class="card-title mb-0" style="color: #ffffff !important;">
                                                 {% if project.pk %}
-                                                <a href="{% url 'writer:chapter_editor' project.pk %}" class="text-decoration-none ethereal-glow-on-hover" style="color: #ffffff !important;" title="Open in Editor">
+                                                <a href="{% url 'writer:google_docs_editor' %}" class="text-decoration-none ethereal-glow-on-hover" style="color: #ffffff !important;" title="Open in Editor">
                                                     {{ project.title }}
                                                 </a>
                                                 {% else %}
@@ -119,7 +119,7 @@
                                                 </button>
                                                 <ul class="dropdown-menu ethereal-dropdown">
                                                     {% if project.pk %}
-                                                    <li><a class="dropdown-item ethereal-dropdown-item" href="{% url 'writer:chapter_editor' project.pk %}">
+                                                    <li><a class="dropdown-item ethereal-dropdown-item" href="{% url 'writer:google_docs_editor' %}">
                                                         <i class="fas fa-edit me-2"></i> Open Editor
                                                     </a></li>
                                                     {% endif %}
@@ -226,7 +226,7 @@
                                             <div class="d-grid gap-2">
                                                 <div class="row g-2">
                                                     <div class="col-6">
-                                                        <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn ethereal-btn ethereal-btn-primary w-100" title="Open Writing Editor">
+                                                        <a href="{% url 'writer:google_docs_editor' %}" class="btn ethereal-btn ethereal-btn-primary w-100" title="Open Writing Editor">
                                                             <i class="fas fa-feather-alt"></i> Write
                                                         </a>
                                                     </div>
@@ -296,7 +296,7 @@
                                         <!-- Save for Later Button -->
                                         <div class="d-grid gap-2 mb-2">
                                             {% if project.pk %}
-                                            <a href="{% url 'writer:chapter_editor' project.pk %}" class="btn btn-outline-info btn-sm ethereal-glow-on-hover" title="Continue editing this project">
+                                            <a href="{% url 'writer:google_docs_editor' %}" class="btn btn-outline-info btn-sm ethereal-glow-on-hover" title="Continue editing this project">
                                                 <i class="fas fa-save me-1"></i>Save for Later / Continue Editing
                                             </a>
                                             {% endif %}

@@ -1,0 +1,710 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.first_name|default:profile_user.username }}'s Profile - A Writer's Web Dream{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Professional Profile Styling */
+.profile-page {
+    background: #f8fafc;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Header Card */
+.profile-header {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.header-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+}
+
+.avatar-section {
+    flex-shrink: 0;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 16px;
+    object-fit: cover;
+    border: 3px solid #e5e7eb;
+}
+
+.avatar-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 700;
+    color: white;
+    border: 3px solid #e5e7eb;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.profile-username {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.profile-bio {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #374151;
+    margin-bottom: 20px;
+}
+
+.profile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.meta-item i {
+    color: #667eea;
+    width: 16px;
+}
+
+.meta-item a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.meta-item a:hover {
+    text-decoration: underline;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+    color: white;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Content Grid */
+.profile-content {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 32px;
+}
+
+/* Section Cards */
+.section-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.section-icon {
+    width: 24px;
+    height: 24px;
+    color: #667eea;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+/* Interests */
+.interests-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.interest-tag {
+    background: #f0f4ff;
+    color: #3730a3;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid #e0e7ff;
+}
+
+/* Writers List */
+.writers-list {
+    display: grid;
+    gap: 16px;
+}
+
+.writer-item {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.writer-name {
+    font-weight: 600;
+    color: #111827;
+    font-size: 1rem;
+}
+
+/* Quotes */
+.quotes-list {
+    display: grid;
+    gap: 20px;
+}
+
+.quote-item {
+    padding: 24px;
+    background: #fefefe;
+    border-left: 4px solid #667eea;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.quote-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #374151;
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+.quote-author {
+    font-size: 0.9rem;
+    color: #6b7280;
+    text-align: right;
+}
+
+/* Dreams Section */
+.dreams-content {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #374151;
+}
+
+/* Projects Grid */
+.projects-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.project-item {
+    padding: 20px;
+    background: #fefefe;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.project-item:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-color: #667eea;
+}
+
+.project-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.project-description {
+    font-size: 0.95rem;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.project-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px 16px;
+    background: #fefefe;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+}
+
+.empty-state-icon {
+    font-size: 2.5rem;
+    color: #d1d5db;
+    margin-bottom: 12px;
+}
+
+.empty-state-text {
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+/* Preferences */
+.preferences-list {
+    display: grid;
+    gap: 12px;
+}
+
+.preference-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.preference-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.preference-value {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .profile-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 20px 16px;
+    }
+    
+    .profile-header {
+        padding: 24px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 24px;
+    }
+    
+    .profile-actions {
+        justify-content: center;
+    }
+    
+    .section-card {
+        padding: 24px 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .profile-name {
+        font-size: 1.75rem;
+    }
+    
+    .profile-meta {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="header-content">
+                <div class="avatar-section">
+                    {% if profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ profile_user.first_name|default:profile_user.username }}" class="profile-avatar">
+                    {% else %}
+                        <div class="avatar-placeholder">
+                            {{ profile_user.first_name.0|default:profile_user.username.0|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="profile-name">
+                        {% if profile_user.first_name %}
+                            {{ profile_user.first_name }} {{ profile_user.last_name }}
+                        {% else %}
+                            {{ profile_user.username }}
+                        {% endif %}
+                    </h1>
+                    
+                    <div class="profile-username">@{{ profile_user.username }}</div>
+                    
+                    {% if profile.bio %}
+                        <div class="profile-bio">{{ profile.bio }}</div>
+                    {% endif %}
+                    
+                    <div class="profile-meta">
+                        {% if profile.location %}
+                            <div class="meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ profile.location }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if profile.website %}
+                            <div class="meta-item">
+                                <i class="fas fa-globe"></i>
+                                <a href="{{ profile.website }}" target="_blank">Website</a>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Joined {{ profile_user.date_joined|date:"F Y" }}</span>
+                        </div>
+                        
+                        {% if profile.writing_goal_daily %}
+                            <div class="meta-item">
+                                <i class="fas fa-target"></i>
+                                <span>{{ profile.writing_goal_daily }} words/day</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if is_own_profile %}
+                        <div class="profile-actions">
+                            <a href="{% url 'writer:edit_profile' %}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i>
+                                Edit Profile
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Grid -->
+        <div class="profile-content">
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Writing Interests -->
+                {% if profile.interests %}
+                    <div class="section-card">
+                        <div class="section-header">
+                            <i class="fas fa-heart section-icon"></i>
+                            <h2 class="section-title">Writing Interests</h2>
+                        </div>
+                        <div class="interests-grid" id="interestsContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Favorite Writers -->
+                {% if profile.favorite_writers %}
+                    <div class="section-card">
+                        <div class="section-header">
+                            <i class="fas fa-book section-icon"></i>
+                            <h2 class="section-title">Favorite Writers</h2>
+                        </div>
+                        <div class="writers-list" id="writersContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Favorite Quotes -->
+                {% if profile.favorite_quotes %}
+                    <div class="section-card">
+                        <div class="section-header">
+                            <i class="fas fa-quote-left section-icon"></i>
+                            <h2 class="section-title">Favorite Quotes</h2>
+                        </div>
+                        <div class="quotes-list" id="quotesContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Hopes and Dreams -->
+                {% if profile.hopes_and_dreams %}
+                    <div class="section-card">
+                        <div class="section-header">
+                            <i class="fas fa-star section-icon"></i>
+                            <h2 class="section-title">Writing Dreams & Goals</h2>
+                        </div>
+                        <div class="dreams-content">
+                            {{ profile.hopes_and_dreams|linebreaks }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Recent Projects -->
+                {% if projects %}
+                    <div class="section-card">
+                        <div class="section-header">
+                            <i class="fas fa-folder section-icon"></i>
+                            <h2 class="section-title">
+                                {% if is_own_profile %}My Projects{% else %}Public Projects{% endif %}
+                            </h2>
+                        </div>
+                        <div class="projects-grid">
+                            {% for project in projects %}
+                                <div class="project-item">
+                                    <div class="project-title">{{ project.title }}</div>
+                                    {% if project.description %}
+                                        <div class="project-description">{{ project.description|truncatewords:15 }}</div>
+                                    {% endif %}
+                                    <div class="project-meta">
+                                        <span>{{ project.genre|default:"General" }}</span>
+                                        <span>{{ project.updated_at|date:"M d, Y" }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="sidebar-content">
+                <!-- Writing Stats -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="fas fa-chart-line section-icon"></i>
+                        <h2 class="section-title">Writing Stats</h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ projects.count }}</span>
+                            <div class="stat-label">Projects</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ profile.writing_goal_daily|default:0 }}</span>
+                            <div class="stat-label">Daily Goal</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Writing Preferences -->
+                {% if is_own_profile %}
+                    <div class="section-card">
+                        <div class="section-header">
+                            <i class="fas fa-cog section-icon"></i>
+                            <h2 class="section-title">Preferences</h2>
+                        </div>
+                        <div class="preferences-list">
+                            <div class="preference-item">
+                                <span class="preference-label">Theme</span>
+                                <span class="preference-value">{{ profile.get_theme_display }}</span>
+                            </div>
+                            <div class="preference-item">
+                                <span class="preference-label">Font Size</span>
+                                <span class="preference-value">{{ profile.get_font_size_display }}</span>
+                            </div>
+                            <div class="preference-item">
+                                <span class="preference-label">Editor</span>
+                                <span class="preference-value">{{ profile.get_preferred_editor_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Empty State for New Users -->
+                {% if not profile.interests and not profile.favorite_writers and not profile.favorite_quotes and not profile.hopes_and_dreams and is_own_profile %}
+                    <div class="section-card">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div class="empty-state-text">
+                                Complete your profile to showcase your writing journey!
+                            </div>
+                            <div style="margin-top: 16px;">
+                                <a href="{% url 'writer:edit_profile' %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                    Edit Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Populate interests
+    const interests = "{{ profile.interests|default:""|escapejs }}";
+    const interestsContainer = document.getElementById('interestsContainer');
+    if (interestsContainer && interests.trim()) {
+        const interestsList = interests.split(',');
+        interestsList.forEach(interest => {
+            const trimmed = interest.trim();
+            if (trimmed) {
+                const tag = document.createElement('span');
+                tag.className = 'interest-tag';
+                tag.textContent = trimmed;
+                interestsContainer.appendChild(tag);
+            }
+        });
+    }
+    
+    // Populate writers
+    const writers = "{{ profile.favorite_writers|default:""|escapejs }}";
+    const writersContainer = document.getElementById('writersContainer');
+    if (writersContainer && writers.trim()) {
+        const writersList = writers.split('\n');
+        writersList.forEach(writer => {
+            const trimmed = writer.trim();
+            if (trimmed) {
+                const div = document.createElement('div');
+                div.className = 'writer-item';
+                const name = document.createElement('div');
+                name.className = 'writer-name';
+                name.textContent = trimmed;
+                div.appendChild(name);
+                writersContainer.appendChild(div);
+            }
+        });
+    }
+    
+    // Populate quotes
+    const quotes = "{{ profile.favorite_quotes|default:""|escapejs }}";
+    const quotesContainer = document.getElementById('quotesContainer');
+    if (quotesContainer && quotes.trim()) {
+        const quotesList = quotes.split('\n');
+        quotesList.forEach(quote => {
+            const trimmed = quote.trim();
+            if (trimmed) {
+                const div = document.createElement('div');
+                div.className = 'quote-item';
+                const text = document.createElement('div');
+                text.className = 'quote-text';
+                text.textContent = `"${trimmed}"`;
+                div.appendChild(text);
+                quotesContainer.appendChild(div);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

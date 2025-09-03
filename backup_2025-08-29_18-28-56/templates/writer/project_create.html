@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Create New Project{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card p-4">
+                <h2 class="mb-4 text-center">Create a New Project</h2>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label">Project Title</label>
+                        <input type="text" class="form-control" id="id_title" name="title" placeholder="Enter project title..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="id_description" name="description" rows="4" placeholder="Describe your project..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_target_word_count" class="form-label">Target Word Count</label>
+                        <input type="number" class="form-control" id="id_target_word_count" name="target_word_count" placeholder="e.g. 50000">
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_genre" class="form-label">Genre</label>
+                        <input type="text" class="form-control" id="id_genre" name="genre" placeholder="e.g. Fantasy, Mystery, etc.">
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_theme" class="form-label">Theme</label>
+                        <select class="form-select" id="id_theme" name="theme">
+                            <option value="">Select a theme...</option>
+                            {% for theme in themes %}
+                                <option value="{{ theme.id }}">{{ theme.get_name_display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Collaboration</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="id_is_collaborative" name="is_collaborative">
+                            <label class="form-check-label" for="id_is_collaborative">Allow collaboration (invite others to edit)</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Public Project</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="id_is_public" name="is_public">
+                            <label class="form-check-label" for="id_is_public">Make this project public</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn ethereal-btn ethereal-btn-primary w-100">Create Project</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

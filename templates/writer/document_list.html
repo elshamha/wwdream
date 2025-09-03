@@ -33,11 +33,17 @@
                 {% endif %}
                 
                 <div class="btn-group w-100" role="group">
-                    <a href="{% url 'writer:document_detail' document.pk %}" class="btn btn-outline-info btn-sm">
+                    <a href="{% url 'writer:google_docs_editor_document' document.pk %}" class="btn btn-outline-info btn-sm">
                         <i class="fas fa-eye"></i>
                     </a>
                     <a href="{% url 'writer:document_update' document.pk %}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'writer:export_document_pdf' document.pk %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-file-pdf"></i>
+                    </a>
+                    <a href="{% url 'writer:export_document_epub_view' document.pk %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-book"></i>
                     </a>
                     <a href="{% url 'writer:document_delete' document.pk %}" class="btn btn-outline-danger btn-sm">
                         <i class="fas fa-trash"></i>
@@ -49,36 +55,6 @@
     {% endfor %}
 </div>
 
-<!-- Pagination -->
-{% if is_paginated %}
-<nav aria-label="Document pagination">
-    <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page=1">First</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-        </li>
-        {% endif %}
-        
-        <li class="page-item active">
-            <span class="page-link">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-        </li>
-        
-        {% if page_obj.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-        </li>
-        {% endif %}
-    </ul>
-</nav>
-{% endif %}
 
 {% else %}
 <div class="text-center py-5">

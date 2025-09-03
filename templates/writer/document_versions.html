@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Version History - {{ document.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-history text-primary"></i> Version History</h2>
+                    <p class="text-muted mb-0">Document: <strong>{{ document.title }}</strong></p>
+                </div>
+                <div>
+                    <a href="{% url 'writer:document_detail' document.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Document
+                    </a>
+                    <!-- Save New Version Button -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveVersionModal">
+                        <i class="fas fa-save"></i> Save Current Version
+                    </button>
+                </div>
+            </div>
+
+            <!-- Version Control Info -->
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Version Control:</strong> This feature automatically creates versions when you save your work, 
+                and allows you to manually save important versions. You can restore any previous version or compare changes between versions.
+            </div>
+
+            <!-- Versions List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> All Versions 
+                        <span class="badge bg-primary">{{ versions.count }} versions</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if versions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Version</th>
+                                        <th>Date</th>
+                                        <th>Saved By</th>
+                                        <th>Reason</th>
+                                        <th>Changes</th>
+                                        <th>Word Count</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for version in versions %}
+                                    <tr {% if forloop.first %}class="table-success"{% endif %}>
+                                        <td>
+                                            <span class="fw-bold">v{{ version.version_number }}</span>
+                                            {% if forloop.first %}
+                                                <span class="badge bg-success ms-2">Current</span>
+                                            {% endif %}
+                                            {% if version.is_major_version %}
+                                                <span class="badge bg-warning ms-2">Major</span>
+                                            {% endif %}
+                                            {% if version.is_published_version %}
+                                                <span class="badge bg-info ms-2">Published</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ version.created_at|date:"M d, Y" }}<br>
+                                                {{ version.created_at|time:"g:i A" }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-user text-muted"></i>
+                                            {{ version.saved_by.username }}
+                                        </td>
+                                        <td>
+                                            {% if version.save_reason %}
+                                                <span class="text-dark">{{ version.save_reason }}</span>
+                                            {% else %}
+                                                <span class="text-muted fst-italic">No reason provided</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ version.changes_summary }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">{{ version.word_count }} words</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <!-- Restore Button -->
+                                                {% if not forloop.first %}
+                                                <button type="button" class="btn btn-outline-success" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#restoreModal"
+                                                        data-version="{{ version.version_number }}"
+                                                        data-version-id="{{ version.id }}"
+                                                        title="Restore this version">
+                                                    <i class="fas fa-undo"></i>
+                                                </button>
+                                                {% endif %}
+                                                
+                                                <!-- Compare Button -->
+                                                {% if not forloop.last %}
+                                                <button type="button" class="btn btn-outline-primary" 
+                                                        onclick="compareVersions({{ version.id }}, {% if not forloop.first %}{{ versions.1.id }}{% else %}{{ versions.1.id }}{% endif %})"
+                                                        title="Compare with previous">
+                                                    <i class="fas fa-exchange-alt"></i>
+                                                </button>
+                                                {% endif %}
+                                                
+                                                <!-- Delete Button -->
+                                                {% if not version.is_major_version and not version.is_published_version and not forloop.first %}
+                                                <button type="button" class="btn btn-outline-danger" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteModal"
+                                                        data-version="{{ version.version_number }}"
+                                                        data-version-id="{{ version.id }}"
+                                                        title="Delete this version">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-history text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted mt-3">No versions yet</h4>
+                            <p class="text-muted">Save a version to start tracking changes to your document.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Version Modal -->
+<div class="modal fade" id="saveVersionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-save text-primary"></i> Save New Version
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'writer:save_document_version' document.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="save_reason" class="form-label">Reason for saving (optional)</label>
+                        <input type="text" class="form-control" id="save_reason" name="save_reason" 
+                               placeholder="e.g., Major revisions, Final draft, Bug fixes...">
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_major" name="is_major">
+                        <label class="form-check-label" for="is_major">
+                            Mark as major version
+                            <small class="text-muted d-block">Major versions are protected from automatic deletion</small>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Version
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Version Modal -->
+<div class="modal fade" id="restoreModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-undo text-warning"></i> Restore Version
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> Restoring this version will replace the current content. 
+                    A backup of the current version will be created automatically.
+                </div>
+                <p>Are you sure you want to restore to version <strong id="restoreVersionNumber"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" id="restoreForm" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-undo"></i> Restore Version
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Version Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash text-danger"></i> Delete Version
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete version <strong id="deleteVersionNumber"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" id="deleteForm" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Version
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle restore modal
+document.getElementById('restoreModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const versionNumber = button.getAttribute('data-version');
+    const versionId = button.getAttribute('data-version-id');
+    
+    document.getElementById('restoreVersionNumber').textContent = versionNumber;
+    document.getElementById('restoreForm').action = 
+        '{% url "writer:restore_document_version" document.id 0 %}'.replace('0', versionId);
+});
+
+// Handle delete modal
+document.getElementById('deleteModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const versionNumber = button.getAttribute('data-version');
+    const versionId = button.getAttribute('data-version-id');
+    
+    document.getElementById('deleteVersionNumber').textContent = versionNumber;
+    document.getElementById('deleteForm').action = 
+        '{% url "writer:delete_document_version" document.id 0 %}'.replace('0', versionId);
+});
+
+// Compare versions function
+function compareVersions(version1Id, version2Id) {
+    const compareUrl = '{% url "writer:compare_document_versions" document.id 0 0 %}'
+        .replace(/0/g, function(match, offset, string) {
+            return offset === string.lastIndexOf('0') - 2 ? version1Id : version2Id;
+        });
+    window.open(compareUrl, '_blank');
+}
+</script>
+
+<style>
+.table td {
+    vertical-align: middle;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
+{% endblock %}
