@@ -1,0 +1,31 @@
+# Ignore all backup directories
+backup*/
+backup_*/
+
+# Ignore mobile app directories  
+bookshelf-mobile/
+bookshelf-mobile-backup/
+bookshelf-mobile-backup-*/
+phoneapp/
+phoneapp-backup/
+ReactApp/
+Reactor/
+SmartLinkApp/
+FairyAppExpo/
+FairyAppNative/
+NewExpoProject/
+FrontStack/
+Webdream/
+webview/
+BasicDjangoApp/
+
+# Ignore any package.json files
+**/package.json
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# Keep only Django/Python files
+!requirements.txt
+!manage.py
+!*.py
