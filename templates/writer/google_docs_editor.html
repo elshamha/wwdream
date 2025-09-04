@@ -6389,12 +6389,19 @@ function centerSelectedText() {
         return;
     }
     
-    // Apply center alignment
-    quill.formatText(selection.index, selection.length, 'align', 'center');
-    quill.formatText(selection.index, selection.length, 'bold', true);
-    
-    showCompanionNotification('Text centered and bolded!', 'success');
-    companionCelebrate('format');
+    // Apply center alignment - using formatLine for block-level formatting
+    const lines = quill.getLines(selection.index, selection.length);
+    if (lines && lines.length > 0) {
+        // Format the entire line(s) that contain the selection
+        quill.formatLine(selection.index, selection.length, 'align', 'center');
+        // Also make the text bold
+        quill.formatText(selection.index, selection.length, 'bold', true);
+        
+        showCompanionNotification('Text centered and bolded!', 'success');
+        companionCelebrate('format');
+    } else {
+        showCompanionNotification('Unable to center text', 'error');
+    }
 }
 
 // Toggle auto-centering feature
