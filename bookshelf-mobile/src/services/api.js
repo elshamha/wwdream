@@ -5,6 +5,9 @@ import { Platform } from 'react-native';
 
 // Different URLs for different environments
 const getApiUrl = () => {
+  // TEMPORARY: Use Railway subdomain with valid SSL
+  return 'https://web-production-42009.up.railway.app';
+  
   // First try to use the configured URL from app.json
   if (Constants.expoConfig?.extra?.apiUrl) {
     return Constants.expoConfig.extra.apiUrl;
