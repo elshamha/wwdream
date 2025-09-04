@@ -4394,13 +4394,17 @@ def media_update(request, media_id):
 
 
 # User Registration Views
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.urls import reverse
 from django import forms
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.cache import never_cache
+from django.views.decorators.debug import sensitive_post_parameters
+from django.utils.decorators import method_decorator
 
 class CustomUserCreationForm(UserCreationForm):
     """Custom user creation form with email field"""
@@ -4434,6 +4438,28 @@ def signup(request):
         form = CustomUserCreationForm()
     
     return render(request, 'registration/signup.html', {'form': form})
+
+@method_decorator([sensitive_post_parameters(), csrf_protect, never_cache], name='dispatch')
+def custom_login_view(request):
+    """Custom login view with enhanced CSRF debugging"""
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Welcome back, {username}!')
+                return redirect('writer:dashboard')
+            else:
+                messages.error(request, 'Invalid username or password.')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'registration/login.html', {'form': form})
 
 
 class MLStripper(HTMLParser):
