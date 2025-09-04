@@ -26,11 +26,7 @@ const LoginScreen = ({ navigation }) => {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   const { theme, gradients } = useTheme();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigation.replace('Bookshelf');
-    }
-  }, [isAuthenticated]);
+  // No need for useEffect navigation since App.js handles auth routing
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -42,11 +38,10 @@ const LoginScreen = ({ navigation }) => {
     const result = await login(username, password);
     setLoading(false);
 
-    if (result.success) {
-      navigation.replace('Bookshelf');
-    } else {
+    if (!result.success) {
       Alert.alert('Login Failed', result.error);
     }
+    // No need to navigate manually - App.js will handle the routing
   };
 
   const testConnection = async () => {

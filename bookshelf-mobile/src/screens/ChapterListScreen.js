@@ -292,7 +292,7 @@ const ChapterListScreen = ({ route, navigation }) => {
     try {
       const shareUrl = `https://atticuswriter.com/project/${project.id}/collaborate`;
       await Share.share({
-        message: `Join me in writing "${project.title}" on Atticus Writer!\n\n${shareUrl}`,
+        message: `Join me in writing "${project.title}" at Writer's Web Dream!\n\n${shareUrl}`,
         title: `Collaborate on ${project.title}`,
       });
     } catch (error) {

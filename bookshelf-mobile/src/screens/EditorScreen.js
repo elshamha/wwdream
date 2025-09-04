@@ -27,18 +27,43 @@ const EditorScreen = ({ route, navigation }) => {
   // Helper function to convert HTML to plain text
   const htmlToText = (html) => {
     if (!html) return '';
-    return html
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n\n')
-      .replace(/<p[^>]*>/gi, '')
-      .replace(/<[^>]*>/g, '')
+    
+    // First, decode HTML entities
+    let text = html
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&#x2F;/g, '/')
+      .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+      .replace(/&#x([0-9A-Fa-f]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+
+    // Handle line breaks and paragraphs properly
+    text = text
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<p[^>]*>/gi, '')
+      .replace(/<div[^>]*>/gi, '\n')
+      .replace(/<\/div>/gi, '')
+      .replace(/<h[1-6][^>]*>/gi, '\n')
+      .replace(/<\/h[1-6]>/gi, '\n\n');
+
+    // Remove all remaining HTML tags
+    text = text.replace(/<[^>]*>/g, '');
+
+    // Clean up multiple spaces and formatting artifacts
+    text = text
+      .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ') // Replace various Unicode spaces
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/\n\s+/g, '\n') // Remove spaces at beginning of lines
+      .replace(/\s+\n/g, '\n') // Remove spaces at end of lines
+      .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with double newline
       .trim();
+
+    return text;
   };
 
   // Helper function to convert plain text to basic HTML
