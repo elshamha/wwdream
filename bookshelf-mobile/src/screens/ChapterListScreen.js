@@ -454,6 +454,8 @@ const ChapterListScreen = ({ route, navigation }) => {
           icon="plus"
           onPress={handleCreateChapter}
           label="New Chapter"
+          labelStyle={{ color: '#ffffff', fontWeight: '600' }}
+          color="#ffffff"
         />
       )}
 
@@ -733,7 +735,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 0,
+    bottom: 80, // Moved up to avoid overlapping with phone navigation bar
     backgroundColor: theme.colors.primary,
   },
   modalContainer: {

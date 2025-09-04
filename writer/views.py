@@ -4439,6 +4439,10 @@ def signup(request):
     
     return render(request, 'registration/signup.html', {'form': form})
 
+def privacy_policy(request):
+    """Privacy policy page for the app"""
+    return render(request, 'privacy_policy.html')
+
 @method_decorator([sensitive_post_parameters(), csrf_protect, never_cache], name='dispatch')
 def custom_login_view(request):
     """Custom login view with enhanced CSRF debugging"""

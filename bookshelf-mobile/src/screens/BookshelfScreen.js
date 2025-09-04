@@ -547,7 +547,7 @@ const createStyles = (theme) => StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 0,
+    bottom: 80, // Moved higher to ensure clearance from phone navigation bar
     backgroundColor: theme.colors.primary,
   },
 });

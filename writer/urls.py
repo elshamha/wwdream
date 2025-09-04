@@ -16,6 +16,9 @@ urlpatterns = [
     # Authentication
     path('signup/', views.signup, name='signup'),
     
+    # Privacy Policy
+    path('privacy/', views.privacy_policy, name='privacy_policy'),
+    
     path('stats/', views.stats_api, name='stats_api'),
     path('tinymce-editor/', views.tinymce_editor, name='tinymce_editor'),
     path('simple-editor/', views.simple_editor, name='simple_editor'),

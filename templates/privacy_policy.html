@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}Privacy Policy - A Writer's Web Dream{% endblock %}
+
+{% block main_class %}privacy-container{% endblock %}
+
+{% block extra_css %}
+<style>
+    .privacy-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.6;
+        color: #333;
+    }
+    
+    .privacy-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+    }
+    
+    .privacy-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    
+    .privacy-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    .privacy-content {
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    
+    .privacy-content h2 {
+        color: #667eea;
+        font-size: 1.5rem;
+        margin: 30px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .privacy-content h2:first-child {
+        margin-top: 0;
+    }
+    
+    .privacy-content ul {
+        padding-left: 20px;
+        margin: 15px 0;
+    }
+    
+    .privacy-content li {
+        margin: 8px 0;
+    }
+    
+    .contact-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border-left: 4px solid #667eea;
+    }
+    
+    .last-updated {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        margin-bottom: 30px;
+    }
+    
+    .back-link {
+        text-align: center;
+        margin-top: 30px;
+    }
+    
+    .back-link a {
+        display: inline-block;
+        padding: 12px 30px;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+        border-radius: 25px;
+        transition: background 0.3s ease;
+    }
+    
+    .back-link a:hover {
+        background: #5a6fd8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="privacy-header">
+    <h1>Privacy Policy</h1>
+    <p>A Writer's Web Dream</p>
+</div>
+
+<div class="last-updated">
+    <p>Last updated: January 4, 2025</p>
+</div>
+
+<div class="privacy-content">
+    <h2>1. INFORMATION WE COLLECT</h2>
+    <ul>
+        <li><strong>Account information:</strong> Username, email address, and profile information</li>
+        <li><strong>Writing content:</strong> Your projects, chapters, documents, and creative work</li>
+        <li><strong>Usage data:</strong> App interactions, features used, and performance analytics</li>
+        <li><strong>Device information:</strong> Basic device and browser information for compatibility</li>
+    </ul>
+
+    <h2>2. HOW WE USE YOUR INFORMATION</h2>
+    <ul>
+        <li>To provide and maintain our writing and project management services</li>
+        <li>To sync your writing projects across web and mobile devices</li>
+        <li>To improve app functionality and user experience</li>
+        <li>To communicate important updates about the service</li>
+        <li>To provide customer support when requested</li>
+        <li>To ensure security and prevent unauthorized access</li>
+    </ul>
+
+    <h2>3. DATA STORAGE AND SECURITY</h2>
+    <ul>
+        <li>Your data is stored securely on encrypted servers</li>
+        <li>We use industry-standard security measures to protect your information</li>
+        <li>Your writing content remains private and confidential</li>
+        <li>We implement regular security audits and updates</li>
+        <li>Access to your data is restricted to authorized personnel only</li>
+    </ul>
+
+    <h2>4. DATA SHARING AND DISCLOSURE</h2>
+    <ul>
+        <li>We do not sell, trade, or share your personal information with third parties for marketing purposes</li>
+        <li>Your writing content is never shared without your explicit consent</li>
+        <li>We may share data only if required by law or to protect our rights</li>
+        <li>Collaboration features allow you to voluntarily share projects with other users</li>
+    </ul>
+
+    <h2>5. YOUR RIGHTS AND CHOICES</h2>
+    <ul>
+        <li>You can delete your account and associated data at any time</li>
+        <li>You can export your writing projects in multiple formats</li>
+        <li>You can contact us to request data corrections or clarifications</li>
+        <li>You can opt out of non-essential communications</li>
+        <li>You have the right to access all data we store about you</li>
+    </ul>
+
+    <h2>6. CHILDREN'S PRIVACY</h2>
+    <ul>
+        <li>Our service is intended for users aged 13 and above</li>
+        <li>We do not knowingly collect information from children under 13</li>
+        <li>If we become aware of data from a child under 13, we will delete it promptly</li>
+        <li>Parents can contact us to request removal of their child's data</li>
+    </ul>
+
+    <h2>7. COOKIES AND TRACKING</h2>
+    <ul>
+        <li>We use essential cookies to maintain your session and preferences</li>
+        <li>Analytics cookies help us understand how users interact with our service</li>
+        <li>You can disable cookies in your browser, though some features may not work properly</li>
+        <li>We do not use tracking for advertising purposes</li>
+    </ul>
+
+    <h2>8. DATA RETENTION</h2>
+    <ul>
+        <li>We retain your data as long as your account is active</li>
+        <li>Deleted content is permanently removed within 30 days</li>
+        <li>Backups may retain data for up to 90 days for recovery purposes</li>
+        <li>Legal compliance may require longer retention in some cases</li>
+    </ul>
+
+    <h2>9. INTERNATIONAL USERS</h2>
+    <ul>
+        <li>Our servers are located in secure data centers</li>
+        <li>Data may be processed in different countries for service delivery</li>
+        <li>We comply with applicable international privacy laws</li>
+        <li>Users in the EU have additional rights under GDPR</li>
+    </ul>
+
+    <div class="contact-info">
+        <h2>10. CONTACT US</h2>
+        <p>If you have any questions about this Privacy Policy or our data practices, please contact us:</p>
+        <ul>
+            <li><strong>Website:</strong> <a href="https://writerswebdream.com">https://writerswebdream.com</a></li>
+            <li><strong>Email:</strong> privacy@writerswebdream.com</li>
+        </ul>
+    </div>
+
+    <h2>11. POLICY UPDATES</h2>
+    <p>This Privacy Policy may be updated periodically to reflect changes in our practices or legal requirements. We will notify users of significant changes through the app or email. Continued use of A Writer's Web Dream constitutes acceptance of any policy updates.</p>
+    
+    <p><strong>Effective Date:</strong> This policy is effective as of January 4, 2025.</p>
+</div>
+
+<div class="back-link">
+    <a href="{% url 'writer:dashboard' %}">← Return to Dashboard</a>
+</div>
+{% endblock %}
