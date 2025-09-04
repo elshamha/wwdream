@@ -1628,10 +1628,39 @@ def export_as_pdf(project, chapters):
         if chapter.content:
             # Clean HTML content for PDF
             import re
-            clean_content = re.sub('<[^<]+?>', '', chapter.content)
-            content = Paragraph(clean_content, styles['Normal'])
-            story.append(content)
-            story.append(Spacer(1, 12))
+            from html import unescape
+            from bs4 import BeautifulSoup
+            
+            # Parse HTML and extract text properly
+            soup = BeautifulSoup(chapter.content, 'html.parser')
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
+            # Get text and clean it
+            text = soup.get_text()
+            # Break into lines and remove leading/trailing space
+            lines = (line.strip() for line in text.splitlines())
+            # Break multi-headlines into a line each
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            # Drop blank lines
+            clean_content = ' '.join(chunk for chunk in chunks if chunk)
+            # Unescape HTML entities
+            clean_content = unescape(clean_content)
+            
+            # Create paragraphs for each line
+            for para_text in clean_content.split('\n'):
+                if para_text.strip():
+                    try:
+                        content = Paragraph(para_text, styles['Normal'])
+                        story.append(content)
+                        story.append(Spacer(1, 6))
+                    except:
+                        # If paragraph fails, add as plain text
+                        safe_text = re.sub(r'[^\x20-\x7E\n]', '', para_text)
+                        if safe_text.strip():
+                            content = Paragraph(safe_text, styles['Normal'])
+                            story.append(content)
+                            story.append(Spacer(1, 6))
     
     doc.build(story)
     buffer.seek(0)
@@ -1663,15 +1692,33 @@ def export_as_epub(project, chapters):
             file_name=f'chapter_{i+1}.xhtml',
             lang='en'
         )
-        epub_chapter.content = f'''
+        # Clean and format content for EPUB
+        from html import escape, unescape
+        from bs4 import BeautifulSoup
+        
+        if chapter.content:
+            # Parse and clean the HTML content
+            soup = BeautifulSoup(chapter.content, 'html.parser')
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
+            # Get clean HTML
+            clean_html = str(soup)
+        else:
+            clean_html = '<p>No content</p>'
+        
+        epub_chapter.content = f'''<?xml version='1.0' encoding='utf-8'?>
+        <!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.1//EN' 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>
         <html xmlns="http://www.w3.org/1999/xhtml">
-        <head><title>{chapter.title or f'Chapter {i+1}'}</title></head>
+        <head>
+            <title>{escape(chapter.title or f'Chapter {i+1}')}</title>
+            <meta charset="utf-8"/>
+        </head>
         <body>
-        <h1>{chapter.title or f'Chapter {i+1}'}</h1>
-        {chapter.content or ''}
+            <h1>{escape(chapter.title or f'Chapter {i+1}')}</h1>
+            {clean_html}
         </body>
-        </html>
-        '''
+        </html>'''
         book.add_item(epub_chapter)
         epub_chapters.append(epub_chapter)
     
