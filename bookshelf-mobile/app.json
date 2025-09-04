@@ -29,7 +29,7 @@
     },
     "web": {},
     "extra": {
-      "apiUrl": "https://writerswebdream.com",
+      "apiUrl": "http://writerswebdream.com",
       "eas": {
         "projectId": "e0570b63-8e60-4a5f-b17a-cd7472a84464"
       }

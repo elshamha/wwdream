@@ -38,10 +38,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Security - Enable for production
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# Security - Temporarily disabled for SSL cert issues
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -53,6 +53,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
     'https://writerswebdream.com',
     'https://www.writerswebdream.com',
+    'http://writerswebdream.com',
+    'http://www.writerswebdream.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
