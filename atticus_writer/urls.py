@@ -26,7 +26,6 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from rest_framework.authtoken.views import obtain_auth_token
-from writer.views import custom_login_view
 
 def home_redirect(request):
     if request.user.is_authenticated:
@@ -42,7 +41,7 @@ urlpatterns = [
     path('', home_redirect, name='home'),
     path('favicon.ico', favicon, name='favicon'),
     path('writer/', include('writer.urls')),
-    path('accounts/login/', custom_login_view, name='login'),
+    path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('accounts/', include('allauth.urls')),  # This includes social login URLs
     path('accounts/', include('django.contrib.auth.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
