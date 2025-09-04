@@ -1211,15 +1211,51 @@
             });
         }
 
+        // CSRF cookie helper function
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         function toggleProjectVisibility(projectId) {
             const project = projects.find(p => p.id === projectId);
             if (project) {
-                project.visible = !project.visible;
-                loadProjects();
-                
-                // Show feedback
-                const message = project.visible ? 'Project shown on dashboard' : 'Project hidden from dashboard';
-                showToast(message);
+                // Make API call to server
+                fetch('{% url "writer:toggle_bookshelf_visibility" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        project_id: projectId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update local state based on server response
+                        project.visible = data.show_on_dashboard;
+                        loadProjects();
+                        showToast(data.message);
+                    } else {
+                        showToast('Failed to toggle project visibility', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error toggling visibility:', error);
+                    showToast('Error updating project visibility', 'error');
+                });
             }
         }
 
