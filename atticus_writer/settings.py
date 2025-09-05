@@ -20,10 +20,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)725054@5r4k%g-q7h6@p=5c5&&mmv!wf%9ek&f7tukp_uae!%'
+import os
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-)725054@5r4k%g-q7h6@p=5c5&&mmv!wf%9ek&f7tukp_uae!%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']  # Allow all hosts temporarily
 
@@ -32,6 +33,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://web-production-42009.up.railway.app',
     'https://*.up.railway.app', 
     'https://*.railway.app',
+    'https://www.writerswebdream.com',
+    'https://writerswebdream.com',
 ]
 
 
@@ -63,6 +66,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -97,18 +101,16 @@ ASGI_APPLICATION = 'atticus_writer.asgi.application'
 # Database
 # Use Railway PostgreSQL in production, SQLite for local development
 import os
+import dj_database_url
 
 # Check if we're in production (Railway environment)
-if os.environ.get('PGDATABASE'):
+if os.environ.get('DATABASE_URL'):
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE'),
-            'USER': os.environ.get('PGUSER'),
-            'PASSWORD': os.environ.get('PGPASSWORD'),
-            'HOST': os.environ.get('PGHOST'),
-            'PORT': os.environ.get('PGPORT', '5432'),
-        }
+        'default': dj_database_url.parse(
+            os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 else:
     # Use SQLite for local development
