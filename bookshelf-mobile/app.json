@@ -29,7 +29,7 @@
     },
     "web": {},
     "extra": {
-      "apiUrl": "http://writerswebdream.com",
+      "apiUrl": "https://web-production-42009.up.railway.app",
       "eas": {
         "projectId": "e0570b63-8e60-4a5f-b17a-cd7472a84464"
       }
@@ -37,9 +37,7 @@
     "plugins": [
       "expo-font"
     ],
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/e0570b63-8e60-4a5f-b17a-cd7472a84464"
     }
