@@ -24,12 +24,12 @@
         "backgroundColor": "#667eea"
       },
       "package": "com.writerswebdream.mobile",
-      "versionCode": 1,
+      "versionCode": 2,
       "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"]
     },
     "web": {},
     "extra": {
-      "apiUrl": "https://web-production-42009.up.railway.app",
+      "apiUrl": "https://www.writerswebdream.com",
       "eas": {
         "projectId": "e0570b63-8e60-4a5f-b17a-cd7472a84464"
       }
