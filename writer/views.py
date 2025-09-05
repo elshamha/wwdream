@@ -6408,3 +6408,57 @@ def fetch_book_content(request):
             })
     
     return JsonResponse({"error": "POST method required"}, status=405)
+
+
+# Mobile Authentication Endpoint
+@csrf_exempt
+def mobile_auth(request):
+    """Mobile authentication endpoint that bypasses potential DRF/allauth conflicts"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    
+    try:
+        # Get credentials from both JSON and form data
+        content_type = request.content_type or ''
+        
+        if 'application/json' in content_type:
+            import json
+            data = json.loads(request.body)
+            username = data.get('username')
+            password = data.get('password')
+        else:
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+        
+        if not username or not password:
+            return JsonResponse({
+                'success': False,
+                'error': 'Username and password required'
+            }, status=400)
+        
+        # Authenticate using Django's built-in authentication
+        from django.contrib.auth import authenticate
+        user = authenticate(username=username, password=password)
+        
+        if user and user.is_active:
+            # Create or get token
+            from rest_framework.authtoken.models import Token
+            token, created = Token.objects.get_or_create(user=user)
+            
+            return JsonResponse({
+                'success': True,
+                'token': token.key,
+                'user_id': user.id,
+                'username': user.username
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid credentials'
+            }, status=401)
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Authentication error: {str(e)}'
+        }, status=500)

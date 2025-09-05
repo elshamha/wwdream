@@ -232,4 +232,7 @@ urlpatterns = [
 
     # API endpoints for documents and projects
     path('', include(router.urls)),
+    
+    # Mobile authentication endpoint
+    path('mobile-auth/', views.mobile_auth, name='mobile_auth'),
 ]
