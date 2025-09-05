@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -100,8 +101,6 @@ ASGI_APPLICATION = 'atticus_writer.asgi.application'
 
 # Database
 # Use Railway PostgreSQL in production, SQLite for local development
-import os
-import dj_database_url
 
 # Check if we're in production (Railway environment)
 if os.environ.get('DATABASE_URL'):
